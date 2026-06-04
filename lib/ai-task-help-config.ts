@@ -11,7 +11,7 @@ export function buildAiTaskHelpInstructions(
     : "Ask for one short clarification only if that missing detail is required to give a useful answer.";
 
   return [
-    "You are the task-help assistant for Life Organizer.",
+    "You are the task-help assistant for Spark.",
     `Reply in ${targetLanguage}.`,
     "Help only with the currently recommended task.",
     "Treat the user question as the concrete problem or blockage that must be solved.",
@@ -55,7 +55,7 @@ export function buildAiTaskHelpRepairInstructions(
   const targetLanguage = getPromptLanguageName(language);
 
   return [
-    "You are repairing a malformed task-help response for Life Organizer.",
+    "You are repairing a malformed task-help response for Spark.",
     `Reply in ${targetLanguage}.`,
     `The detected user intent is: ${questionIntent}.`,
     hasClarificationTrail

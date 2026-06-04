@@ -7,8 +7,11 @@ import {
   RecommendedTaskHelp,
   type RecommendedTaskHelpState
 } from "@/components/recommended-task-help";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskDurationLabel } from "@/lib/task-labels";
+import { cn } from "@/lib/utils";
 import { Task } from "@/types/task";
 
 type RecommendationCardProps = {
@@ -26,7 +29,6 @@ export function RecommendationCard({
   recommendedTask,
   statusMessage
 }: RecommendationCardProps) {
-  const { language } = useAppLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
   const [helpState, setHelpState] = useState<RecommendedTaskHelpState>(() =>
     createInitialRecommendedTaskHelpState()
@@ -40,25 +42,17 @@ export function RecommendationCard({
 
   useEffect(() => {
     setHelpState(createInitialRecommendedTaskHelpState());
-  }, [recommendedTask?.id, language]);
+  }, [recommendedTask?.id]);
 
   useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
-
+    if (!isExpanded) return;
     const previousOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsExpanded(false);
-      }
+      if (event.key === "Escape") setIsExpanded(false);
     }
-
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
@@ -67,7 +61,7 @@ export function RecommendationCard({
 
   return (
     <>
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[0_10px_30px_rgba(24,36,28,0.06)] backdrop-blur">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-lg">
         <RecommendationCardContent
           hasPendingTasks={hasPendingTasks}
           isAiLoading={isAiLoading}
@@ -82,12 +76,11 @@ export function RecommendationCard({
       </section>
 
       {isExpanded && recommendedTask ? (
-        <div className="fixed inset-0 z-50 bg-[rgba(24,28,31,0.72)] p-4 backdrop-blur-sm sm:p-6">
-          <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-[rgba(255,255,255,0.12)] bg-[var(--card)] shadow-[0_30px_80px_rgba(0,0,0,0.28)]">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4 sm:px-7">
+        <div className="fixed inset-0 z-50 bg-black/60 p-4 backdrop-blur-sm sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-7">
               <ExpandedHeader task={recommendedTask} onClose={() => setIsExpanded(false)} />
             </div>
-
             <div className="overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
               <RecommendationCardContent
                 hasPendingTasks={hasPendingTasks}
@@ -110,22 +103,17 @@ export function RecommendationCard({
 
 function ExpandedHeader({ onClose, task }: { onClose: () => void; task: Task }) {
   const { copy } = useAppLanguage();
-
   return (
     <>
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           {copy.recommendation.expandedView}
         </p>
         <h2 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{task.title}</h2>
       </div>
-      <button
-        className="rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-        onClick={onClose}
-        type="button"
-      >
+      <Button variant="outline" size="sm" onClick={onClose} type="button">
         {copy.common.close}
-      </button>
+      </Button>
     </>
   );
 }
@@ -158,44 +146,47 @@ function RecommendationCardContent({
       : copy.common.noPendingTasks;
 
   return (
-    <div className={`flex flex-col ${isExpanded ? "gap-8" : "gap-6"}`}>
+    <div className={cn("flex flex-col", isExpanded ? "gap-8" : "gap-6")}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className={isExpanded ? "max-w-3xl" : undefined}>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {copy.common.todayRecommendation}
           </p>
           <h2
-            className={`mt-2 font-semibold tracking-tight ${
+            className={cn(
+              "mt-2 font-semibold tracking-tight",
               isExpanded ? "text-4xl sm:text-5xl" : "text-2xl"
-            }`}
+            )}
           >
             {heading}
           </h2>
           {recommendationReason ? (
             <p
-              className={`mt-3 text-[var(--muted)] ${
+              className={cn(
+                "mt-3 text-muted-foreground",
                 isExpanded ? "max-w-3xl text-base leading-7 sm:text-lg" : "text-sm leading-6 sm:text-base"
-              }`}
+              )}
             >
               {recommendationReason}
             </p>
           ) : isAiLoading && hasPendingTasks ? (
             <div className="mt-4 flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--muted)]">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 <span className="loading-dot" />
                 <span className="loading-dot loading-dot-delay-1" />
                 <span className="loading-dot loading-dot-delay-2" />
                 <span className="ml-1">{copy.recommendation.buildExplanation}</span>
               </div>
-              <div className="h-2.5 w-full max-w-[28rem] overflow-hidden rounded-full bg-[rgba(60,64,68,0.1)]">
+              <div className="h-2 w-full max-w-[28rem] overflow-hidden rounded-full bg-border">
                 <div className="loading-shimmer h-full rounded-full" />
               </div>
             </div>
           ) : statusMessage ? (
             <p
-              className={`mt-3 text-[var(--muted)] ${
+              className={cn(
+                "mt-3 text-muted-foreground",
                 isExpanded ? "text-base leading-7 sm:text-lg" : "text-sm leading-6 sm:text-base"
-              }`}
+              )}
             >
               {statusMessage}
             </p>
@@ -203,20 +194,17 @@ function RecommendationCardContent({
         </div>
 
         {onExpand ? (
-          <button
-            className="rounded-xl border border-[var(--border)] bg-white/55 px-4 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)]"
-            onClick={onExpand}
-            type="button"
-          >
+          <Button variant="outline" size="sm" onClick={onExpand} type="button">
             {copy.recommendation.openLarge}
-          </button>
+          </Button>
         ) : null}
       </div>
 
       <div
-        className={`grid gap-4 rounded-2xl bg-[var(--accent-soft)] ${
+        className={cn(
+          "grid gap-4 rounded-xl bg-primary/10 border border-primary/20",
           isExpanded ? "p-5 sm:grid-cols-4" : "p-4 sm:grid-cols-3"
-        }`}
+        )}
       >
         <MetaItem label={copy.recommendation.category} value={recommendedTask ? recommendedTask.category : "-"} />
         <MetaItem
@@ -240,14 +228,14 @@ function RecommendationCardContent({
       </div>
 
       {isExpanded && recommendedTask?.description ? (
-        <div className="rounded-2xl border border-[var(--border)] bg-white/55 p-5">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--muted)]">
+        <Card className="p-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {copy.recommendation.description}
           </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--foreground)] sm:text-base">
+          <p className="mt-3 text-sm leading-7 sm:text-base">
             {recommendedTask.description}
           </p>
-        </div>
+        </Card>
       ) : null}
 
       {recommendedTask ? (
@@ -271,10 +259,10 @@ type MetaItemProps = {
 function MetaItem({ label, value }: MetaItemProps) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--muted)]">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 text-sm font-medium text-[var(--foreground)] sm:text-base">{value}</p>
+      <p className="mt-1.5 text-sm font-medium sm:text-base">{value}</p>
     </div>
   );
 }

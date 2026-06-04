@@ -12,7 +12,7 @@ export function buildAiPriorityInstructions(
       : `recommendedTaskId must be one of: ${validTaskIds.join(", ")}.`;
 
   return [
-    "You are the prioritization engine for Life Organizer.",
+    "You are the prioritization engine for Spark.",
     `Reply in ${targetLanguage}.`,
     taskCount === 1
       ? "There is only one pending task: keep that recommendedTaskId and explain why it makes sense to do it now."
@@ -47,7 +47,7 @@ export function buildAiPriorityRepairInstructions(
   const targetLanguage = getPromptLanguageName(language);
 
   return [
-    "You are repairing a malformed prioritization response for Life Organizer.",
+    "You are repairing a malformed prioritization response for Spark.",
     `Reply in ${targetLanguage}.`,
     `recommendedTaskId must be one of: ${validTaskIds.join(", ")}.`,
     "Return only valid JSON.",

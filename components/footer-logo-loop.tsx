@@ -4,7 +4,7 @@ import { useAppLanguage } from "@/components/language-provider";
 import LogoLoop from "@/components/logo-loop";
 import {
   SiNextdotjs,
-  SiOllama,
+  SiMeta,
   SiReact,
   SiSupabase,
   SiTailwindcss,
@@ -17,7 +17,7 @@ const techLogos = [
   { node: <SiTypescript />, title: "TypeScript", href: "https://www.typescriptlang.org" },
   { node: <SiTailwindcss />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
   { node: <SiSupabase />, title: "Supabase", href: "https://supabase.com" },
-  { node: <SiOllama />, title: "Ollama", href: "https://ollama.com" }
+  { node: <SiMeta />, title: "Groq + Llama", href: "https://groq.com" }
 ];
 
 export function FooterLogoLoop() {

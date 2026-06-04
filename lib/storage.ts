@@ -1,7 +1,7 @@
 import { Task } from "@/types/task";
-import { getSupabaseBrowserClient } from "./supabase";
+import { supabase, getSupabaseBrowserClient } from "./supabase";
 
-const TASK_OWNER_TOKEN_KEY = "life-organizer-owner-token";
+const TASK_OWNER_TOKEN_KEY = "spark-owner-token";
 
 type TaskRow = {
   id: string;
@@ -16,7 +16,7 @@ type TaskRow = {
 };
 
 export async function loadTasks(): Promise<Task[]> {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
 
   const { data, error } = await client.from("tasks").select("*").order("created_at", { ascending: false });
 
@@ -29,8 +29,8 @@ export async function loadTasks(): Promise<Task[]> {
 }
 
 export async function createTask(task: Task) {
-  const client = getSupabaseClient();
-  const ownerToken = getOrCreateTaskOwnerToken();
+  const client = await getSupabaseClient();
+  const ownerToken = await getOwnerToken();
   let data: unknown;
   let error: unknown;
 
@@ -61,7 +61,7 @@ export async function createTask(task: Task) {
 }
 
 export async function updateTask(task: Task) {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   const { data, error } = await client
     .from("tasks")
     .update(taskToDB(task))
@@ -84,7 +84,7 @@ export async function updateTask(task: Task) {
 }
 
 export async function setTaskDone(taskId: string, done: boolean) {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   const { data, error } = await client
     .from("tasks")
     .update({ done })
@@ -107,7 +107,7 @@ export async function setTaskDone(taskId: string, done: boolean) {
 }
 
 export async function deleteTaskById(taskId: string) {
-  const client = getSupabaseClient();
+  const client = await getSupabaseClient();
   const { error } = await client.from("tasks").delete().eq("id", taskId);
 
   if (error) {
@@ -116,33 +116,35 @@ export async function deleteTaskById(taskId: string) {
   }
 }
 
-function getSupabaseClient() {
-  const ownerToken = getOrCreateTaskOwnerToken();
-  const client = getSupabaseBrowserClient(ownerToken);
+async function getSupabaseClient() {
+  const ownerToken = await getOwnerToken();
+  return getSupabaseBrowserClient(ownerToken);
+}
 
-  if (!client) {
-    throw new Error(
-      "Supabase isn't configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    );
+async function getOwnerToken(): Promise<string> {
+  // Prefer the authenticated user's ID for proper data scoping
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user?.id) return user.id;
+
+  // Fallback to localStorage token for unauthenticated use
+  if (typeof window === "undefined") {
+    throw new Error("Task storage requires a browser environment.");
   }
-
-  return client;
+  const existing = window.localStorage.getItem(TASK_OWNER_TOKEN_KEY);
+  if (existing) return existing;
+  const newToken = `task-owner-${crypto.randomUUID()}`;
+  window.localStorage.setItem(TASK_OWNER_TOKEN_KEY, newToken);
+  return newToken;
 }
 
 function getOrCreateTaskOwnerToken() {
   if (typeof window === "undefined") {
     throw new Error("Task storage requires a browser environment.");
   }
-
-  const existingToken = window.localStorage.getItem(TASK_OWNER_TOKEN_KEY);
-
-  if (existingToken) {
-    return existingToken;
-  }
-
+  const existing = window.localStorage.getItem(TASK_OWNER_TOKEN_KEY);
+  if (existing) return existing;
   const newToken = `task-owner-${crypto.randomUUID()}`;
   window.localStorage.setItem(TASK_OWNER_TOKEN_KEY, newToken);
-
   return newToken;
 }
 

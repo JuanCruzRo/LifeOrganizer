@@ -5,10 +5,10 @@ import {
 } from "@/lib/ai-task-help-config";
 import { AppLanguage } from "@/lib/i18n";
 import {
-  chatWithOllama,
-  getOllamaErrorMessage,
+  chatWithMilo,
+  getMiloErrorMessage,
   parseJsonObject
-} from "@/lib/ollama";
+} from "@/lib/milo";
 import { getDaysUntilDueDate } from "@/lib/task-date";
 import { getTaskScore } from "@/lib/task-score";
 import {
@@ -35,37 +35,6 @@ type QuestionIntent =
 
 const AI_CACHE_TTL_MS = 5 * 60 * 1000;
 const AI_TASK_HELP_CACHE_VERSION = 8;
-
-const aiTaskHelpSchema = {
-  type: "object",
-  properties: {
-    status: { type: "string", enum: ["answer", "needs_clarification"] },
-    understanding: { type: "string" },
-    answer: { type: "string" },
-    clarificationQuestion: { type: "string" },
-    missingContext: {
-      type: "array",
-      items: { type: "string" }
-    },
-    actionPlan: {
-      type: "array",
-      items: { type: "string" }
-    },
-    artifactTitle: { type: "string" },
-    artifact: { type: "string" }
-  },
-  required: [
-    "status",
-    "understanding",
-    "answer",
-    "clarificationQuestion",
-    "missingContext",
-    "actionPlan",
-    "artifactTitle",
-    "artifact"
-  ],
-  additionalProperties: false
-} as const;
 
 const aiTaskHelpCache = new Map<
   string,
@@ -139,7 +108,7 @@ export async function POST(request: Request) {
       {
         enabled: true,
         result: null,
-        error: getOllamaErrorMessage(
+        error: getMiloErrorMessage(
           error,
           uiLanguage === "es" ? "la ayuda de IA" : "AI help",
           uiLanguage
@@ -165,30 +134,20 @@ async function requestTaskHelp(input: {
     return cachedResult;
   }
 
-  const { content, model } = await chatWithOllama({
-    format: aiTaskHelpSchema,
-    temperature: 0.1,
-    numPredict: getTaskHelpNumPredict(input),
-    messages: [
-      {
-        role: "system",
-        content: buildAiTaskHelpInstructions(
-          input.responseLanguage,
-          input.questionIntent,
-          input.clarificationTrail.length > 0
-        )
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: input.task,
-          recommendationReason: input.recommendationReason,
-          questionIntent: input.questionIntent,
-          userQuestion: input.question,
-          clarificationTrail: input.clarificationTrail
-        })
-      }
-    ]
+  const { content, model } = await chatWithMilo({
+    message: JSON.stringify({
+      task: input.task,
+      recommendationReason: input.recommendationReason,
+      questionIntent: input.questionIntent,
+      userQuestion: input.question,
+      clarificationTrail: input.clarificationTrail
+    }),
+    context: buildAiTaskHelpInstructions(
+      input.responseLanguage,
+      input.questionIntent,
+      input.clarificationTrail.length > 0
+    ),
+    timeoutMs: 35000
   });
 
   const validResult = await parseAndValidateTaskHelpResult({
@@ -197,11 +156,18 @@ async function requestTaskHelp(input: {
     model
   });
 
-  if (!validResult || !isResultCompatibleWithIntent(validResult, input.questionIntent)) {
+  const intentOk = validResult ? isResultCompatibleWithIntent(validResult, input.questionIntent) : false;
+
+  if (!validResult || !intentOk) {
+    console.warn("Task help failed final check", {
+      validResult: !!validResult,
+      intentOk,
+      questionIntent: input.questionIntent
+    });
     throw new Error(
       input.responseLanguage === "es"
-        ? "Ollama Cloud respondio, pero no devolvio una ayuda valida."
-        : "Ollama Cloud responded, but it did not return valid help."
+        ? "Milo respondió, pero no devolvió una ayuda válida."
+        : "Milo responded, but it did not return valid help."
     );
   }
 
@@ -235,41 +201,38 @@ async function parseAndValidateTaskHelpResult(input: {
     return firstPassResult;
   }
 
-  console.warn("Invalid AI task-help response received from Ollama Cloud", {
+  console.warn("Invalid AI task-help response received from Milo (first pass)", {
     model: input.model,
+    contentLength: input.content.length,
     content: input.content
   });
 
-  const { content: repairedContent } = await chatWithOllama({
-    format: aiTaskHelpSchema,
-    temperature: 0,
-    numPredict: getTaskHelpNumPredict(input.input),
-    messages: [
-      {
-        role: "system",
-        content: buildAiTaskHelpRepairInstructions(
-          input.input.responseLanguage,
-          input.input.questionIntent,
-          input.input.clarificationTrail.length > 0
-        )
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: input.input.task,
-          recommendationReason: input.input.recommendationReason,
-          questionIntent: input.input.questionIntent,
-          userQuestion: input.input.question,
-          clarificationTrail: input.input.clarificationTrail,
-          originalModelOutput: input.content
-        })
-      }
-    ]
+  const { content: repairedContent } = await chatWithMilo({
+    message: JSON.stringify({
+      task: input.input.task,
+      recommendationReason: input.input.recommendationReason,
+      questionIntent: input.input.questionIntent,
+      userQuestion: input.input.question,
+      clarificationTrail: input.input.clarificationTrail,
+      originalModelOutput: input.content
+    }),
+    context: buildAiTaskHelpRepairInstructions(
+      input.input.responseLanguage,
+      input.input.questionIntent,
+      input.input.clarificationTrail.length > 0
+    ),
+    timeoutMs: 35000
   });
 
-  return validateTaskHelpResult(
+  const repairedResult = validateTaskHelpResult(
     parseJsonObject<Omit<AiTaskHelpResult, "model">>(repairedContent)
   );
+
+  if (!repairedResult) {
+    console.warn("Repair pass also failed", { repairedContent });
+  }
+
+  return repairedResult;
 }
 
 function validateTaskHelpResult(
@@ -340,34 +303,6 @@ function buildTaskHelpCacheKey(input: {
   });
 }
 
-function getTaskHelpNumPredict(input: {
-  task: AiTaskHelpTaskInput;
-  question: string;
-  clarificationTrail: AiTaskHelpClarification[];
-  recommendationReason: string;
-  responseLanguage: AppLanguage;
-  questionIntent: QuestionIntent;
-}) {
-  const contextSize =
-    input.task.description.length +
-    input.question.length +
-    input.recommendationReason.length +
-    input.clarificationTrail.reduce(
-      (total, item) => total + item.question.length + item.answer.length,
-      0
-    );
-
-  if (contextSize < 240) {
-    return 320;
-  }
-
-  if (contextSize < 520) {
-    return 420;
-  }
-
-  return 520;
-}
-
 function getCachedTaskHelp(cacheKey: string) {
   const cachedEntry = aiTaskHelpCache.get(cacheKey);
 
@@ -428,17 +363,14 @@ function normalizeClarificationTrail(value: unknown): AiTaskHelpClarification[] 
       return [];
     }
 
-    return [
-      {
-        question,
-        answer
-      }
-    ];
+    return [{ question, answer }];
   });
 }
 
 function normalizeText(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) return value.filter((s) => typeof s === "string").join("\n").trim();
+  return "";
 }
 
 function normalizeStringArray(value: unknown) {
@@ -565,171 +497,67 @@ function looksLikeToolsQuestion(value: string) {
 }
 
 const FOOD_KEYWORDS = [
-  "pizza",
-  "cocinar",
-  "cocina",
-  "receta",
-  "ingrediente",
-  "ingredientes",
-  "comida",
-  "horno",
-  "masa",
-  "salsa",
-  "queso",
-  "cook",
-  "recipe",
-  "ingredient",
-  "ingredients",
-  "meal",
-  "dish",
-  "bake"
+  "pizza", "cocinar", "cocina", "receta", "ingrediente", "ingredientes",
+  "comida", "horno", "masa", "salsa", "queso", "cook", "recipe",
+  "ingredient", "ingredients", "meal", "dish", "bake"
 ];
 
 const MATERIALS_QUESTION_KEYWORDS = [
-  "que necesito",
-  "que hace falta",
-  "ingredientes",
-  "ingredient",
-  "ingredients",
-  "materials",
-  "materiales",
-  "what do i need",
-  "what is needed",
-  "lista de compras",
-  "shopping list",
-  "resources"
+  "que necesito", "que hace falta", "ingredientes", "ingredient", "ingredients",
+  "materials", "materiales", "what do i need", "what is needed",
+  "lista de compras", "shopping list", "resources"
 ];
 
 const SHOPPING_QUESTION_KEYWORDS = [
-  "shopping list",
-  "lista de compras",
-  "what should i buy",
-  "what do i buy",
-  "que compro",
-  "que deberia comprar",
-  "buy first"
+  "shopping list", "lista de compras", "what should i buy", "what do i buy",
+  "que compro", "que deberia comprar", "buy first"
 ];
 
 const DRINK_QUESTION_KEYWORDS = [
-  "drink",
-  "drinks",
-  "beverage",
-  "beverages",
-  "pairing",
-  "maridaje",
-  "tomar",
-  "para tomar",
-  "que bebida",
-  "que tomar",
-  "what should i drink",
-  "what drink",
-  "best drink"
+  "drink", "drinks", "beverage", "beverages", "pairing", "maridaje",
+  "tomar", "para tomar", "que bebida", "que tomar", "what should i drink",
+  "what drink", "best drink"
 ];
 
 const RECIPE_STEP_QUESTION_KEYWORDS = [
-  "how do i make",
-  "how to make",
-  "como hago",
-  "como preparar",
-  "pasos",
-  "steps",
-  "recipe",
-  "cook it",
-  "prepararla",
-  "prepararlo"
+  "how do i make", "how to make", "como hago", "como preparar",
+  "pasos", "steps", "recipe", "cook it", "prepararla", "prepararlo"
 ];
 
 const TIME_QUESTION_KEYWORDS = [
-  "how long",
-  "cuanto tarda",
-  "cuanto tiempo",
-  "when should i",
-  "cuando deberia",
-  "timing",
-  "time"
+  "how long", "cuanto tarda", "cuanto tiempo", "when should i",
+  "cuando deberia", "timing", "time"
 ];
 
 const TOOL_QUESTION_KEYWORDS = [
-  "what do i use",
-  "what tool",
-  "tools",
-  "tool",
-  "utensil",
-  "utensils",
-  "con que",
-  "que herramienta",
-  "que necesito usar"
+  "what do i use", "what tool", "tools", "tool", "utensil", "utensils",
+  "con que", "que herramienta", "que necesito usar"
 ];
 
 const DRINK_RESULT_KEYWORDS = [
-  "drink",
-  "drinks",
-  "beverage",
-  "cola",
-  "soda",
-  "water",
-  "lemonade",
-  "iced tea",
-  "bebida",
-  "gaseosa",
-  "limonada",
-  "agua con gas"
+  "drink", "drinks", "beverage", "cola", "soda", "water", "lemonade",
+  "iced tea", "bebida", "gaseosa", "limonada", "agua con gas"
 ];
 
 const INGREDIENT_RESULT_KEYWORDS = [
-  "ingredient",
-  "ingredients",
-  "shopping",
-  "buy",
-  "dough",
-  "crust",
-  "sauce",
-  "mozzarella",
-  "queso",
-  "masa",
-  "salsa",
-  "lista"
+  "ingredient", "ingredients", "shopping", "buy", "dough", "crust",
+  "sauce", "mozzarella", "queso", "masa", "salsa", "lista", "harina",
+  "aceite", "necesitas", "necesitarás", "comprar", "levadura", "tomate", "ingrediente"
 ];
 
 const RECIPE_STEP_RESULT_KEYWORDS = [
-  "step",
-  "steps",
-  "preheat",
-  "bake",
-  "assemble",
-  "cook",
-  "mix",
-  "hornea",
-  "precalienta",
-  "arma",
-  "cocina"
+  "step", "steps", "preheat", "bake", "assemble", "cook", "mix", "knead",
+  "combine", "prepare", "hornea", "precalienta", "arma", "cocina", "mezcla",
+  "amasa", "prepara", "añade", "agrega", "combina", "incorpora", "hacer",
+  "haz", "revuelve", "bate", "cocer", "cocinar"
 ];
 
 const TIME_RESULT_KEYWORDS = [
-  "minute",
-  "minutes",
-  "hour",
-  "hours",
-  "mins",
-  "timing",
-  "minuto",
-  "minutos",
-  "hora",
-  "horas"
+  "minute", "minutes", "hour", "hours", "mins", "timing",
+  "minuto", "minutos", "hora", "horas"
 ];
 
 const TOOL_RESULT_KEYWORDS = [
-  "oven",
-  "tray",
-  "pan",
-  "knife",
-  "board",
-  "tool",
-  "tools",
-  "utensil",
-  "horno",
-  "bandeja",
-  "cuchillo",
-  "tabla",
-  "herramienta"
+  "oven", "tray", "pan", "knife", "board", "tool", "tools", "utensil",
+  "horno", "bandeja", "cuchillo", "tabla", "herramienta"
 ];

@@ -5,10 +5,10 @@ import {
 } from "@/lib/ai-priority-config";
 import { AppLanguage } from "@/lib/i18n";
 import {
-  chatWithOllama,
-  getOllamaErrorMessage,
+  chatWithMilo,
+  getMiloErrorMessage,
   parseJsonObject
-} from "@/lib/ollama";
+} from "@/lib/milo";
 import { getDaysUntilDueDate } from "@/lib/task-date";
 import { getTaskScore } from "@/lib/task-score";
 import {
@@ -25,16 +25,6 @@ type AiPriorityRequestTask = Pick<
 
 const AI_CACHE_TTL_MS = 5 * 60 * 1000;
 const AI_PRIORITY_CACHE_VERSION = 3;
-
-const aiPrioritySchema = {
-  type: "object",
-  properties: {
-    recommendedTaskId: { type: "string" },
-    recommendationReason: { type: "string" }
-  },
-  required: ["recommendedTaskId", "recommendationReason"],
-  additionalProperties: false
-} as const;
 
 const aiRecommendationCache = new Map<
   string,
@@ -73,7 +63,7 @@ export async function POST(request: Request) {
   }));
 
   try {
-    const recommendation = await requestOllamaRecommendation(
+    const recommendation = await requestMiloRecommendation(
       taskInputs,
       pendingTasks,
       uiLanguage
@@ -91,7 +81,7 @@ export async function POST(request: Request) {
       {
         enabled: true,
         recommendation: null,
-        error: getOllamaErrorMessage(
+        error: getMiloErrorMessage(
           error,
           uiLanguage === "es" ? "la recomendacion de prioridad" : "the priority recommendation",
           uiLanguage
@@ -102,7 +92,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function requestOllamaRecommendation(
+async function requestMiloRecommendation(
   taskInputs: AiPriorityTaskInput[],
   tasks: AiPriorityRequestTask[],
   language: AppLanguage
@@ -127,20 +117,9 @@ async function requestOllamaRecommendation(
         tasks: taskInputs
       };
 
-  const { content, model } = await chatWithOllama({
-    format: aiPrioritySchema,
-    temperature: 0,
-    numPredict: isSingleTask ? 160 : 220,
-    messages: [
-      {
-        role: "system",
-        content: buildAiPriorityInstructions(taskInputs.length, language, validTaskIds)
-      },
-      {
-        role: "user",
-        content: JSON.stringify(requestPayload)
-      }
-    ]
+  const { content, model } = await chatWithMilo({
+    message: JSON.stringify(requestPayload),
+    context: buildAiPriorityInstructions(taskInputs.length, language, validTaskIds)
   });
 
   const validRecommendation = await parseAndValidateRecommendation({
@@ -156,8 +135,8 @@ async function requestOllamaRecommendation(
   if (!validRecommendation) {
     throw new Error(
       language === "es"
-        ? "Ollama Cloud respondio, pero no devolvio una recomendacion valida."
-        : "Ollama Cloud responded, but it did not return a valid recommendation."
+        ? "Milo respondió, pero no devolvió una recomendación válida."
+        : "Milo responded, but it did not return a valid recommendation."
     );
   }
 
@@ -189,29 +168,18 @@ async function parseAndValidateRecommendation(input: {
     return firstPassRecommendation;
   }
 
-  console.warn("Invalid AI priority response received from Ollama Cloud", {
+  console.warn("Invalid AI priority response received from Milo", {
     model: input.model,
     content: input.content
   });
 
-  const { content: repairedContent } = await chatWithOllama({
-    format: aiPrioritySchema,
-    temperature: 0,
-    numPredict: 220,
-    messages: [
-      {
-        role: "system",
-        content: buildAiPriorityRepairInstructions(input.language, input.validTaskIds)
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          tasks: input.taskInputs,
-          originalRequest: input.requestPayload,
-          originalModelOutput: input.content
-        })
-      }
-    ]
+  const { content: repairedContent } = await chatWithMilo({
+    message: JSON.stringify({
+      tasks: input.taskInputs,
+      originalRequest: input.requestPayload,
+      originalModelOutput: input.content
+    }),
+    context: buildAiPriorityRepairInstructions(input.language, input.validTaskIds)
   });
 
   return validateRecommendation(
@@ -283,3 +251,4 @@ function setCachedRecommendation(
     recommendation
   });
 }
+

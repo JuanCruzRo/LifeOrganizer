@@ -1,8 +1,12 @@
 "use client";
 
 import { useAppLanguage } from "@/components/language-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskDurationLabel, getTaskPriorityLabel } from "@/lib/task-labels";
+import { cn } from "@/lib/utils";
 import { Task } from "@/types/task";
 
 type TaskListProps = {
@@ -22,13 +26,13 @@ export function TaskList({
   onEditTask,
   onToggleTask
 }: TaskListProps) {
-  const { copy, language } = useAppLanguage();
+  const { copy } = useAppLanguage();
 
   return (
-    <section className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[0_10px_30px_rgba(24,36,28,0.06)] backdrop-blur">
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-lg">
       <div className="flex flex-col gap-8">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {copy.taskList.title}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -40,7 +44,6 @@ export function TaskList({
           <TaskGroup
             emptyMessage={copy.taskList.noPending}
             isMutating={isMutating}
-            language={language}
             tasks={pendingTasks}
             title={copy.taskList.pending}
             onDeleteTask={onDeleteTask}
@@ -50,7 +53,6 @@ export function TaskList({
           <TaskGroup
             emptyMessage={copy.taskList.noCompleted}
             isMutating={isMutating}
-            language={language}
             tasks={completedTasks}
             title={copy.taskList.completed}
             onDeleteTask={onDeleteTask}
@@ -66,7 +68,6 @@ export function TaskList({
 type TaskGroupProps = {
   emptyMessage: string;
   isMutating: boolean;
-  language: "en" | "es";
   tasks: Task[];
   title: string;
   onDeleteTask: (taskId: string) => Promise<void>;
@@ -77,75 +78,76 @@ type TaskGroupProps = {
 function TaskGroup({
   emptyMessage,
   isMutating,
-  language,
   tasks,
   title,
   onDeleteTask,
   onEditTask,
   onToggleTask
 }: TaskGroupProps) {
-  const { copy } = useAppLanguage();
+  const { copy, language } = useAppLanguage();
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-white/65 p-4">
+    <div className="rounded-xl border border-border bg-background/50 p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[var(--foreground)]">
-          {tasks.length}
-        </span>
+        <h3 className="text-base font-semibold">{title}</h3>
+        <Badge variant="secondary">{tasks.length}</Badge>
       </div>
 
       {tasks.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--muted)]">{emptyMessage}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {tasks.map((task) => (
-            <li
-              className="rounded-2xl border border-[var(--border)] bg-white p-4"
-              key={task.id}
-            >
-              <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-start">
-                <div className="min-w-0 pr-0 sm:pr-2">
-                  <p className="text-base font-semibold">{task.title}</p>
-                  {task.description ? (
-                    <p className="mt-1 text-sm text-[var(--foreground)]/80">
-                      {task.description}
+            <li key={task.id}>
+              <Card className="p-4">
+                <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
+                  <div className="min-w-0 pr-0 sm:pr-2">
+                    <p className={cn("text-sm font-semibold", task.done && "line-through text-muted-foreground")}>
+                      {task.title}
                     </p>
-                  ) : null}
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    {task.category} · {getTaskPriorityLabel(task.priority, language)} ·{" "}
-                    {getTaskDurationLabel(task.duration, language)} · {getDueDateLabel(task.dueDate, language)} ·{" "}
-                    {formatDueDate(task.dueDate, language)}
-                  </p>
-                </div>
+                    {task.description ? (
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        {task.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {task.category} · {getTaskPriorityLabel(task.priority, language)} ·{" "}
+                      {getTaskDurationLabel(task.duration, language)} · {getDueDateLabel(task.dueDate, language)} ·{" "}
+                      {formatDueDate(task.dueDate, language)}
+                    </p>
+                  </div>
 
-                <div className="grid w-full shrink-0 gap-2 sm:w-44">
-                  <button
-                    className="min-h-11 rounded-xl border border-[var(--border)] px-3 py-2 text-center text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={isMutating}
-                    onClick={() => onEditTask(task.id)}
-                    type="button"
-                  >
-                    {copy.taskList.edit}
-                  </button>
-                  <button
-                    className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--accent-soft)] px-3 py-2 text-center text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--card)] disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={isMutating}
-                    onClick={() => void onToggleTask(task.id)}
-                    type="button"
-                  >
-                    {task.done ? copy.taskList.markPending : copy.taskList.markDone}
-                  </button>
-                  <button
-                    className="min-h-11 rounded-xl border border-[var(--accent)] px-3 py-2 text-center text-sm font-medium text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-[var(--card)] disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={isMutating}
-                    onClick={() => void onDeleteTask(task.id)}
-                    type="button"
-                  >
-                    {copy.common.delete}
-                  </button>
+                  <div className="grid w-full shrink-0 gap-2 sm:w-40">
+                    <Button
+                      disabled={isMutating}
+                      onClick={() => onEditTask(task.id)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {copy.taskList.edit}
+                    </Button>
+                    <Button
+                      disabled={isMutating}
+                      onClick={() => void onToggleTask(task.id)}
+                      size="sm"
+                      type="button"
+                      variant={task.done ? "secondary" : "default"}
+                    >
+                      {task.done ? copy.taskList.markPending : copy.taskList.markDone}
+                    </Button>
+                    <Button
+                      disabled={isMutating}
+                      onClick={() => void onDeleteTask(task.id)}
+                      size="sm"
+                      type="button"
+                      variant="destructive"
+                    >
+                      {copy.common.delete}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             </li>
           ))}
         </ul>

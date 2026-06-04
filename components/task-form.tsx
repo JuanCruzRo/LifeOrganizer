@@ -2,6 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useAppLanguage } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { getTodayDateValue } from "@/lib/task-date";
 import { TaskDuration, TaskInput, TaskPriority } from "@/types/task";
 
@@ -84,7 +89,6 @@ export function TaskForm({
 
     if (didSave && mode === "create") {
       const nextValues = buildFormValues(undefined, todayDateValue);
-
       setTitle(nextValues.title);
       setCategory(nextValues.category);
       setDescription(nextValues.description);
@@ -95,100 +99,98 @@ export function TaskForm({
   }
 
   return (
-    <section className="self-start rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-[0_10px_30px_rgba(24,36,28,0.06)] backdrop-blur">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+    <section className="self-start rounded-2xl border border-border bg-card p-6 shadow-lg">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         {mode === "edit" ? copy.taskForm.editTask : copy.taskForm.newTask}
       </p>
       <form className="mt-5 flex flex-col gap-4" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{copy.taskForm.title}</span>
-          <input
-            className="rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="task-title">{copy.taskForm.title}</Label>
+          <Input
+            id="task-title"
             disabled={isSubmitting}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder={copy.taskForm.titlePlaceholder}
             type="text"
             value={title}
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{copy.taskForm.category}</span>
-          <input
-            className="rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="task-category">{copy.taskForm.category}</Label>
+          <Input
+            id="task-category"
             disabled={isSubmitting}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(e) => setCategory(e.target.value)}
             placeholder={copy.taskForm.categoryPlaceholder}
             type="text"
             value={category}
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{copy.taskForm.description}</span>
-          <textarea
-            className="min-h-28 rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="task-description">{copy.taskForm.description}</Label>
+          <Textarea
+            id="task-description"
+            className="min-h-28"
             disabled={isSubmitting}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder={copy.taskForm.descriptionPlaceholder}
             value={description}
           />
-        </label>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="flex min-h-14 items-end text-sm font-medium">
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label className="flex min-h-10 items-end" htmlFor="task-priority">
               {copy.taskForm.priority}
-            </span>
-            <select
-              className="min-h-13 w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            </Label>
+            <Select
+              id="task-priority"
               disabled={isSubmitting}
-              onChange={(event) => setPriority(event.target.value as TaskPriority)}
+              onChange={(e) => setPriority(e.target.value as TaskPriority)}
               value={priority}
             >
               <option value="low">{copy.taskForm.priorities.low}</option>
               <option value="medium">{copy.taskForm.priorities.medium}</option>
               <option value="high">{copy.taskForm.priorities.high}</option>
-            </select>
-          </label>
+            </Select>
+          </div>
 
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="flex min-h-14 items-end text-sm font-medium">
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label className="flex min-h-10 items-end" htmlFor="task-duration">
               {copy.taskForm.duration}
-            </span>
-            <select
-              className="min-h-13 w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            </Label>
+            <Select
+              id="task-duration"
               disabled={isSubmitting}
-              onChange={(event) => setDuration(event.target.value as TaskDuration)}
+              onChange={(e) => setDuration(e.target.value as TaskDuration)}
               value={duration}
             >
               <option value="short">{copy.taskForm.durations.short}</option>
               <option value="medium">{copy.taskForm.durations.medium}</option>
               <option value="long">{copy.taskForm.durations.long}</option>
-            </select>
-          </label>
+            </Select>
+          </div>
 
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="flex min-h-14 items-end text-sm font-medium">
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label className="flex min-h-10 items-end" htmlFor="task-due-date">
               {copy.taskForm.dueDate}
-            </span>
-            <input
-              className="min-h-13 w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            </Label>
+            <Input
+              id="task-due-date"
+              className="h-10"
               disabled={isSubmitting}
               min={mode === "create" ? todayDateValue : undefined}
-              onChange={(event) => setDueDate(event.target.value)}
+              onChange={(e) => setDueDate(e.target.value)}
               type="date"
               value={dueDate}
             />
-          </label>
+          </div>
         </div>
 
         <div className="mt-2 flex flex-wrap gap-3">
-          <button
-            className="rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[var(--card)] transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={isSubmitting}
-            type="submit"
-          >
+          <Button disabled={isSubmitting} type="submit">
             {isSubmitting
               ? mode === "edit"
                 ? copy.common.saving
@@ -196,16 +198,16 @@ export function TaskForm({
               : mode === "edit"
                 ? copy.taskForm.editSubmit
                 : copy.taskForm.addTask}
-          </button>
+          </Button>
           {mode === "edit" && onCancel ? (
-            <button
-              className="rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
+            <Button
               disabled={isSubmitting}
               onClick={onCancel}
               type="button"
+              variant="outline"
             >
               {copy.common.cancel}
-            </button>
+            </Button>
           ) : null}
         </div>
       </form>

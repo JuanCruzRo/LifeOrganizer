@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap"
+});
+
 export const metadata: Metadata = {
-  title: "Life Organizer",
-  description: "Simple daily task planning with one clear recommendation."
+  title: "Spark",
+  description: "AI-powered task organizer."
 };
 
 type RootLayoutProps = {
@@ -14,7 +21,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <LanguageProvider>{children}</LanguageProvider>
       </body>

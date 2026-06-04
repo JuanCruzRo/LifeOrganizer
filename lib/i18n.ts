@@ -11,7 +11,7 @@ export const languageLabels: Record<AppLanguage, string> = {
 export const copy = {
   en: {
     common: {
-      appName: "Life Organizer",
+      appName: "Spark",
       close: "Close",
       cancel: "Cancel",
       saveChanges: "Save changes",
@@ -33,10 +33,10 @@ export const copy = {
       autoLanguageHint: "Uses your browser and system locale as a location-safe signal."
     },
     header: {
-      title: "Life Organizer",
+      title: "Spark",
       subtitle:
         "A simple view to choose what to tackle first based on priority, due date, and the time you actually have today.",
-      mascotAlt: "Life Organizer mascot"
+      mascotAlt: "Spark mascot"
     },
     recommendation: {
       expandedView: "Expanded view",
@@ -131,7 +131,7 @@ export const copy = {
   },
   es: {
     common: {
-      appName: "Life Organizer",
+      appName: "Spark",
       close: "Cerrar",
       cancel: "Cancelar",
       saveChanges: "Guardar cambios",
@@ -153,10 +153,10 @@ export const copy = {
       autoLanguageHint: "Usa el locale del navegador y del sistema como senal segura de ubicacion."
     },
     header: {
-      title: "Life Organizer",
+      title: "Spark",
       subtitle:
         "Una vista simple para elegir que tarea hacer primero segun prioridad, vencimiento y el tiempo real que tienes hoy.",
-      mascotAlt: "Mascota de Life Organizer"
+      mascotAlt: "Mascota de Spark"
     },
     recommendation: {
       expandedView: "Vista ampliada",

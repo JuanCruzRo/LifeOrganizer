@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FooterLogoLoop } from "@/components/footer-logo-loop";
-import { HeaderMascot } from "@/components/header-mascot";
+import Link from "next/link";
+import { LogOut, Zap, X } from "lucide-react";
+import { CalendarView } from "@/components/calendar-view";
+import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { RecommendationCard } from "@/components/recommendation-card";
+import { LanguageIndicator } from "@/components/language-indicator";
+import { MiloChat } from "@/components/milo-chat";
+import { getUserDisplayName } from "@/lib/auth";
 import { TaskForm } from "@/components/task-form";
-import { TaskList } from "@/components/task-list";
+import { Button } from "@/components/ui/button";
 import { formatTodayLongDate } from "@/lib/task-date";
 import {
   createTask,
@@ -23,182 +26,99 @@ const FALLBACK_STORAGE_ERROR_MESSAGE = "An unexpected error occurred.";
 
 export function LifeOrganizerApp() {
   const { copy, language } = useAppLanguage();
+  const { user, logout } = useAuth();
+  const displayName = getUserDisplayName(user);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [storageStatusMessage, setStorageStatusMessage] = useState("");
+  const [storageError, setStorageError] = useState("");
   const [aiRecommendation, setAiRecommendation] = useState<AiPriorityRecommendation | null>(null);
-  const [aiStatusMessage, setAiStatusMessage] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const aiRecommendationCacheRef = useRef(new Map<string, AiPriorityRecommendation>());
   const todayLabel = formatTodayLongDate(language);
 
   useEffect(() => {
-    let isActive = true;
-
+    let active = true;
     async function load() {
       try {
-        const loadedTasks = await loadTasks();
-
-        if (!isActive) {
-          return;
-        }
-
-        setTasks(loadedTasks);
-        setStorageStatusMessage("");
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-
-        setStorageStatusMessage(getErrorMessage(error, FALLBACK_STORAGE_ERROR_MESSAGE));
+        const loaded = await loadTasks();
+        if (active) { setTasks(loaded); setStorageError(""); }
+      } catch (err) {
+        if (active) setStorageError(getErrorMessage(err, FALLBACK_STORAGE_ERROR_MESSAGE));
       } finally {
-        if (isActive) {
-          setIsLoaded(true);
-        }
+        if (active) setIsLoaded(true);
       }
     }
-
     void load();
-
-    return () => {
-      isActive = false;
-    };
+    return () => { active = false; };
   }, []);
 
-  const pendingTasks = useMemo(() => {
-    return tasks.filter((task) => !task.done);
-  }, [tasks]);
+  const pendingTasks = useMemo(() => tasks.filter((t) => !t.done), [tasks]);
 
-  const completedTasks = useMemo(() => {
-    return tasks.filter((task) => task.done);
-  }, [tasks]);
+  const aiRequestTasks = useMemo(() =>
+    [...pendingTasks]
+      .map(({ id, title, category, description, priority, duration, dueDate }) =>
+        ({ id, title, category, description, priority, duration, dueDate })
+      )
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    [pendingTasks]
+  );
 
-  const aiRequestTasks = useMemo(() => {
-    return [...pendingTasks]
-      .map((task) => ({
-        id: task.id,
-        title: task.title,
-        category: task.category,
-        description: task.description,
-        priority: task.priority,
-        duration: task.duration,
-        dueDate: task.dueDate
-      }))
-      .sort((leftTask, rightTask) => leftTask.id.localeCompare(rightTask.id));
-  }, [pendingTasks]);
-
-  const aiRequestKey = useMemo(() => {
-    return JSON.stringify({
-      language,
-      tasks: aiRequestTasks
-    });
-  }, [aiRequestTasks, language]);
+  const aiRequestKey = useMemo(() =>
+    JSON.stringify({ language, tasks: aiRequestTasks }),
+    [aiRequestTasks, language]
+  );
 
   useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
+    if (!isLoaded) return;
+    if (pendingTasks.length === 0) { setAiRecommendation(null); setIsAiLoading(false); return; }
 
-    if (pendingTasks.length === 0) {
-      setAiRecommendation(null);
-      setAiStatusMessage("");
-      setIsAiLoading(false);
-      return;
-    }
-
-    const cachedRecommendation = aiRecommendationCacheRef.current.get(aiRequestKey);
-
-    if (cachedRecommendation) {
-      setAiRecommendation(cachedRecommendation);
-      setAiStatusMessage("");
-      setIsAiLoading(false);
-      return;
-    }
+    const cached = aiRecommendationCacheRef.current.get(aiRequestKey);
+    if (cached) { setAiRecommendation(cached); setIsAiLoading(false); return; }
 
     setAiRecommendation(null);
-    setAiStatusMessage("");
     setIsAiLoading(true);
+    const ctrl = new AbortController();
 
-    const abortController = new AbortController();
-
-    async function loadAiRecommendation() {
+    async function loadRec() {
       try {
-        const response = await fetch("/api/ai-priority", {
+        const res = await fetch("/api/ai-priority", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tasks: aiRequestTasks, uiLanguage: language }),
-          signal: abortController.signal
+          signal: ctrl.signal
         });
-
-        const data = (await response.json()) as AiPriorityApiResponse;
-
-        if (!response.ok) {
-          setAiRecommendation(null);
-          setAiStatusMessage(data.error ?? copy.recommendation.priorityLoadingError);
-          setIsAiLoading(false);
-          return;
-        }
-
+        const data = (await res.json()) as AiPriorityApiResponse;
         if (data.enabled && data.recommendation) {
           aiRecommendationCacheRef.current.set(aiRequestKey, data.recommendation);
           setAiRecommendation(data.recommendation);
-          setAiStatusMessage("");
-          setIsAiLoading(false);
-          return;
-        }
-
-        setAiRecommendation(null);
-        setAiStatusMessage(data.error ?? "");
-        setIsAiLoading(false);
-      } catch {
-        if (!abortController.signal.aborted) {
+        } else {
           setAiRecommendation(null);
-          setAiStatusMessage(copy.recommendation.priorityLoadingError);
-          setIsAiLoading(false);
         }
+      } catch {
+        if (!ctrl.signal.aborted) setAiRecommendation(null);
+      } finally {
+        if (!ctrl.signal.aborted) setIsAiLoading(false);
       }
     }
+    void loadRec();
+    return () => ctrl.abort();
+  }, [aiRequestKey, aiRequestTasks, isLoaded, language, pendingTasks.length]);
 
-    void loadAiRecommendation();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [aiRequestKey, aiRequestTasks, copy.recommendation.priorityLoadingError, isLoaded, language, pendingTasks.length]);
-
-  const aiRecommendedTask = aiRecommendation
-    ? tasks.find((task) => task.id === aiRecommendation.recommendedTaskId && !task.done) ?? null
-    : null;
-
-  const recommendedTask = aiRecommendedTask;
-  const recommendationReason = aiRecommendedTask ? aiRecommendation?.recommendationReason ?? "" : "";
-  const editingTask = editingTaskId ? tasks.find((task) => task.id === editingTaskId) ?? null : null;
+  const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) ?? null : null;
 
   async function handleCreateTask(input: TaskInput) {
     setIsSyncing(true);
-
     try {
-      const newTask: Task = {
-        id: crypto.randomUUID(),
-        title: input.title,
-        category: input.category,
-        description: input.description,
-        priority: input.priority,
-        duration: input.duration,
-        dueDate: input.dueDate,
-        done: false
-      };
-      const createdTask = await createTask(newTask);
-
-      setTasks((currentTasks) => [createdTask, ...currentTasks]);
-      setStorageStatusMessage("");
+      const newTask: Task = { id: crypto.randomUUID(), ...input, done: false };
+      const created = await createTask(newTask);
+      setTasks((prev) => [created, ...prev]);
+      setStorageError("");
       return true;
-    } catch (error) {
-      setStorageStatusMessage(getErrorMessage(error, copy.errors.unexpected));
+    } catch (err) {
+      setStorageError(getErrorMessage(err, copy.errors.unexpected));
       return false;
     } finally {
       setIsSyncing(false);
@@ -206,33 +126,19 @@ export function LifeOrganizerApp() {
   }
 
   async function handleUpdateTask(input: TaskInput) {
-    if (!editingTaskId) {
-      return false;
-    }
-
-    const currentTask = tasks.find((task) => task.id === editingTaskId);
-
-    if (!currentTask) {
-      setEditingTaskId(null);
-      return false;
-    }
-
+    if (!editingTaskId) return false;
+    const current = tasks.find((t) => t.id === editingTaskId);
+    if (!current) { setEditingTaskId(null); return false; }
     setIsSyncing(true);
-
     try {
-      const updatedTask = await persistTaskUpdate({
-        ...currentTask,
-        ...input
-      });
-
-      setTasks((currentTasks) =>
-        currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-      );
+      const updated = await persistTaskUpdate({ ...current, ...input });
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
       setEditingTaskId(null);
-      setStorageStatusMessage("");
+      setShowForm(false);
+      setStorageError("");
       return true;
-    } catch (error) {
-      setStorageStatusMessage(getErrorMessage(error, copy.errors.unexpected));
+    } catch (err) {
+      setStorageError(getErrorMessage(err, copy.errors.unexpected));
       return false;
     } finally {
       setIsSyncing(false);
@@ -240,23 +146,15 @@ export function LifeOrganizerApp() {
   }
 
   async function handleToggleTask(taskId: string) {
-    const currentTask = tasks.find((task) => task.id === taskId);
-
-    if (!currentTask) {
-      return;
-    }
-
+    const current = tasks.find((t) => t.id === taskId);
+    if (!current) return;
     setIsSyncing(true);
-
     try {
-      const updatedTask = await setTaskDone(taskId, !currentTask.done);
-
-      setTasks((currentTasks) =>
-        currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-      );
-      setStorageStatusMessage("");
-    } catch (error) {
-      setStorageStatusMessage(getErrorMessage(error, copy.errors.unexpected));
+      const updated = await setTaskDone(taskId, !current.done);
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      setStorageError("");
+    } catch (err) {
+      setStorageError(getErrorMessage(err, copy.errors.unexpected));
     } finally {
       setIsSyncing(false);
     }
@@ -264,108 +162,130 @@ export function LifeOrganizerApp() {
 
   async function handleDeleteTask(taskId: string) {
     setIsSyncing(true);
-
     try {
       await deleteTaskById(taskId);
-
-      if (editingTaskId === taskId) {
-        setEditingTaskId(null);
-      }
-
-      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
-      setStorageStatusMessage("");
-    } catch (error) {
-      setStorageStatusMessage(getErrorMessage(error, copy.errors.unexpected));
+      if (editingTaskId === taskId) { setEditingTaskId(null); setShowForm(false); }
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setStorageError("");
+    } catch (err) {
+      setStorageError(getErrorMessage(err, copy.errors.unexpected));
     } finally {
       setIsSyncing(false);
     }
   }
 
-  function handleStartEditingTask(taskId: string) {
-    if (isSyncing) {
-      return;
-    }
+  function handleAddTask() {
+    setEditingTaskId(null);
+    setShowForm(true);
+  }
 
+  function handleEditTask(taskId: string) {
+    if (isSyncing) return;
     setEditingTaskId(taskId);
+    setShowForm(true);
+  }
+
+  function handleCloseForm() {
+    setEditingTaskId(null);
+    setShowForm(false);
   }
 
   return (
-    <main className="min-h-screen px-4 py-8 sm:px-6">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <header className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--card)] px-6 py-6 shadow-[0_10px_30px_rgba(24,36,28,0.06)] backdrop-blur">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_8rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_9rem]">
-            <div>
-              <div className="mb-4">
-                <LanguageSwitcher />
-              </div>
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-[var(--muted)]">
-                {copy.header.title}
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {todayLabel}
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)] sm:text-base">
-                {copy.header.subtitle}
-              </p>
-            </div>
-
-            <HeaderMascot />
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* Header */}
+      <header className="flex flex-shrink-0 items-center justify-between border-b border-border px-5 py-3">
+        <div className="flex items-center gap-3">
+          <LanguageIndicator />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              {copy.header.title}
+            </p>
+            <h1 className="text-lg font-semibold tracking-tight">{todayLabel}</h1>
           </div>
-        </header>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm text-muted-foreground sm:inline">
+            Hola, <span className="font-medium text-foreground">{displayName}</span>
+          </span>
+          <Link
+            href="/plans"
+            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            <Zap className="h-3 w-3" />
+            Planes
+          </Link>
+          <button
+            onClick={() => void logout()}
+            className="flex items-center gap-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
 
-        {storageStatusMessage ? (
-          <div className="rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3 text-sm leading-6 text-[var(--foreground)]">
-            {storageStatusMessage}
-          </div>
-        ) : null}
+      {storageError && (
+        <div className="flex-shrink-0 border-b border-border bg-destructive/10 px-5 py-2 text-xs text-destructive">
+          {storageError}
+        </div>
+      )}
 
-        <section className="grid gap-6 lg:items-start lg:grid-cols-[1.2fr_0.8fr]">
-          <RecommendationCard
-            hasPendingTasks={pendingTasks.length > 0}
+      {/* Main two-panel layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: Milo chat */}
+        <MiloChat tasks={pendingTasks} />
+
+        {/* Right: Calendar + tasks */}
+        <main className="flex-1 overflow-hidden">
+          <CalendarView
+            allTasks={tasks}
+            isMutating={isSyncing}
+            aiRecommendation={aiRecommendation}
             isAiLoading={isAiLoading}
-            recommendationReason={recommendationReason}
-            recommendedTask={recommendedTask}
-            statusMessage={aiStatusMessage}
+            onAddTask={handleAddTask}
+            onDeleteTask={handleDeleteTask}
+            onEditTask={handleEditTask}
+            onToggleTask={handleToggleTask}
           />
-          <TaskForm
-            initialValues={
-              editingTask
-                ? {
-                    title: editingTask.title,
-                    category: editingTask.category,
-                    description: editingTask.description,
-                    priority: editingTask.priority,
-                    duration: editingTask.duration,
-                    dueDate: editingTask.dueDate
-                  }
-                : undefined
-            }
-            isSubmitting={isSyncing}
-            mode={editingTask ? "edit" : "create"}
-            onCancel={() => setEditingTaskId(null)}
-            onSubmitTask={editingTask ? handleUpdateTask : handleCreateTask}
-          />
-        </section>
-
-        <TaskList
-          completedTasks={completedTasks}
-          isMutating={isSyncing}
-          pendingTasks={pendingTasks}
-          onDeleteTask={handleDeleteTask}
-          onEditTask={handleStartEditingTask}
-          onToggleTask={handleToggleTask}
-        />
-
-        <FooterLogoLoop />
+        </main>
       </div>
-    </main>
+
+      {/* Task form modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseForm}
+              className="absolute -right-2 -top-2 z-10 h-8 w-8 rounded-full bg-secondary"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <TaskForm
+              initialValues={editingTask ? {
+                title: editingTask.title,
+                category: editingTask.category,
+                description: editingTask.description,
+                priority: editingTask.priority,
+                duration: editingTask.duration,
+                dueDate: editingTask.dueDate
+              } : undefined}
+              isSubmitting={isSyncing}
+              mode={editingTask ? "edit" : "create"}
+              onCancel={handleCloseForm}
+              onSubmitTask={editingTask ? handleUpdateTask : handleCreateTask}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallbackMessage;
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return fallback;
 }

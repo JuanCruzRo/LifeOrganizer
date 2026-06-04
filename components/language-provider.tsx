@@ -16,8 +16,8 @@ import {
   type TranslationSet
 } from "@/lib/i18n";
 
-const LANGUAGE_MODE_KEY = "life-organizer-language-mode";
-const MANUAL_LANGUAGE_KEY = "life-organizer-manual-language";
+const LANGUAGE_MODE_KEY = "spark-language-mode";
+const MANUAL_LANGUAGE_KEY = "spark-manual-language";
 
 type LanguageContextValue = {
   copy: TranslationSet;

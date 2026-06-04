@@ -1,31 +1,14 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-function isValidHttpUrl(value: string | undefined) {
-  if (!value) {
-    return false;
-  }
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+// Auth-capable singleton (session persisted in localStorage)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export function getSupabaseBrowserClient(ownerToken: string): SupabaseClient | null {
-  if (!isValidHttpUrl(supabaseUrl) || !supabaseAnonKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl as string, supabaseAnonKey, {
-    global: {
-      headers: {
-        "x-client-token": ownerToken
-      }
-    }
+// Data client that adds owner_token header for RLS scoping
+export function getSupabaseBrowserClient(ownerToken: string): SupabaseClient {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { "x-client-token": ownerToken } }
   });
 }
