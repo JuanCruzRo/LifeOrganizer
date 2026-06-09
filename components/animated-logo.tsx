@@ -16,10 +16,10 @@ export function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <svg viewBox="0 0 60 60" className="h-20 w-20">
+      <svg viewBox="0 0 60 60" className="h-20 w-20 text-primary">
         <motion.path
           d={BOLT}
-          fill="hsl(20 98% 62%)"
+          fill="currentColor"
           style={{ transformOrigin: "30px 30px" }}
           // Scale from 0 → overshoots → settles — feels electric
           initial={{ scale: 0, opacity: 0 }}

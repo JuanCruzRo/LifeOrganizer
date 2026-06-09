@@ -6,7 +6,6 @@ import { LogOut, Zap, X } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
-import { LanguageIndicator } from "@/components/language-indicator";
 import { MiloChat } from "@/components/milo-chat";
 import { getUserDisplayName } from "@/lib/auth";
 import { TaskForm } from "@/components/task-form";
@@ -19,6 +18,7 @@ import {
   setTaskDone,
   updateTask as persistTaskUpdate
 } from "@/lib/storage";
+import { getAuthToken } from "@/lib/auth";
 import { AiPriorityApiResponse, AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task, TaskInput } from "@/types/task";
 
@@ -84,9 +84,13 @@ export function LifeOrganizerApp() {
 
     async function loadRec() {
       try {
+        const authToken = await getAuthToken();
         const res = await fetch("/api/ai-priority", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {})
+          },
           body: JSON.stringify({ tasks: aiRequestTasks, uiLanguage: language }),
           signal: ctrl.signal
         });
@@ -195,7 +199,6 @@ export function LifeOrganizerApp() {
       {/* Header */}
       <header className="flex flex-shrink-0 items-center justify-between border-b border-border px-5 py-3">
         <div className="flex items-center gap-3">
-          <LanguageIndicator />
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {copy.header.title}
@@ -234,7 +237,7 @@ export function LifeOrganizerApp() {
       {/* Main two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Milo chat */}
-        <MiloChat tasks={pendingTasks} />
+        <MiloChat tasks={tasks} onCreateTask={handleCreateTask} />
 
         {/* Right: Calendar + tasks */}
         <main className="flex-1 overflow-hidden">

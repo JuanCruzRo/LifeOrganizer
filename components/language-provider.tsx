@@ -13,6 +13,7 @@ import {
   copy,
   LanguageMode,
   resolveAppLanguage,
+  supportedLanguages,
   type TranslationSet
 } from "@/lib/i18n";
 
@@ -38,7 +39,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedMode = window.localStorage.getItem(LANGUAGE_MODE_KEY);
-    const storedLanguage = window.localStorage.getItem(MANUAL_LANGUAGE_KEY);
+    const storedLanguage = window.localStorage.getItem(MANUAL_LANGUAGE_KEY) as AppLanguage | null;
     const browserLocale =
       navigator.languages?.[0] ??
       navigator.language ??
@@ -51,7 +52,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setModeState(storedMode);
     }
 
-    if (storedLanguage === "en" || storedLanguage === "es") {
+    if (storedLanguage && supportedLanguages.includes(storedLanguage)) {
       setManualLanguageState(storedLanguage);
     } else {
       setManualLanguageState(resolvedSystemLanguage);
@@ -87,10 +88,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
 export function useAppLanguage() {
   const context = useContext(LanguageContext);
-
-  if (!context) {
-    throw new Error("useAppLanguage must be used inside LanguageProvider.");
-  }
-
+  if (!context) throw new Error("useAppLanguage must be used inside LanguageProvider.");
   return context;
 }

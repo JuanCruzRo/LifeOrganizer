@@ -13,8 +13,8 @@
     --popover: 228 10% 11%;
     --popover-foreground: 220 10% 93%;
 
-    --primary: 20 98% 62%;
-    --primary-foreground: 228 12% 7%;
+    --primary: 243 75% 63%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 228 8% 15%;
     --secondary-foreground: 220 10% 93%;
@@ -22,15 +22,15 @@
     --muted: 228 8% 15%;
     --muted-foreground: 220 5% 50%;
 
-    --accent: 20 98% 62%;
-    --accent-foreground: 228 12% 7%;
+    --accent: 243 75% 63%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 228 6% 17%;
     --input: 228 8% 12%;
-    --ring: 20 98% 62%;
+    --ring: 243 75% 63%;
 
     --radius: 0.75rem;
   }
@@ -43,9 +43,9 @@
   --color-card: hsl(228, 7%, 14%);
   --color-border: hsl(228, 6%, 22%);
   --color-muted: hsl(220, 5%, 55%);
-  --color-accent: hsl(20, 98%, 62%);
-  --color-accent-soft: hsla(20, 98%, 62%, 0.15);
-  --color-accent-strong: hsl(20, 90%, 55%);
+  --color-accent: hsl(243, 75%, 63%);
+  --color-accent-soft: hsla(243, 75%, 63%, 0.15);
+  --color-accent-strong: hsl(243, 75%, 55%);
   --color-danger: hsl(0, 84%, 60%);
   --color-input: hsl(228, 7%, 17%);
 }
@@ -138,11 +138,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 100%;
   background: linear-gradient(
     90deg,
-    hsla(20, 98%, 62%, 0.05) 0%,
-    hsla(20, 98%, 62%, 0.18) 30%,
-    hsla(20, 98%, 62%, 0.45) 50%,
-    hsla(20, 98%, 62%, 0.18) 70%,
-    hsla(20, 98%, 62%, 0.05) 100%
+    hsla(243, 75%, 63%, 0.05) 0%,
+    hsla(243, 75%, 63%, 0.18) 30%,
+    hsla(243, 75%, 63%, 0.45) 50%,
+    hsla(243, 75%, 63%, 0.18) 70%,
+    hsla(243, 75%, 63%, 0.05) 100%
   );
   background-size: 200% 100%;
   animation: loading-shimmer-slide 1.4s infinite linear;

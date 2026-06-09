@@ -2,6 +2,7 @@
 
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useAppLanguage } from "@/components/language-provider";
+import { getAuthToken } from "@/lib/auth";
 import { formatAiDisplayText } from "@/lib/format-ai-display-text";
 import {
   AiTaskHelpApiResponse,
@@ -134,10 +135,12 @@ export function RecommendedTaskHelp({
     }));
 
     try {
+      const authToken = await getAuthToken();
       const response = await fetch("/api/ai-task-help", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {})
         },
         body: JSON.stringify({
           task,

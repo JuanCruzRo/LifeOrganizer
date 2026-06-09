@@ -4,6 +4,9 @@ import {
   buildAiPriorityRepairInstructions
 } from "@/lib/ai-priority-config";
 import { AppLanguage } from "@/lib/i18n";
+import { verifyApiAuth } from "@/lib/supabase-server";
+
+const MAX_TASKS = 100;
 import {
   chatWithMilo,
   getMiloErrorMessage,
@@ -35,11 +38,19 @@ const aiRecommendationCache = new Map<
 >();
 
 export async function POST(request: Request) {
+  const userId = await verifyApiAuth(request);
+  if (!userId) {
+    return NextResponse.json<AiPriorityApiResponse>(
+      { enabled: true, recommendation: null, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   const body = (await request.json()) as {
     tasks?: AiPriorityRequestTask[];
     uiLanguage?: AppLanguage;
   };
-  const pendingTasks = Array.isArray(body.tasks) ? body.tasks : [];
+  const pendingTasks = Array.isArray(body.tasks) ? body.tasks.slice(0, MAX_TASKS) : [];
   const uiLanguage = body.uiLanguage === "es" ? "es" : "en";
 
   if (pendingTasks.length === 0) {

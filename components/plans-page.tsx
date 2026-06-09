@@ -2,6 +2,7 @@
 
 import { Check, X, Zap } from "lucide-react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -43,8 +44,17 @@ const PLANS = [
 ] as const;
 
 export function PlansPage() {
+  const router = useRouter();
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-16">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4 py-16">
+      <button
+        onClick={() => router.push("/")}
+        className="absolute left-4 top-4 flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        aria-label="Volver"
+      >
+        <X className="h-5 w-5" />
+      </button>
       {/* Header */}
       <motion.div
         className="mb-12 text-center"

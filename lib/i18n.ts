@@ -1,11 +1,38 @@
-export type AppLanguage = "en" | "es";
+export type AppLanguage = "en" | "es" | "pt" | "fr" | "de" | "it" | "zh" | "ja" | "ko" | "ru" | "tr" | "nl" | "pl";
 export type LanguageMode = "auto" | "manual";
 
-export const supportedLanguages: AppLanguage[] = ["en", "es"];
+export const supportedLanguages: AppLanguage[] = ["en", "es", "pt", "fr", "de", "it", "zh", "ja", "ko", "ru", "tr", "nl", "pl"];
 
-export const languageLabels: Record<AppLanguage, string> = {
+export const languageNativeNames: Record<AppLanguage, string> = {
   en: "English",
-  es: "Espanol"
+  es: "Español",
+  pt: "Português",
+  fr: "Français",
+  de: "Deutsch",
+  it: "Italiano",
+  zh: "中文",
+  ja: "日本語",
+  ko: "한국어",
+  ru: "Русский",
+  tr: "Türkçe",
+  nl: "Nederlands",
+  pl: "Polski"
+};
+
+export const languageFlags: Record<AppLanguage, string> = {
+  en: "🇺🇸",
+  es: "🇪🇸",
+  pt: "🇧🇷",
+  fr: "🇫🇷",
+  de: "🇩🇪",
+  it: "🇮🇹",
+  zh: "🇨🇳",
+  ja: "🇯🇵",
+  ko: "🇰🇷",
+  ru: "🇷🇺",
+  tr: "🇹🇷",
+  nl: "🇳🇱",
+  pl: "🇵🇱"
 };
 
 export const copy = {
@@ -30,12 +57,11 @@ export const copy = {
       manual: "Manual",
       systemLanguage: "System language",
       interfaceLanguage: "Interface language",
-      autoLanguageHint: "Uses your browser and system locale as a location-safe signal."
+      autoLanguageHint: "Uses your browser locale as a location-safe signal."
     },
     header: {
       title: "Spark",
-      subtitle:
-        "A simple view to choose what to tackle first based on priority, due date, and the time you actually have today.",
+      subtitle: "A simple view to choose what to tackle first based on priority, due date, and the time you have today.",
       mascotAlt: "Spark mascot"
     },
     recommendation: {
@@ -49,12 +75,11 @@ export const copy = {
       dueDate: "Due date",
       description: "Description",
       unavailableTitle: "AI recommendation unavailable",
-      priorityLoadingError: "Couldn't generate the priority explanation with Ollama Cloud."
+      priorityLoadingError: "Couldn't generate the priority explanation."
     },
     taskHelp: {
       title: "Deep help for this task",
-      subtitle:
-        "AI tries to answer well with the context it already has. It only asks for more if it truly needs it.",
+      subtitle: "AI tries to answer well with the context it already has. It only asks for more if it truly needs it.",
       closeHelp: "Close help",
       openHelp: "Help me solve this",
       mainQuestion: "Main question",
@@ -64,9 +89,8 @@ export const copy = {
       anotherQuestion: "Another question about this task",
       whatDoYouNeed: "What do you want to solve?",
       clarificationPlaceholder: "Reply with the missing detail so AI can help you better.",
-      followUpPlaceholder: "If you want, ask another specific question about this same task.",
-      initialPlaceholder:
-        "Example: I don't know how to start, I don't know what to deliver, I'm stuck on this part, or I need help making a decision.",
+      followUpPlaceholder: "Ask another specific question about this same task.",
+      initialPlaceholder: "Example: I don't know how to start, I'm stuck on a decision, I don't know what to deliver.",
       thinking: "Thinking...",
       submitError: "Couldn't generate AI help right now.",
       understanding: "How it read the situation",
@@ -87,16 +111,8 @@ export const copy = {
       dueDate: "Due date",
       addTask: "Add task",
       editSubmit: "Save changes",
-      priorities: {
-        low: "Low",
-        medium: "Medium",
-        high: "High"
-      },
-      durations: {
-        short: "Short",
-        medium: "Medium",
-        long: "Long"
-      }
+      priorities: { low: "Low", medium: "Medium", high: "High" },
+      durations: { short: "Short", medium: "Medium", long: "Long" }
     },
     taskList: {
       title: "Tasks",
@@ -108,27 +124,13 @@ export const copy = {
       edit: "Edit",
       markPending: "Mark pending",
       markDone: "Mark done",
-      durations: {
-        short: "short",
-        medium: "medium",
-        long: "long"
-      }
+      durations: { short: "short", medium: "medium", long: "long" }
     },
-    footer: {
-      stackLabel: "Project stack"
-    },
-    language: {
-      responseLanguage: "Response language",
-      automatic: "Automatic",
-      manual: "Manual",
-      english: "English",
-      spanish: "Spanish",
-      activeLanguage: "Active UI language"
-    },
-    errors: {
-      unexpected: "An unexpected error occurred."
-    }
+    footer: { stackLabel: "Project stack" },
+    language: { responseLanguage: "Response language", automatic: "Automatic", manual: "Manual", activeLanguage: "Active UI language" },
+    errors: { unexpected: "An unexpected error occurred." }
   },
+
   es: {
     common: {
       appName: "Spark",
@@ -150,12 +152,11 @@ export const copy = {
       manual: "Manual",
       systemLanguage: "Idioma del sistema",
       interfaceLanguage: "Idioma de la interfaz",
-      autoLanguageHint: "Usa el locale del navegador y del sistema como senal segura de ubicacion."
+      autoLanguageHint: "Usa el locale del navegador como senal de ubicacion."
     },
     header: {
       title: "Spark",
-      subtitle:
-        "Una vista simple para elegir que tarea hacer primero segun prioridad, vencimiento y el tiempo real que tienes hoy.",
+      subtitle: "Una vista simple para elegir que tarea hacer primero segun prioridad, vencimiento y el tiempo que tenes hoy.",
       mascotAlt: "Mascota de Spark"
     },
     recommendation: {
@@ -169,12 +170,11 @@ export const copy = {
       dueDate: "Vencimiento",
       description: "Descripcion",
       unavailableTitle: "La recomendacion de IA no esta disponible",
-      priorityLoadingError: "No se pudo generar la explicacion de prioridad con Ollama Cloud."
+      priorityLoadingError: "No se pudo generar la explicacion de prioridad."
     },
     taskHelp: {
       title: "Ayuda profunda para esta tarea",
-      subtitle:
-        "La IA intenta responder bien con lo que ya tiene. Solo te pedira mas contexto si de verdad lo necesita.",
+      subtitle: "La IA intenta responder bien con lo que ya tiene. Solo te pedira mas contexto si de verdad lo necesita.",
       closeHelp: "Cerrar ayuda",
       openHelp: "Ayudame a resolver esto",
       mainQuestion: "Duda principal",
@@ -185,8 +185,7 @@ export const copy = {
       whatDoYouNeed: "Que quieres resolver",
       clarificationPlaceholder: "Responde con el dato que falta para que la IA pueda ayudarte mejor.",
       followUpPlaceholder: "Si quieres, haz otra consulta puntual sobre esta misma tarea.",
-      initialPlaceholder:
-        "Ej: no se como empezar, no tengo claro que entregar, no se como resolver esta parte o estoy bloqueado con una decision.",
+      initialPlaceholder: "Ej: no se como empezar, no tengo claro que entregar, estoy bloqueado con una decision.",
       thinking: "Pensando...",
       submitError: "No se pudo generar la ayuda con IA en este momento.",
       understanding: "Como leyo la situacion",
@@ -207,16 +206,8 @@ export const copy = {
       dueDate: "Fecha de vencimiento",
       addTask: "Agregar tarea",
       editSubmit: "Guardar cambios",
-      priorities: {
-        low: "Baja",
-        medium: "Media",
-        high: "Alta"
-      },
-      durations: {
-        short: "Corta",
-        medium: "Media",
-        long: "Larga"
-      }
+      priorities: { low: "Baja", medium: "Media", high: "Alta" },
+      durations: { short: "Corta", medium: "Media", long: "Larga" }
     },
     taskList: {
       title: "Tareas",
@@ -228,98 +219,1106 @@ export const copy = {
       edit: "Editar",
       markPending: "Marcar pendiente",
       markDone: "Marcar hecha",
-      durations: {
-        short: "corta",
-        medium: "media",
-        long: "larga"
-      }
+      durations: { short: "corta", medium: "media", long: "larga" }
     },
-    footer: {
-      stackLabel: "Stack del proyecto"
-    },
-    language: {
-      responseLanguage: "Idioma de respuesta",
-      automatic: "Automatico",
+    footer: { stackLabel: "Stack del proyecto" },
+    language: { responseLanguage: "Idioma de respuesta", automatic: "Automatico", manual: "Manual", activeLanguage: "Idioma activo de la interfaz" },
+    errors: { unexpected: "Ocurrio un error inesperado." }
+  },
+
+  pt: {
+    common: {
+      appName: "Spark",
+      close: "Fechar",
+      cancel: "Cancelar",
+      saveChanges: "Salvar alterações",
+      delete: "Excluir",
+      todayRecommendation: "Recomendação de hoje",
+      noPendingTasks: "Nada pendente",
+      loading: "Pensando...",
+      askForHelp: "Pedir ajuda",
+      startOver: "Recomeçar",
+      sendContext: "Enviar contexto",
+      save: "Salvar",
+      add: "Adicionar",
+      saving: "Salvando...",
+      adding: "Adicionando...",
+      auto: "Automático",
       manual: "Manual",
-      english: "Ingles",
-      spanish: "Espanol",
-      activeLanguage: "Idioma activo de la interfaz"
+      systemLanguage: "Idioma do sistema",
+      interfaceLanguage: "Idioma da interface",
+      autoLanguageHint: "Usa o locale do navegador como sinal de localização."
     },
-    errors: {
-      unexpected: "Ocurrio un error inesperado."
-    }
+    header: {
+      title: "Spark",
+      subtitle: "Uma visão simples para escolher qual tarefa fazer primeiro com base em prioridade, prazo e tempo disponível hoje.",
+      mascotAlt: "Mascote Spark"
+    },
+    recommendation: {
+      expandedView: "Visão expandida",
+      buildExplanation: "Construindo explicação",
+      awaitingAiTitle: "Aguardando recomendação da IA",
+      openLarge: "Abrir grande",
+      category: "Categoria",
+      priority: "Prioridade",
+      duration: "Tempo",
+      dueDate: "Vencimento",
+      description: "Descrição",
+      unavailableTitle: "Recomendação de IA indisponível",
+      priorityLoadingError: "Não foi possível gerar a explicação de prioridade."
+    },
+    taskHelp: {
+      title: "Ajuda profunda para esta tarefa",
+      subtitle: "A IA tenta responder bem com o que já tem. Só pede mais contexto se realmente precisar.",
+      closeHelp: "Fechar ajuda",
+      openHelp: "Me ajude a resolver isso",
+      mainQuestion: "Dúvida principal",
+      extraContext: "Contexto extra que você já deu",
+      beforeAnswering: "Antes de responder bem",
+      clarificationAnswer: "Resposta ao esclarecimento",
+      anotherQuestion: "Outra dúvida sobre esta tarefa",
+      whatDoYouNeed: "O que você quer resolver",
+      clarificationPlaceholder: "Responda com o detalhe que falta para a IA ajudar melhor.",
+      followUpPlaceholder: "Faça outra consulta específica sobre esta mesma tarefa.",
+      initialPlaceholder: "Ex: não sei como começar, não tenho claro o que entregar, estou travado em uma decisão.",
+      thinking: "Pensando...",
+      submitError: "Não foi possível gerar a ajuda com IA no momento.",
+      understanding: "Como leu a situação",
+      answer: "O que faria",
+      actionPlan: "Plano concreto"
+    },
+    taskForm: {
+      editTask: "Editar tarefa",
+      newTask: "Nova tarefa",
+      title: "Título",
+      titlePlaceholder: "Ex: Preparar apresentação",
+      category: "Categoria",
+      categoryPlaceholder: "Trabalho, casa, estudo...",
+      description: "Descrição",
+      descriptionPlaceholder: "Adicione contexto para que a recomendação entenda melhor a tarefa...",
+      priority: "Prioridade",
+      duration: "Duração",
+      dueDate: "Data de vencimento",
+      addTask: "Adicionar tarefa",
+      editSubmit: "Salvar alterações",
+      priorities: { low: "Baixa", medium: "Média", high: "Alta" },
+      durations: { short: "Curta", medium: "Média", long: "Longa" }
+    },
+    taskList: {
+      title: "Tarefas",
+      subtitle: "Pendentes e concluídas",
+      pending: "Pendentes",
+      completed: "Concluídas",
+      noPending: "Ainda não há tarefas pendentes.",
+      noCompleted: "Ainda não há tarefas concluídas.",
+      edit: "Editar",
+      markPending: "Marcar pendente",
+      markDone: "Marcar concluída",
+      durations: { short: "curta", medium: "média", long: "longa" }
+    },
+    footer: { stackLabel: "Stack do projeto" },
+    language: { responseLanguage: "Idioma de resposta", automatic: "Automático", manual: "Manual", activeLanguage: "Idioma ativo da interface" },
+    errors: { unexpected: "Ocorreu um erro inesperado." }
+  },
+
+  fr: {
+    common: {
+      appName: "Spark",
+      close: "Fermer",
+      cancel: "Annuler",
+      saveChanges: "Enregistrer les modifications",
+      delete: "Supprimer",
+      todayRecommendation: "Recommandation du jour",
+      noPendingTasks: "Rien en attente",
+      loading: "Réflexion...",
+      askForHelp: "Demander de l'aide",
+      startOver: "Recommencer",
+      sendContext: "Envoyer le contexte",
+      save: "Enregistrer",
+      add: "Ajouter",
+      saving: "Enregistrement...",
+      adding: "Ajout en cours...",
+      auto: "Automatique",
+      manual: "Manuel",
+      systemLanguage: "Langue du système",
+      interfaceLanguage: "Langue de l'interface",
+      autoLanguageHint: "Utilise les paramètres régionaux du navigateur comme indicateur de localisation."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Une vue simple pour choisir quelle tâche traiter en premier selon la priorité, l'échéance et le temps disponible.",
+      mascotAlt: "Mascotte Spark"
+    },
+    recommendation: {
+      expandedView: "Vue étendue",
+      buildExplanation: "Construction de l'explication",
+      awaitingAiTitle: "En attente de la recommandation IA",
+      openLarge: "Ouvrir en grand",
+      category: "Catégorie",
+      priority: "Priorité",
+      duration: "Durée",
+      dueDate: "Échéance",
+      description: "Description",
+      unavailableTitle: "Recommandation IA indisponible",
+      priorityLoadingError: "Impossible de générer l'explication de priorité."
+    },
+    taskHelp: {
+      title: "Aide approfondie pour cette tâche",
+      subtitle: "L'IA essaie de bien répondre avec ce qu'elle a. Elle ne demande plus de contexte que si c'est vraiment nécessaire.",
+      closeHelp: "Fermer l'aide",
+      openHelp: "Aidez-moi à résoudre cela",
+      mainQuestion: "Question principale",
+      extraContext: "Contexte supplémentaire déjà fourni",
+      beforeAnswering: "Avant de répondre correctement",
+      clarificationAnswer: "Réponse à la clarification",
+      anotherQuestion: "Une autre question sur cette tâche",
+      whatDoYouNeed: "Que souhaitez-vous résoudre ?",
+      clarificationPlaceholder: "Répondez avec le détail manquant pour que l'IA puisse mieux vous aider.",
+      followUpPlaceholder: "Posez une autre question spécifique sur cette même tâche.",
+      initialPlaceholder: "Ex: je ne sais pas par où commencer, je suis bloqué sur une décision.",
+      thinking: "Réflexion...",
+      submitError: "Impossible de générer l'aide IA pour l'instant.",
+      understanding: "Comment il a lu la situation",
+      answer: "Ce qu'il ferait",
+      actionPlan: "Plan concret"
+    },
+    taskForm: {
+      editTask: "Modifier la tâche",
+      newTask: "Nouvelle tâche",
+      title: "Titre",
+      titlePlaceholder: "Ex: Préparer la présentation",
+      category: "Catégorie",
+      categoryPlaceholder: "Travail, maison, études...",
+      description: "Description",
+      descriptionPlaceholder: "Ajoutez du contexte pour que la recommandation comprenne mieux la tâche...",
+      priority: "Priorité",
+      duration: "Durée",
+      dueDate: "Date d'échéance",
+      addTask: "Ajouter la tâche",
+      editSubmit: "Enregistrer les modifications",
+      priorities: { low: "Faible", medium: "Moyenne", high: "Haute" },
+      durations: { short: "Courte", medium: "Moyenne", long: "Longue" }
+    },
+    taskList: {
+      title: "Tâches",
+      subtitle: "En attente et terminées",
+      pending: "En attente",
+      completed: "Terminées",
+      noPending: "Aucune tâche en attente pour l'instant.",
+      noCompleted: "Aucune tâche terminée pour l'instant.",
+      edit: "Modifier",
+      markPending: "Marquer en attente",
+      markDone: "Marquer comme terminée",
+      durations: { short: "courte", medium: "moyenne", long: "longue" }
+    },
+    footer: { stackLabel: "Stack du projet" },
+    language: { responseLanguage: "Langue de réponse", automatic: "Automatique", manual: "Manuel", activeLanguage: "Langue active de l'interface" },
+    errors: { unexpected: "Une erreur inattendue s'est produite." }
+  },
+
+  de: {
+    common: {
+      appName: "Spark",
+      close: "Schließen",
+      cancel: "Abbrechen",
+      saveChanges: "Änderungen speichern",
+      delete: "Löschen",
+      todayRecommendation: "Empfehlung des Tages",
+      noPendingTasks: "Nichts ausstehend",
+      loading: "Nachdenken...",
+      askForHelp: "Um Hilfe bitten",
+      startOver: "Von vorne beginnen",
+      sendContext: "Kontext senden",
+      save: "Speichern",
+      add: "Hinzufügen",
+      saving: "Speichern...",
+      adding: "Hinzufügen...",
+      auto: "Automatisch",
+      manual: "Manuell",
+      systemLanguage: "Systemsprache",
+      interfaceLanguage: "Oberflächensprache",
+      autoLanguageHint: "Verwendet den Browser-Locale als Standortsignal."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Eine einfache Ansicht, um die erste Aufgabe nach Priorität, Fälligkeitsdatum und verfügbarer Zeit auszuwählen.",
+      mascotAlt: "Spark Maskottchen"
+    },
+    recommendation: {
+      expandedView: "Erweiterte Ansicht",
+      buildExplanation: "Erklärung wird erstellt",
+      awaitingAiTitle: "Warte auf KI-Empfehlung",
+      openLarge: "Groß öffnen",
+      category: "Kategorie",
+      priority: "Priorität",
+      duration: "Dauer",
+      dueDate: "Fälligkeitsdatum",
+      description: "Beschreibung",
+      unavailableTitle: "KI-Empfehlung nicht verfügbar",
+      priorityLoadingError: "Prioritätserklärung konnte nicht generiert werden."
+    },
+    taskHelp: {
+      title: "Tiefe Hilfe für diese Aufgabe",
+      subtitle: "Die KI versucht mit vorhandenem Kontext gut zu antworten. Sie fragt nur nach mehr, wenn nötig.",
+      closeHelp: "Hilfe schließen",
+      openHelp: "Hilf mir, das zu lösen",
+      mainQuestion: "Hauptfrage",
+      extraContext: "Zusätzlicher Kontext",
+      beforeAnswering: "Vor der Antwort",
+      clarificationAnswer: "Antwort auf die Klärung",
+      anotherQuestion: "Weitere Frage zu dieser Aufgabe",
+      whatDoYouNeed: "Was möchtest du lösen?",
+      clarificationPlaceholder: "Antworte mit dem fehlenden Detail, damit die KI besser helfen kann.",
+      followUpPlaceholder: "Stelle eine weitere spezifische Frage zu dieser Aufgabe.",
+      initialPlaceholder: "Bsp: Ich weiß nicht, wie ich anfangen soll, ich bin bei einer Entscheidung blockiert.",
+      thinking: "Nachdenken...",
+      submitError: "KI-Hilfe konnte gerade nicht generiert werden.",
+      understanding: "Wie es die Situation verstanden hat",
+      answer: "Was es tun würde",
+      actionPlan: "Konkreter Plan"
+    },
+    taskForm: {
+      editTask: "Aufgabe bearbeiten",
+      newTask: "Neue Aufgabe",
+      title: "Titel",
+      titlePlaceholder: "Bsp: Präsentation vorbereiten",
+      category: "Kategorie",
+      categoryPlaceholder: "Arbeit, Zuhause, Studium...",
+      description: "Beschreibung",
+      descriptionPlaceholder: "Füge Kontext hinzu, damit die Empfehlung die Aufgabe besser versteht...",
+      priority: "Priorität",
+      duration: "Dauer",
+      dueDate: "Fälligkeitsdatum",
+      addTask: "Aufgabe hinzufügen",
+      editSubmit: "Änderungen speichern",
+      priorities: { low: "Niedrig", medium: "Mittel", high: "Hoch" },
+      durations: { short: "Kurz", medium: "Mittel", long: "Lang" }
+    },
+    taskList: {
+      title: "Aufgaben",
+      subtitle: "Ausstehend und abgeschlossen",
+      pending: "Ausstehend",
+      completed: "Abgeschlossen",
+      noPending: "Noch keine ausstehenden Aufgaben.",
+      noCompleted: "Noch keine abgeschlossenen Aufgaben.",
+      edit: "Bearbeiten",
+      markPending: "Als ausstehend markieren",
+      markDone: "Als erledigt markieren",
+      durations: { short: "kurz", medium: "mittel", long: "lang" }
+    },
+    footer: { stackLabel: "Projekt-Stack" },
+    language: { responseLanguage: "Antwortsprache", automatic: "Automatisch", manual: "Manuell", activeLanguage: "Aktive Oberflächensprache" },
+    errors: { unexpected: "Ein unerwarteter Fehler ist aufgetreten." }
+  },
+
+  it: {
+    common: {
+      appName: "Spark",
+      close: "Chiudi",
+      cancel: "Annulla",
+      saveChanges: "Salva modifiche",
+      delete: "Elimina",
+      todayRecommendation: "Raccomandazione di oggi",
+      noPendingTasks: "Niente in sospeso",
+      loading: "Sto pensando...",
+      askForHelp: "Chiedi aiuto",
+      startOver: "Ricomincia",
+      sendContext: "Invia contesto",
+      save: "Salva",
+      add: "Aggiungi",
+      saving: "Salvataggio...",
+      adding: "Aggiunta...",
+      auto: "Automatico",
+      manual: "Manuale",
+      systemLanguage: "Lingua del sistema",
+      interfaceLanguage: "Lingua dell'interfaccia",
+      autoLanguageHint: "Usa le impostazioni locali del browser come segnale di posizione."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Una vista semplice per scegliere quale attività affrontare prima in base a priorità, scadenza e tempo disponibile.",
+      mascotAlt: "Mascotte Spark"
+    },
+    recommendation: {
+      expandedView: "Vista espansa",
+      buildExplanation: "Creazione spiegazione",
+      awaitingAiTitle: "In attesa della raccomandazione IA",
+      openLarge: "Apri grande",
+      category: "Categoria",
+      priority: "Priorità",
+      duration: "Durata",
+      dueDate: "Scadenza",
+      description: "Descrizione",
+      unavailableTitle: "Raccomandazione IA non disponibile",
+      priorityLoadingError: "Impossibile generare la spiegazione della priorità."
+    },
+    taskHelp: {
+      title: "Aiuto approfondito per questa attività",
+      subtitle: "L'IA cerca di rispondere bene con ciò che ha. Chiede più contesto solo se necessario.",
+      closeHelp: "Chiudi aiuto",
+      openHelp: "Aiutami a risolvere questo",
+      mainQuestion: "Domanda principale",
+      extraContext: "Contesto extra già fornito",
+      beforeAnswering: "Prima di rispondere bene",
+      clarificationAnswer: "Risposta al chiarimento",
+      anotherQuestion: "Un'altra domanda su questa attività",
+      whatDoYouNeed: "Cosa vuoi risolvere?",
+      clarificationPlaceholder: "Rispondi con il dettaglio mancante perché l'IA possa aiutarti meglio.",
+      followUpPlaceholder: "Fai un'altra domanda specifica su questa stessa attività.",
+      initialPlaceholder: "Es: non so come iniziare, sono bloccato su una decisione.",
+      thinking: "Sto pensando...",
+      submitError: "Impossibile generare l'aiuto IA al momento.",
+      understanding: "Come ha letto la situazione",
+      answer: "Cosa farebbe",
+      actionPlan: "Piano concreto"
+    },
+    taskForm: {
+      editTask: "Modifica attività",
+      newTask: "Nuova attività",
+      title: "Titolo",
+      titlePlaceholder: "Es: Preparare la presentazione",
+      category: "Categoria",
+      categoryPlaceholder: "Lavoro, casa, studio...",
+      description: "Descrizione",
+      descriptionPlaceholder: "Aggiungi contesto per aiutare la raccomandazione a capire meglio l'attività...",
+      priority: "Priorità",
+      duration: "Durata",
+      dueDate: "Data di scadenza",
+      addTask: "Aggiungi attività",
+      editSubmit: "Salva modifiche",
+      priorities: { low: "Bassa", medium: "Media", high: "Alta" },
+      durations: { short: "Breve", medium: "Media", long: "Lunga" }
+    },
+    taskList: {
+      title: "Attività",
+      subtitle: "In sospeso e completate",
+      pending: "In sospeso",
+      completed: "Completate",
+      noPending: "Nessuna attività in sospeso.",
+      noCompleted: "Nessuna attività completata.",
+      edit: "Modifica",
+      markPending: "Segna come in sospeso",
+      markDone: "Segna come completata",
+      durations: { short: "breve", medium: "media", long: "lunga" }
+    },
+    footer: { stackLabel: "Stack del progetto" },
+    language: { responseLanguage: "Lingua di risposta", automatic: "Automatico", manual: "Manuale", activeLanguage: "Lingua attiva dell'interfaccia" },
+    errors: { unexpected: "Si è verificato un errore imprevisto." }
+  },
+
+  zh: {
+    common: {
+      appName: "Spark",
+      close: "关闭",
+      cancel: "取消",
+      saveChanges: "保存更改",
+      delete: "删除",
+      todayRecommendation: "今日推荐",
+      noPendingTasks: "没有待办事项",
+      loading: "思考中...",
+      askForHelp: "寻求帮助",
+      startOver: "重新开始",
+      sendContext: "发送背景",
+      save: "保存",
+      add: "添加",
+      saving: "保存中...",
+      adding: "添加中...",
+      auto: "自动",
+      manual: "手动",
+      systemLanguage: "系统语言",
+      interfaceLanguage: "界面语言",
+      autoLanguageHint: "使用浏览器语言设置作为位置信号。"
+    },
+    header: {
+      title: "Spark",
+      subtitle: "简单视图，根据优先级、截止日期和今天的可用时间选择首要任务。",
+      mascotAlt: "Spark 吉祥物"
+    },
+    recommendation: {
+      expandedView: "展开视图",
+      buildExplanation: "正在生成解释",
+      awaitingAiTitle: "等待 AI 推荐",
+      openLarge: "大屏查看",
+      category: "类别",
+      priority: "优先级",
+      duration: "时长",
+      dueDate: "截止日期",
+      description: "描述",
+      unavailableTitle: "AI 推荐不可用",
+      priorityLoadingError: "无法生成优先级解释。"
+    },
+    taskHelp: {
+      title: "深度任务帮助",
+      subtitle: "AI 会尽量用已有信息给出好的回答，只有在真正需要时才会请求更多背景。",
+      closeHelp: "关闭帮助",
+      openHelp: "帮我解决这个",
+      mainQuestion: "主要问题",
+      extraContext: "已提供的额外背景",
+      beforeAnswering: "回答之前",
+      clarificationAnswer: "对澄清的回答",
+      anotherQuestion: "关于此任务的另一个问题",
+      whatDoYouNeed: "你想解决什么？",
+      clarificationPlaceholder: "用缺少的细节回复，以便 AI 更好地帮助你。",
+      followUpPlaceholder: "对此任务提出另一个具体问题。",
+      initialPlaceholder: "例如：不知道如何开始，被某个决定卡住了。",
+      thinking: "思考中...",
+      submitError: "目前无法生成 AI 帮助。",
+      understanding: "如何理解情况",
+      answer: "会做什么",
+      actionPlan: "具体计划"
+    },
+    taskForm: {
+      editTask: "编辑任务",
+      newTask: "新建任务",
+      title: "标题",
+      titlePlaceholder: "例：准备演示文稿",
+      category: "类别",
+      categoryPlaceholder: "工作、家庭、学习...",
+      description: "描述",
+      descriptionPlaceholder: "添加背景信息，帮助推荐系统更好地理解任务...",
+      priority: "优先级",
+      duration: "时长",
+      dueDate: "截止日期",
+      addTask: "添加任务",
+      editSubmit: "保存更改",
+      priorities: { low: "低", medium: "中", high: "高" },
+      durations: { short: "短", medium: "中", long: "长" }
+    },
+    taskList: {
+      title: "任务",
+      subtitle: "待办和已完成",
+      pending: "待办",
+      completed: "已完成",
+      noPending: "暂无待办任务。",
+      noCompleted: "暂无已完成任务。",
+      edit: "编辑",
+      markPending: "标记为待办",
+      markDone: "标记为完成",
+      durations: { short: "短", medium: "中", long: "长" }
+    },
+    footer: { stackLabel: "项目技术栈" },
+    language: { responseLanguage: "响应语言", automatic: "自动", manual: "手动", activeLanguage: "当前界面语言" },
+    errors: { unexpected: "发生了意外错误。" }
+  },
+
+  ja: {
+    common: {
+      appName: "Spark",
+      close: "閉じる",
+      cancel: "キャンセル",
+      saveChanges: "変更を保存",
+      delete: "削除",
+      todayRecommendation: "今日のおすすめ",
+      noPendingTasks: "未完了なし",
+      loading: "考え中...",
+      askForHelp: "ヘルプを求める",
+      startOver: "最初からやり直す",
+      sendContext: "コンテキストを送信",
+      save: "保存",
+      add: "追加",
+      saving: "保存中...",
+      adding: "追加中...",
+      auto: "自動",
+      manual: "手動",
+      systemLanguage: "システム言語",
+      interfaceLanguage: "インターフェース言語",
+      autoLanguageHint: "ブラウザのロケールを位置情報のシグナルとして使用します。"
+    },
+    header: {
+      title: "Spark",
+      subtitle: "優先度、期限、今日の利用可能な時間に基づいて最初にすべきタスクを選ぶシンプルなビュー。",
+      mascotAlt: "Sparkマスコット"
+    },
+    recommendation: {
+      expandedView: "拡張表示",
+      buildExplanation: "説明を作成中",
+      awaitingAiTitle: "AIの推奨を待っています",
+      openLarge: "大きく開く",
+      category: "カテゴリ",
+      priority: "優先度",
+      duration: "所要時間",
+      dueDate: "期限",
+      description: "説明",
+      unavailableTitle: "AI推奨が利用不可",
+      priorityLoadingError: "優先度の説明を生成できませんでした。"
+    },
+    taskHelp: {
+      title: "このタスクの詳細サポート",
+      subtitle: "AIは既存の情報でできる限り回答しようとします。本当に必要な場合のみ追加情報を求めます。",
+      closeHelp: "ヘルプを閉じる",
+      openHelp: "解決を手伝って",
+      mainQuestion: "メインの質問",
+      extraContext: "既に提供した追加コンテキスト",
+      beforeAnswering: "回答前に",
+      clarificationAnswer: "明確化への回答",
+      anotherQuestion: "このタスクに関する別の質問",
+      whatDoYouNeed: "何を解決したいですか？",
+      clarificationPlaceholder: "不足している詳細を回答して、AIがより良く助けられるようにしてください。",
+      followUpPlaceholder: "同じタスクについて別の具体的な質問をしてください。",
+      initialPlaceholder: "例：どこから始めればいいかわからない、決断に迷っている。",
+      thinking: "考え中...",
+      submitError: "現在AIサポートを生成できませんでした。",
+      understanding: "状況をどう読んだか",
+      answer: "何をするか",
+      actionPlan: "具体的な計画"
+    },
+    taskForm: {
+      editTask: "タスクを編集",
+      newTask: "新しいタスク",
+      title: "タイトル",
+      titlePlaceholder: "例：プレゼンを準備する",
+      category: "カテゴリ",
+      categoryPlaceholder: "仕事、家事、勉強...",
+      description: "説明",
+      descriptionPlaceholder: "推奨がタスクをより理解できるようにコンテキストを追加...",
+      priority: "優先度",
+      duration: "所要時間",
+      dueDate: "期限",
+      addTask: "タスクを追加",
+      editSubmit: "変更を保存",
+      priorities: { low: "低", medium: "中", high: "高" },
+      durations: { short: "短い", medium: "普通", long: "長い" }
+    },
+    taskList: {
+      title: "タスク",
+      subtitle: "未完了と完了済み",
+      pending: "未完了",
+      completed: "完了済み",
+      noPending: "未完了のタスクはまだありません。",
+      noCompleted: "完了済みのタスクはまだありません。",
+      edit: "編集",
+      markPending: "未完了にする",
+      markDone: "完了にする",
+      durations: { short: "短い", medium: "普通", long: "長い" }
+    },
+    footer: { stackLabel: "プロジェクトスタック" },
+    language: { responseLanguage: "応答言語", automatic: "自動", manual: "手動", activeLanguage: "現在のUI言語" },
+    errors: { unexpected: "予期しないエラーが発生しました。" }
+  },
+
+  ko: {
+    common: {
+      appName: "Spark",
+      close: "닫기",
+      cancel: "취소",
+      saveChanges: "변경 사항 저장",
+      delete: "삭제",
+      todayRecommendation: "오늘의 추천",
+      noPendingTasks: "대기 중 없음",
+      loading: "생각 중...",
+      askForHelp: "도움 요청",
+      startOver: "다시 시작",
+      sendContext: "컨텍스트 전송",
+      save: "저장",
+      add: "추가",
+      saving: "저장 중...",
+      adding: "추가 중...",
+      auto: "자동",
+      manual: "수동",
+      systemLanguage: "시스템 언어",
+      interfaceLanguage: "인터페이스 언어",
+      autoLanguageHint: "위치 신호로 브라우저 로캘을 사용합니다."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "우선순위, 마감일, 오늘의 가용 시간을 기반으로 먼저 할 작업을 선택하는 간단한 뷰.",
+      mascotAlt: "Spark 마스코트"
+    },
+    recommendation: {
+      expandedView: "확장 보기",
+      buildExplanation: "설명 작성 중",
+      awaitingAiTitle: "AI 추천 대기 중",
+      openLarge: "크게 열기",
+      category: "카테고리",
+      priority: "우선순위",
+      duration: "소요 시간",
+      dueDate: "마감일",
+      description: "설명",
+      unavailableTitle: "AI 추천 불가",
+      priorityLoadingError: "우선순위 설명을 생성할 수 없습니다."
+    },
+    taskHelp: {
+      title: "이 작업에 대한 심층 도움",
+      subtitle: "AI는 이미 가진 정보로 최선을 다해 답변합니다. 정말 필요할 때만 추가 정보를 요청합니다.",
+      closeHelp: "도움 닫기",
+      openHelp: "해결을 도와줘",
+      mainQuestion: "주요 질문",
+      extraContext: "이미 제공한 추가 컨텍스트",
+      beforeAnswering: "답변 전에",
+      clarificationAnswer: "명확화에 대한 답변",
+      anotherQuestion: "이 작업에 대한 또 다른 질문",
+      whatDoYouNeed: "무엇을 해결하고 싶으신가요?",
+      clarificationPlaceholder: "AI가 더 잘 도울 수 있도록 누락된 세부 사항을 답변해 주세요.",
+      followUpPlaceholder: "같은 작업에 대해 또 다른 구체적인 질문을 해주세요.",
+      initialPlaceholder: "예: 어디서 시작해야 할지 모르겠어요, 결정을 못 하고 있어요.",
+      thinking: "생각 중...",
+      submitError: "현재 AI 도움을 생성할 수 없습니다.",
+      understanding: "상황을 어떻게 읽었는지",
+      answer: "무엇을 할지",
+      actionPlan: "구체적인 계획"
+    },
+    taskForm: {
+      editTask: "작업 편집",
+      newTask: "새 작업",
+      title: "제목",
+      titlePlaceholder: "예: 프레젠테이션 준비",
+      category: "카테고리",
+      categoryPlaceholder: "업무, 가정, 학습...",
+      description: "설명",
+      descriptionPlaceholder: "추천 시스템이 작업을 더 잘 이해할 수 있도록 컨텍스트를 추가하세요...",
+      priority: "우선순위",
+      duration: "소요 시간",
+      dueDate: "마감일",
+      addTask: "작업 추가",
+      editSubmit: "변경 사항 저장",
+      priorities: { low: "낮음", medium: "보통", high: "높음" },
+      durations: { short: "짧음", medium: "보통", long: "김" }
+    },
+    taskList: {
+      title: "작업",
+      subtitle: "대기 중 및 완료",
+      pending: "대기 중",
+      completed: "완료",
+      noPending: "아직 대기 중인 작업이 없습니다.",
+      noCompleted: "아직 완료된 작업이 없습니다.",
+      edit: "편집",
+      markPending: "대기 중으로 표시",
+      markDone: "완료로 표시",
+      durations: { short: "짧음", medium: "보통", long: "김" }
+    },
+    footer: { stackLabel: "프로젝트 스택" },
+    language: { responseLanguage: "응답 언어", automatic: "자동", manual: "수동", activeLanguage: "현재 UI 언어" },
+    errors: { unexpected: "예상치 못한 오류가 발생했습니다." }
+  },
+
+  ru: {
+    common: {
+      appName: "Spark",
+      close: "Закрыть",
+      cancel: "Отмена",
+      saveChanges: "Сохранить изменения",
+      delete: "Удалить",
+      todayRecommendation: "Рекомендация дня",
+      noPendingTasks: "Нет задач",
+      loading: "Думаю...",
+      askForHelp: "Попросить помощи",
+      startOver: "Начать заново",
+      sendContext: "Отправить контекст",
+      save: "Сохранить",
+      add: "Добавить",
+      saving: "Сохранение...",
+      adding: "Добавление...",
+      auto: "Автоматически",
+      manual: "Вручную",
+      systemLanguage: "Язык системы",
+      interfaceLanguage: "Язык интерфейса",
+      autoLanguageHint: "Использует языковые настройки браузера как сигнал местоположения."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Простой вид для выбора первоочередной задачи по приоритету, сроку и доступному времени.",
+      mascotAlt: "Маскот Spark"
+    },
+    recommendation: {
+      expandedView: "Расширенный вид",
+      buildExplanation: "Создание объяснения",
+      awaitingAiTitle: "Ожидание рекомендации ИИ",
+      openLarge: "Открыть большим",
+      category: "Категория",
+      priority: "Приоритет",
+      duration: "Длительность",
+      dueDate: "Срок",
+      description: "Описание",
+      unavailableTitle: "Рекомендация ИИ недоступна",
+      priorityLoadingError: "Не удалось создать объяснение приоритета."
+    },
+    taskHelp: {
+      title: "Глубокая помощь по задаче",
+      subtitle: "ИИ старается хорошо ответить с тем, что уже есть. Запрашивает дополнительный контекст только при необходимости.",
+      closeHelp: "Закрыть помощь",
+      openHelp: "Помоги мне решить это",
+      mainQuestion: "Основной вопрос",
+      extraContext: "Дополнительный контекст",
+      beforeAnswering: "Перед ответом",
+      clarificationAnswer: "Ответ на уточнение",
+      anotherQuestion: "Ещё вопрос по этой задаче",
+      whatDoYouNeed: "Что ты хочешь решить?",
+      clarificationPlaceholder: "Ответь с недостающей деталью, чтобы ИИ мог лучше помочь.",
+      followUpPlaceholder: "Задай ещё один конкретный вопрос по этой задаче.",
+      initialPlaceholder: "Например: не знаю, с чего начать, застрял на решении.",
+      thinking: "Думаю...",
+      submitError: "Не удалось сгенерировать помощь ИИ прямо сейчас.",
+      understanding: "Как прочитал ситуацию",
+      answer: "Что бы сделал",
+      actionPlan: "Конкретный план"
+    },
+    taskForm: {
+      editTask: "Редактировать задачу",
+      newTask: "Новая задача",
+      title: "Заголовок",
+      titlePlaceholder: "Например: Подготовить презентацию",
+      category: "Категория",
+      categoryPlaceholder: "Работа, дом, учёба...",
+      description: "Описание",
+      descriptionPlaceholder: "Добавь контекст, чтобы рекомендация лучше понимала задачу...",
+      priority: "Приоритет",
+      duration: "Длительность",
+      dueDate: "Срок выполнения",
+      addTask: "Добавить задачу",
+      editSubmit: "Сохранить изменения",
+      priorities: { low: "Низкий", medium: "Средний", high: "Высокий" },
+      durations: { short: "Короткая", medium: "Средняя", long: "Длинная" }
+    },
+    taskList: {
+      title: "Задачи",
+      subtitle: "Ожидающие и завершённые",
+      pending: "Ожидающие",
+      completed: "Завершённые",
+      noPending: "Ожидающих задач пока нет.",
+      noCompleted: "Завершённых задач пока нет.",
+      edit: "Редактировать",
+      markPending: "Отметить ожидающей",
+      markDone: "Отметить выполненной",
+      durations: { short: "короткая", medium: "средняя", long: "длинная" }
+    },
+    footer: { stackLabel: "Стек проекта" },
+    language: { responseLanguage: "Язык ответа", automatic: "Автоматически", manual: "Вручную", activeLanguage: "Активный язык интерфейса" },
+    errors: { unexpected: "Произошла непредвиденная ошибка." }
+  },
+
+  tr: {
+    common: {
+      appName: "Spark",
+      close: "Kapat",
+      cancel: "İptal",
+      saveChanges: "Değişiklikleri kaydet",
+      delete: "Sil",
+      todayRecommendation: "Günün tavsiyesi",
+      noPendingTasks: "Bekleyen yok",
+      loading: "Düşünüyorum...",
+      askForHelp: "Yardım iste",
+      startOver: "Baştan başla",
+      sendContext: "Bağlam gönder",
+      save: "Kaydet",
+      add: "Ekle",
+      saving: "Kaydediliyor...",
+      adding: "Ekleniyor...",
+      auto: "Otomatik",
+      manual: "Manuel",
+      systemLanguage: "Sistem dili",
+      interfaceLanguage: "Arayüz dili",
+      autoLanguageHint: "Konum sinyali olarak tarayıcı yerel ayarını kullanır."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Öncelik, son tarih ve bugünkü mevcut zamana göre ilk yapılacak görevi seçmek için basit bir görünüm.",
+      mascotAlt: "Spark maskotu"
+    },
+    recommendation: {
+      expandedView: "Genişletilmiş görünüm",
+      buildExplanation: "Açıklama oluşturuluyor",
+      awaitingAiTitle: "Yapay zeka önerisi bekleniyor",
+      openLarge: "Büyük aç",
+      category: "Kategori",
+      priority: "Öncelik",
+      duration: "Süre",
+      dueDate: "Son tarih",
+      description: "Açıklama",
+      unavailableTitle: "Yapay zeka önerisi mevcut değil",
+      priorityLoadingError: "Öncelik açıklaması oluşturulamadı."
+    },
+    taskHelp: {
+      title: "Bu görev için derin yardım",
+      subtitle: "Yapay zeka sahip olduğu bilgiyle iyi yanıt vermeye çalışır. Gerçekten gerektiğinde daha fazlasını ister.",
+      closeHelp: "Yardımı kapat",
+      openHelp: "Bunu çözmeme yardım et",
+      mainQuestion: "Ana soru",
+      extraContext: "Zaten verdiğin ek bağlam",
+      beforeAnswering: "Doğru yanıtlamadan önce",
+      clarificationAnswer: "Açıklamaya yanıt",
+      anotherQuestion: "Bu görev hakkında başka bir soru",
+      whatDoYouNeed: "Ne çözmek istiyorsun?",
+      clarificationPlaceholder: "Yapay zekanın daha iyi yardımcı olabilmesi için eksik detayı yanıtla.",
+      followUpPlaceholder: "Aynı görev hakkında başka bir spesifik soru sor.",
+      initialPlaceholder: "Örn: nereden başlayacağımı bilmiyorum, bir kararda takıldım.",
+      thinking: "Düşünüyorum...",
+      submitError: "Şu an yapay zeka yardımı oluşturulamadı.",
+      understanding: "Durumu nasıl okudu",
+      answer: "Ne yapardı",
+      actionPlan: "Somut plan"
+    },
+    taskForm: {
+      editTask: "Görevi düzenle",
+      newTask: "Yeni görev",
+      title: "Başlık",
+      titlePlaceholder: "Örn: Sunum hazırla",
+      category: "Kategori",
+      categoryPlaceholder: "İş, ev, çalışma...",
+      description: "Açıklama",
+      descriptionPlaceholder: "Tavsiyenin görevi daha iyi anlaması için bağlam ekle...",
+      priority: "Öncelik",
+      duration: "Süre",
+      dueDate: "Son tarih",
+      addTask: "Görev ekle",
+      editSubmit: "Değişiklikleri kaydet",
+      priorities: { low: "Düşük", medium: "Orta", high: "Yüksek" },
+      durations: { short: "Kısa", medium: "Orta", long: "Uzun" }
+    },
+    taskList: {
+      title: "Görevler",
+      subtitle: "Bekleyen ve tamamlanan",
+      pending: "Bekleyen",
+      completed: "Tamamlanan",
+      noPending: "Henüz bekleyen görev yok.",
+      noCompleted: "Henüz tamamlanan görev yok.",
+      edit: "Düzenle",
+      markPending: "Bekleyen olarak işaretle",
+      markDone: "Tamamlandı olarak işaretle",
+      durations: { short: "kısa", medium: "orta", long: "uzun" }
+    },
+    footer: { stackLabel: "Proje stack'i" },
+    language: { responseLanguage: "Yanıt dili", automatic: "Otomatik", manual: "Manuel", activeLanguage: "Aktif arayüz dili" },
+    errors: { unexpected: "Beklenmedik bir hata oluştu." }
+  },
+
+  nl: {
+    common: {
+      appName: "Spark",
+      close: "Sluiten",
+      cancel: "Annuleren",
+      saveChanges: "Wijzigingen opslaan",
+      delete: "Verwijderen",
+      todayRecommendation: "Aanbeveling van vandaag",
+      noPendingTasks: "Niets in behandeling",
+      loading: "Nadenken...",
+      askForHelp: "Om hulp vragen",
+      startOver: "Opnieuw beginnen",
+      sendContext: "Context verzenden",
+      save: "Opslaan",
+      add: "Toevoegen",
+      saving: "Opslaan...",
+      adding: "Toevoegen...",
+      auto: "Automatisch",
+      manual: "Handmatig",
+      systemLanguage: "Systeemtaal",
+      interfaceLanguage: "Interfacetaal",
+      autoLanguageHint: "Gebruikt de browserlocale als locatiesignaal."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Een eenvoudige weergave om te kiezen welke taak eerst aan te pakken op basis van prioriteit, deadline en beschikbare tijd.",
+      mascotAlt: "Spark mascotte"
+    },
+    recommendation: {
+      expandedView: "Uitgebreide weergave",
+      buildExplanation: "Uitleg wordt gemaakt",
+      awaitingAiTitle: "Wachten op AI-aanbeveling",
+      openLarge: "Groot openen",
+      category: "Categorie",
+      priority: "Prioriteit",
+      duration: "Duur",
+      dueDate: "Deadline",
+      description: "Beschrijving",
+      unavailableTitle: "AI-aanbeveling niet beschikbaar",
+      priorityLoadingError: "Kon de prioriteitsuitleg niet genereren."
+    },
+    taskHelp: {
+      title: "Diepgaande hulp voor deze taak",
+      subtitle: "De AI probeert goed te antwoorden met wat het al heeft. Vraagt alleen meer als het echt nodig is.",
+      closeHelp: "Hulp sluiten",
+      openHelp: "Help me dit op te lossen",
+      mainQuestion: "Hoofdvraag",
+      extraContext: "Extra context al gegeven",
+      beforeAnswering: "Voor het beantwoorden",
+      clarificationAnswer: "Antwoord op de verduidelijking",
+      anotherQuestion: "Nog een vraag over deze taak",
+      whatDoYouNeed: "Wat wil je oplossen?",
+      clarificationPlaceholder: "Antwoord met het ontbrekende detail zodat de AI beter kan helpen.",
+      followUpPlaceholder: "Stel een andere specifieke vraag over dezelfde taak.",
+      initialPlaceholder: "Bv: Ik weet niet waar ik moet beginnen, ik zit vast bij een beslissing.",
+      thinking: "Nadenken...",
+      submitError: "Kon AI-hulp nu niet genereren.",
+      understanding: "Hoe het de situatie las",
+      answer: "Wat het zou doen",
+      actionPlan: "Concreet plan"
+    },
+    taskForm: {
+      editTask: "Taak bewerken",
+      newTask: "Nieuwe taak",
+      title: "Titel",
+      titlePlaceholder: "Bv: Presentatie voorbereiden",
+      category: "Categorie",
+      categoryPlaceholder: "Werk, thuis, studie...",
+      description: "Beschrijving",
+      descriptionPlaceholder: "Voeg context toe zodat de aanbeveling de taak beter begrijpt...",
+      priority: "Prioriteit",
+      duration: "Duur",
+      dueDate: "Deadline",
+      addTask: "Taak toevoegen",
+      editSubmit: "Wijzigingen opslaan",
+      priorities: { low: "Laag", medium: "Gemiddeld", high: "Hoog" },
+      durations: { short: "Kort", medium: "Gemiddeld", long: "Lang" }
+    },
+    taskList: {
+      title: "Taken",
+      subtitle: "In behandeling en voltooid",
+      pending: "In behandeling",
+      completed: "Voltooid",
+      noPending: "Nog geen taken in behandeling.",
+      noCompleted: "Nog geen voltooide taken.",
+      edit: "Bewerken",
+      markPending: "Markeer als in behandeling",
+      markDone: "Markeer als voltooid",
+      durations: { short: "kort", medium: "gemiddeld", long: "lang" }
+    },
+    footer: { stackLabel: "Projectstack" },
+    language: { responseLanguage: "Antwoordtaal", automatic: "Automatisch", manual: "Handmatig", activeLanguage: "Actieve interfacetaal" },
+    errors: { unexpected: "Er is een onverwachte fout opgetreden." }
+  },
+
+  pl: {
+    common: {
+      appName: "Spark",
+      close: "Zamknij",
+      cancel: "Anuluj",
+      saveChanges: "Zapisz zmiany",
+      delete: "Usuń",
+      todayRecommendation: "Rekomendacja dnia",
+      noPendingTasks: "Brak zadań",
+      loading: "Myślę...",
+      askForHelp: "Poproś o pomoc",
+      startOver: "Zacznij od nowa",
+      sendContext: "Wyślij kontekst",
+      save: "Zapisz",
+      add: "Dodaj",
+      saving: "Zapisywanie...",
+      adding: "Dodawanie...",
+      auto: "Automatyczny",
+      manual: "Ręczny",
+      systemLanguage: "Język systemu",
+      interfaceLanguage: "Język interfejsu",
+      autoLanguageHint: "Używa ustawień regionalnych przeglądarki jako sygnału lokalizacji."
+    },
+    header: {
+      title: "Spark",
+      subtitle: "Prosty widok do wyboru pierwszego zadania na podstawie priorytetu, terminu i dostępnego czasu.",
+      mascotAlt: "Maskotka Spark"
+    },
+    recommendation: {
+      expandedView: "Rozszerzony widok",
+      buildExplanation: "Tworzenie wyjaśnienia",
+      awaitingAiTitle: "Oczekiwanie na rekomendację AI",
+      openLarge: "Otwórz duże",
+      category: "Kategoria",
+      priority: "Priorytet",
+      duration: "Czas trwania",
+      dueDate: "Termin",
+      description: "Opis",
+      unavailableTitle: "Rekomendacja AI niedostępna",
+      priorityLoadingError: "Nie można wygenerować wyjaśnienia priorytetu."
+    },
+    taskHelp: {
+      title: "Głęboka pomoc dla tego zadania",
+      subtitle: "AI stara się dobrze odpowiadać z tym co ma. Prosi o więcej tylko wtedy, gdy naprawdę potrzebuje.",
+      closeHelp: "Zamknij pomoc",
+      openHelp: "Pomóż mi to rozwiązać",
+      mainQuestion: "Główne pytanie",
+      extraContext: "Dodatkowy kontekst już podany",
+      beforeAnswering: "Przed odpowiedzią",
+      clarificationAnswer: "Odpowiedź na wyjaśnienie",
+      anotherQuestion: "Kolejne pytanie o to zadanie",
+      whatDoYouNeed: "Co chcesz rozwiązać?",
+      clarificationPlaceholder: "Odpowiedz z brakującym szczegółem, aby AI mogła lepiej pomóc.",
+      followUpPlaceholder: "Zadaj kolejne konkretne pytanie o to zadanie.",
+      initialPlaceholder: "Np: nie wiem od czego zacząć, utknąłem przy decyzji.",
+      thinking: "Myślę...",
+      submitError: "Nie można teraz wygenerować pomocy AI.",
+      understanding: "Jak odczytał sytuację",
+      answer: "Co by zrobił",
+      actionPlan: "Konkretny plan"
+    },
+    taskForm: {
+      editTask: "Edytuj zadanie",
+      newTask: "Nowe zadanie",
+      title: "Tytuł",
+      titlePlaceholder: "Np: Przygotuj prezentację",
+      category: "Kategoria",
+      categoryPlaceholder: "Praca, dom, nauka...",
+      description: "Opis",
+      descriptionPlaceholder: "Dodaj kontekst, aby rekomendacja lepiej zrozumiała zadanie...",
+      priority: "Priorytet",
+      duration: "Czas trwania",
+      dueDate: "Termin",
+      addTask: "Dodaj zadanie",
+      editSubmit: "Zapisz zmiany",
+      priorities: { low: "Niski", medium: "Średni", high: "Wysoki" },
+      durations: { short: "Krótki", medium: "Średni", long: "Długi" }
+    },
+    taskList: {
+      title: "Zadania",
+      subtitle: "Oczekujące i ukończone",
+      pending: "Oczekujące",
+      completed: "Ukończone",
+      noPending: "Brak oczekujących zadań.",
+      noCompleted: "Brak ukończonych zadań.",
+      edit: "Edytuj",
+      markPending: "Oznacz jako oczekujące",
+      markDone: "Oznacz jako ukończone",
+      durations: { short: "krótki", medium: "średni", long: "długi" }
+    },
+    footer: { stackLabel: "Stack projektu" },
+    language: { responseLanguage: "Język odpowiedzi", automatic: "Automatyczny", manual: "Ręczny", activeLanguage: "Aktywny język interfejsu" },
+    errors: { unexpected: "Wystąpił nieoczekiwany błąd." }
   }
 } as const;
 
 export type TranslationSet = (typeof copy)[AppLanguage];
 
 export function resolveAppLanguage(locale?: string | null): AppLanguage {
-  const normalized = locale?.toLowerCase() ?? "";
-
-  if (normalized.startsWith("es")) {
-    return "es";
-  }
-
+  const n = locale?.toLowerCase() ?? "";
+  if (n.startsWith("pt")) return "pt";
+  if (n.startsWith("fr")) return "fr";
+  if (n.startsWith("de")) return "de";
+  if (n.startsWith("it")) return "it";
+  if (n.startsWith("zh")) return "zh";
+  if (n.startsWith("ja")) return "ja";
+  if (n.startsWith("ko")) return "ko";
+  if (n.startsWith("ru")) return "ru";
+  if (n.startsWith("tr")) return "tr";
+  if (n.startsWith("nl")) return "nl";
+  if (n.startsWith("pl")) return "pl";
+  if (n.startsWith("es")) return "es";
   return "en";
 }
 
-export function getDateLocale(language: AppLanguage) {
-  return language === "es" ? "es-ES" : "en-US";
+export function getDateLocale(language: AppLanguage): string {
+  const map: Record<AppLanguage, string> = {
+    en: "en-US", es: "es-ES", pt: "pt-BR", fr: "fr-FR", de: "de-DE",
+    it: "it-IT", zh: "zh-CN", ja: "ja-JP", ko: "ko-KR", ru: "ru-RU",
+    tr: "tr-TR", nl: "nl-NL", pl: "pl-PL"
+  };
+  return map[language];
 }
 
 export function detectTextLanguage(text: string, fallback: AppLanguage): AppLanguage {
   const normalized = text.toLowerCase();
+  if (!normalized.trim()) return fallback;
 
-  if (!normalized.trim()) {
-    return fallback;
-  }
+  const spanishSignals = [" que ", " como ", " para ", " con ", " quiero ", " necesito ", " ayud", " tarea", "entregar", "resolver"];
+  const englishSignals = [" the ", " how ", " what ", " with ", " need ", " want ", "help", "task", "deliver", "solve"];
 
-  const spanishSignals = [
-    " que ",
-    " como ",
-    " para ",
-    " con ",
-    " quiero ",
-    " necesito ",
-    " ayud",
-    " tarea",
-    "entregar",
-    "resolver",
-    "man",
-    "cion",
-    " aca ",
-    " esta "
-  ];
+  const spanishScore = spanishSignals.reduce((s, k) => s + (normalized.includes(k) ? 1 : 0), 0);
+  const englishScore = englishSignals.reduce((s, k) => s + (normalized.includes(k) ? 1 : 0), 0);
 
-  const englishSignals = [
-    " the ",
-    " how ",
-    " what ",
-    " with ",
-    " need ",
-    " want ",
-    "help",
-    "task",
-    "deliver",
-    "solve"
-  ];
-
-  const spanishScore = spanishSignals.reduce(
-    (score, signal) => score + (normalized.includes(signal) ? 1 : 0),
-    0
-  );
-  const englishScore = englishSignals.reduce(
-    (score, signal) => score + (normalized.includes(signal) ? 1 : 0),
-    0
-  );
-
-  if (spanishScore === englishScore) {
-    return fallback;
-  }
-
+  if (spanishScore === englishScore) return fallback;
   return spanishScore > englishScore ? "es" : "en";
 }
 
-export function getPromptLanguageName(language: AppLanguage) {
-  return language === "es" ? "Spanish" : "English";
+export function getPromptLanguageName(language: AppLanguage): string {
+  const map: Record<AppLanguage, string> = {
+    en: "English", es: "Spanish", pt: "Portuguese", fr: "French", de: "German",
+    it: "Italian", zh: "Chinese", ja: "Japanese", ko: "Korean", ru: "Russian",
+    tr: "Turkish", nl: "Dutch", pl: "Polish"
+  };
+  return map[language];
 }

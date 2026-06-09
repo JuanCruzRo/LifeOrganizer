@@ -4,6 +4,10 @@ import {
   buildAiTaskHelpRepairInstructions
 } from "@/lib/ai-task-help-config";
 import { AppLanguage } from "@/lib/i18n";
+import { verifyApiAuth } from "@/lib/supabase-server";
+
+const MAX_QUESTION_LENGTH = 2000;
+const MAX_FIELD_LENGTH = 2000;
 import {
   chatWithMilo,
   getMiloErrorMessage,
@@ -45,6 +49,14 @@ const aiTaskHelpCache = new Map<
 >();
 
 export async function POST(request: Request) {
+  const userId = await verifyApiAuth(request);
+  if (!userId) {
+    return NextResponse.json<AiTaskHelpApiResponse>(
+      { enabled: true, result: null, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   const body = (await request.json()) as {
     task?: AiTaskHelpRequestTask;
     question?: string;
@@ -53,7 +65,9 @@ export async function POST(request: Request) {
     uiLanguage?: AppLanguage;
   };
   const task = isValidTask(body.task) ? body.task : null;
-  const question = typeof body.question === "string" ? body.question.trim() : "";
+  const question = typeof body.question === "string"
+    ? body.question.trim().slice(0, MAX_QUESTION_LENGTH)
+    : "";
   const clarificationTrail = normalizeClarificationTrail(body.clarificationTrail);
   const recommendationReason =
     typeof body.recommendationReason === "string" ? body.recommendationReason.trim() : "";

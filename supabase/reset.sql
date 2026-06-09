@@ -10,6 +10,7 @@ create table public.tasks (
   duration text not null check (duration in ('short', 'medium', 'long')),
   due_date text not null,
   done boolean not null default false,
+  completed_at timestamptz,
   created_at timestamptz not null default timezone('utc', now())
 );
 

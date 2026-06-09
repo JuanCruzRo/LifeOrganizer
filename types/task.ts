@@ -13,4 +13,5 @@ export interface TaskInput {
 export interface Task extends TaskInput {
   id: string;
   done: boolean;
+  completedAt?: string;
 }

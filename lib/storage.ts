@@ -12,6 +12,7 @@ type TaskRow = {
   duration: Task["duration"];
   due_date: string;
   done: boolean;
+  completed_at?: string | null;
   owner_token?: string;
 };
 
@@ -85,12 +86,24 @@ export async function updateTask(task: Task) {
 
 export async function setTaskDone(taskId: string, done: boolean) {
   const client = await getSupabaseClient();
-  const { data, error } = await client
+  let data: unknown;
+  let error: unknown;
+
+  ({ data, error } = await client
     .from("tasks")
-    .update({ done })
+    .update({ done, completed_at: done ? new Date().toISOString() : null })
     .eq("id", taskId)
     .select("*")
-    .single();
+    .single());
+
+  if (isMissingCompletedAtColumnError(error)) {
+    ({ data, error } = await client
+      .from("tasks")
+      .update({ done })
+      .eq("id", taskId)
+      .select("*")
+      .single());
+  }
 
   if (error) {
     console.error("Error toggling task:", error);
@@ -158,6 +171,7 @@ function taskToDB(task: Task, ownerToken?: string) {
     duration: task.duration,
     due_date: task.dueDate,
     done: task.done,
+    ...(task.completedAt !== undefined ? { completed_at: task.completedAt } : {}),
     ...(ownerToken ? { owner_token: ownerToken } : {})
   };
 }
@@ -187,7 +201,8 @@ function normalizeTaskFromDB(value: unknown): Task | null {
       priority: row.priority,
       duration: row.duration,
       dueDate: row.due_date,
-      done: row.done
+      done: row.done,
+      ...(row.completed_at ? { completedAt: row.completed_at } : {})
     };
   }
 
@@ -195,6 +210,14 @@ function normalizeTaskFromDB(value: unknown): Task | null {
 }
 
 function isMissingOwnerTokenColumnError(error: unknown) {
+  return isMissingColumnError(error, "owner_token");
+}
+
+function isMissingCompletedAtColumnError(error: unknown) {
+  return isMissingColumnError(error, "completed_at");
+}
+
+function isMissingColumnError(error: unknown, column: string) {
   if (!error || typeof error !== "object") {
     return false;
   }
@@ -207,6 +230,6 @@ function isMissingOwnerTokenColumnError(error: unknown) {
   return (
     supabaseError.code === "PGRST204" &&
     typeof supabaseError.message === "string" &&
-    supabaseError.message.includes("owner_token")
+    supabaseError.message.includes(column)
   );
 }
