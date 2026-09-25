@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -82,18 +83,26 @@ export function CalendarView({
 
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(true);
+  // Collapsed = only the current week; expanded = the whole month.
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [showDone, setShowDone] = useState(false);
-
-  // Small screens start with the calendar collapsed so the task list is visible right away.
-  useEffect(() => {
-    if (window.innerWidth < 1024) setCalendarOpen(false);
-  }, []);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const calDays = getCalendarDays(year, month);
   const weekdays = getWeekdayLabels(language);
+  // The week that contains today (or the first one) is always visible; the rest expand/collapse.
+  const { weeksBefore, currentWeek, weeksAfter } = useMemo(() => {
+    const weeks: (typeof calDays)[] = [];
+    for (let i = 0; i < calDays.length; i += 7) weeks.push(calDays.slice(i, i + 7));
+    const idx = weeks.findIndex((w) => w.some((d) => d.key === todayKey));
+    const cur = idx === -1 ? 0 : idx;
+    return {
+      weeksBefore: weeks.slice(0, cur).flat(),
+      currentWeek: weeks[cur] ?? [],
+      weeksAfter: weeks.slice(cur + 1).flat()
+    };
+  }, [calDays, todayKey]);
 
   const tasksByDate = allTasks.reduce<Record<string, Task[]>>((acc, task) => {
     if (!task.dueDate) return acc;
@@ -104,6 +113,10 @@ export function CalendarView({
 
   const pendingCount = useMemo(() => allTasks.filter((t) => !t.done).length, [allTasks]);
 
+  const recommendedTask = aiRecommendation
+    ? allTasks.find((t) => t.id === aiRecommendation.recommendedTaskId && !t.done)
+    : null;
+
   // Pending first (soonest due date first); completed ones after, most recent first.
   const byDueAsc = (a: Task, b: Task) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0);
   const byDoneDesc = (a: Task, b: Task) =>
@@ -112,17 +125,62 @@ export function CalendarView({
   const dayTasksSelected = selectedKey ? (tasksByDate[selectedKey] ?? []) : null;
   const pendingList = (dayTasksSelected ?? allTasks).filter((t) => !t.done).sort(byDueAsc);
   const doneList = (dayTasksSelected ?? allTasks).filter((t) => t.done).sort(byDoneDesc);
-  const displayedTasks = [...pendingList, ...(selectedKey || showDone ? doneList : [])];
-
-  const recommendedTask = aiRecommendation
-    ? allTasks.find((t) => t.id === aiRecommendation.recommendedTaskId && !t.done)
-    : null;
+  // The recommended task already has its own card above, so it is not repeated in the list.
+  const listPending = selectedKey ? pendingList : pendingList.filter((t) => t.id !== recommendedTask?.id);
+  const displayedTasks = [...listPending, ...(selectedKey || showDone ? doneList : [])];
 
   function prevMonth() {
     setViewDate(new Date(year, month - 1, 1));
   }
   function nextMonth() {
     setViewDate(new Date(year, month + 1, 1));
+  }
+
+  function renderDay({ key, date, currentMonth }: { key: string; date: Date; currentMonth: boolean }) {
+    const dayTasks = tasksByDate[key] ?? [];
+    const isToday = key === todayKey;
+    const isSelected = key === selectedKey;
+    const hasHighPriority = dayTasks.some((t) => !t.done && t.priority === "high");
+    const pendingCount = dayTasks.filter((t) => !t.done).length;
+    const doneCount = dayTasks.filter((t) => t.done).length;
+
+    return (
+      <div key={key} className="px-0.5">
+      <button
+        onClick={() => setSelectedKey(isSelected ? null : key)}
+        className={cn(
+          "relative flex h-9 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors",
+          currentMonth ? "text-foreground" : "text-muted-foreground/30",
+          !currentMonth && "pointer-events-none",
+          isSelected && "bg-primary text-primary-foreground",
+          !isSelected && isToday && "bg-primary/15 font-bold text-primary ring-1 ring-inset ring-primary/40",
+          !isSelected && !isToday && currentMonth && "hover:bg-secondary/60"
+        )}
+      >
+        <span className="leading-none">{date.getDate()}</span>
+        {dayTasks.length > 0 && (
+          <div className="flex gap-0.5">
+            {pendingCount > 0 && (
+              <span className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                isSelected
+                  ? "bg-primary-foreground"
+                  : hasHighPriority
+                    ? "bg-red-400"
+                    : "bg-primary"
+              )} />
+            )}
+            {doneCount > 0 && (
+              <span className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                isSelected ? "bg-primary-foreground/50" : "bg-muted-foreground/60"
+              )} />
+            )}
+          </div>
+        )}
+      </button>
+      </div>
+    );
   }
 
   return (
@@ -146,14 +204,14 @@ export function CalendarView({
       <div className="flex-1 overflow-y-auto">
         {/* AI recommendation — the star of the screen */}
         {(recommendedTask || isAiLoading) && (
-          <div className="px-5 pt-4">
+          <div className="px-5 pt-3">
             {isAiLoading ? (
               <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 text-sm text-muted-foreground">
                 <MiloLoader />
                 <span>{copy.calendar.analyzingTasks}</span>
               </div>
             ) : recommendedTask ? (
-              <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-5">
+              <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-widest text-primary">
                     <Sparkles className="h-3 w-3" />
@@ -163,21 +221,21 @@ export function CalendarView({
                     {copy.calendar.todayRecommendation}
                   </p>
                 </div>
-                <p className="mt-3 text-xl font-semibold leading-snug tracking-tight sm:text-2xl">
+                <p className="mt-2 text-lg font-semibold leading-snug tracking-tight sm:text-xl">
                   {recommendedTask.title}
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{recommendedTask.category}</span>
                   <span>·</span>
                   <span>{getDueDateLabel(recommendedTask.dueDate, language)}</span>
                   <PriorityPill priority={recommendedTask.priority} language={language} />
                 </div>
                 {aiRecommendation?.recommendationReason && (
-                  <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground/80">
                     {aiRecommendation.recommendationReason}
                   </p>
                 )}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" disabled={isMutating} onClick={() => void onToggleTask(recommendedTask.id)} className="gap-1.5">
                     <CheckCircle2 className="h-4 w-4" />
                     {copy.taskList.markDone}
@@ -192,14 +250,14 @@ export function CalendarView({
         )}
 
         {/* Calendar */}
-        <div className="px-5 py-4">
+        <div className="px-5 py-3">
           {/* Month navigation */}
           <div className="mb-3 flex items-center justify-between">
             <button
               onClick={prevMonth}
               disabled={!calendarOpen}
               aria-label="‹"
-              className={cn("rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground", !calendarOpen && "invisible")}
+              className={cn("rounded-lg p-1.5 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground", !calendarOpen && "pointer-events-none opacity-0")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -213,20 +271,19 @@ export function CalendarView({
                 aria-label={getMonthLabel(language, year, month)}
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
-                {calendarOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", calendarOpen && "rotate-180")} />
               </button>
               <button
                 onClick={nextMonth}
                 disabled={!calendarOpen}
                 aria-label="›"
-                className={cn("rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground", !calendarOpen && "invisible")}
+                className={cn("rounded-lg p-1.5 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground", !calendarOpen && "pointer-events-none opacity-0")}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {calendarOpen && (<>
           {/* Weekday headers */}
           <div className="grid grid-cols-7">
             {weekdays.map((d, i) => (
@@ -242,56 +299,16 @@ export function CalendarView({
             ))}
           </div>
 
-          {/* Days grid */}
-          <div className="grid grid-cols-7 gap-x-0.5 gap-y-0.5">
-            {calDays.map(({ key, date, currentMonth }) => {
-              const dayTasks = tasksByDate[key] ?? [];
-              const isToday = key === todayKey;
-              const isSelected = key === selectedKey;
-              const hasHighPriority = dayTasks.some((t) => !t.done && t.priority === "high");
-              const pendingCount = dayTasks.filter((t) => !t.done).length;
-              const doneCount = dayTasks.filter((t) => t.done).length;
-
-              return (
-                <div key={key} className="px-0.5">
-                <button
-                  onClick={() => setSelectedKey(isSelected ? null : key)}
-                  className={cn(
-                    "relative flex h-9 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors",
-                    currentMonth ? "text-foreground" : "text-muted-foreground/30",
-                    !currentMonth && "pointer-events-none",
-                    isSelected && "bg-primary text-primary-foreground",
-                    !isSelected && isToday && "bg-primary/15 font-bold text-primary ring-1 ring-inset ring-primary/40",
-                    !isSelected && !isToday && currentMonth && "hover:bg-secondary/60"
-                  )}
-                >
-                  <span className="leading-none">{date.getDate()}</span>
-                  {dayTasks.length > 0 && (
-                    <div className="flex gap-0.5">
-                      {pendingCount > 0 && (
-                        <span className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          isSelected
-                            ? "bg-primary-foreground"
-                            : hasHighPriority
-                              ? "bg-red-400"
-                              : "bg-primary"
-                        )} />
-                      )}
-                      {doneCount > 0 && (
-                        <span className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          isSelected ? "bg-primary-foreground/50" : "bg-muted-foreground/60"
-                        )} />
-                      )}
-                    </div>
-                  )}
-                </button>
-                </div>
-              );
-            })}
+          {/* Days grid: the current week is always visible; the other weeks expand smoothly */}
+          <div>
+            <CollapsibleWeeks open={calendarOpen} position="before">
+              {weeksBefore.map(renderDay)}
+            </CollapsibleWeeks>
+            <div className="grid grid-cols-7 gap-x-0.5 gap-y-0.5">{currentWeek.map(renderDay)}</div>
+            <CollapsibleWeeks open={calendarOpen} position="after">
+              {weeksAfter.map(renderDay)}
+            </CollapsibleWeeks>
           </div>
-          </>)}
         </div>
 
         {/* Task list */}
@@ -313,9 +330,12 @@ export function CalendarView({
           </div>
 
           {displayedTasks.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              {selectedKey ? copy.calendar.noTasksDay : copy.calendar.noTasksSaved}
-            </p>
+            // Nothing to list: either there are no tasks at all / on that day, or the only pending one is the recommended card above.
+            selectedKey || allTasks.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {selectedKey ? copy.calendar.noTasksDay : copy.calendar.noTasksSaved}
+              </p>
+            ) : null
           ) : (
             <ul className="flex flex-col gap-2">
               {displayedTasks.map((task) => (
@@ -427,5 +447,22 @@ function PriorityPill({ priority, language }: { priority: Task["priority"]; lang
     >
       {getTaskPriorityLabel(priority, language)}
     </span>
+  );
+}
+
+
+// Height/opacity transition so the month unfolds instead of popping in.
+function CollapsibleWeeks({ open, position, children }: { open: boolean; position: "before" | "after"; children: ReactNode }) {
+  return (
+    <motion.div
+      initial={false}
+      animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+      transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+      className="overflow-hidden"
+      aria-hidden={!open}
+      inert={!open}
+    >
+      <div className={cn("grid grid-cols-7 gap-x-0.5 gap-y-0.5", position === "before" ? "pb-0.5" : "pt-0.5")}>{children}</div>
+    </motion.div>
   );
 }
