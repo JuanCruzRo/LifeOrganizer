@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { MiloLoader } from "@/components/milo-loader";
@@ -127,13 +127,28 @@ export function CalendarView({
   const doneList = (dayTasksSelected ?? allTasks).filter((t) => t.done).sort(byDoneDesc);
   // The recommended task already has its own card above, so it is not repeated in the list.
   const listPending = selectedKey ? pendingList : pendingList.filter((t) => t.id !== recommendedTask?.id);
-  const displayedTasks = [...listPending, ...(selectedKey || showDone ? doneList : [])];
+  const displayedTasks = [...listPending, ...(selectedKey ? doneList : [])];
 
   function prevMonth() {
     setViewDate(new Date(year, month - 1, 1));
   }
   function nextMonth() {
     setViewDate(new Date(year, month + 1, 1));
+  }
+
+  function renderRow(task: Task) {
+    return (
+      <TaskRow
+        key={task.id}
+        task={task}
+        language={language}
+        isMutating={isMutating}
+        isRecommended={task.id === recommendedTask?.id}
+        onToggle={() => void onToggleTask(task.id)}
+        onEdit={() => onEditTask(task.id)}
+        onDelete={() => void onDeleteTask(task.id)}
+      />
+    );
   }
 
   function renderDay({ key, date, currentMonth }: { key: string; date: Date; currentMonth: boolean }) {
@@ -338,30 +353,24 @@ export function CalendarView({
             ) : null
           ) : (
             <ul className="flex flex-col gap-2">
-              {displayedTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  language={language}
-                  isMutating={isMutating}
-                  isRecommended={task.id === recommendedTask?.id}
-                  onToggle={() => void onToggleTask(task.id)}
-                  onEdit={() => onEditTask(task.id)}
-                  onDelete={() => void onDeleteTask(task.id)}
-                />
-              ))}
+              {displayedTasks.map(renderRow)}
             </ul>
           )}
 
           {!selectedKey && doneList.length > 0 && (
-            <button
-              onClick={() => setShowDone((v) => !v)}
-              aria-expanded={showDone}
-              className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {showDone ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              {copy.taskList.completed} ({doneList.length})
-            </button>
+            <>
+              <button
+                onClick={() => setShowDone((v) => !v)}
+                aria-expanded={showDone}
+                className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", showDone && "rotate-180")} />
+                {copy.taskList.completed} ({doneList.length})
+              </button>
+              <Collapsible open={showDone}>
+                <ul className="flex flex-col gap-2 pt-3">{doneList.map(renderRow)}</ul>
+              </Collapsible>
+            </>
           )}
         </div>
       </div>
@@ -451,8 +460,8 @@ function PriorityPill({ priority, language }: { priority: Task["priority"]; lang
 }
 
 
-// Height/opacity transition so the month unfolds instead of popping in.
-function CollapsibleWeeks({ open, position, children }: { open: boolean; position: "before" | "after"; children: ReactNode }) {
+// Height/opacity transition so content unfolds instead of popping in.
+function Collapsible({ open, children }: { open: boolean; children: ReactNode }) {
   return (
     <motion.div
       initial={false}
@@ -462,7 +471,15 @@ function CollapsibleWeeks({ open, position, children }: { open: boolean; positio
       aria-hidden={!open}
       inert={!open}
     >
-      <div className={cn("grid grid-cols-7 gap-x-0.5 gap-y-0.5", position === "before" ? "pb-0.5" : "pt-0.5")}>{children}</div>
+      {children}
     </motion.div>
+  );
+}
+
+function CollapsibleWeeks({ open, position, children }: { open: boolean; position: "before" | "after"; children: ReactNode }) {
+  return (
+    <Collapsible open={open}>
+      <div className={cn("grid grid-cols-7 gap-x-0.5 gap-y-0.5", position === "before" ? "pb-0.5" : "pt-0.5")}>{children}</div>
+    </Collapsible>
   );
 }
