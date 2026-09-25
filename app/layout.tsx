@@ -18,6 +18,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Spark",
   description: "AI-powered task organizer."
 };
@@ -29,7 +30,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <html lang="es" className={`${inter.variable} ${spaceGrotesk.variable}`}>
         <body>
           <LanguageProvider>{children}</LanguageProvider>
         </body>

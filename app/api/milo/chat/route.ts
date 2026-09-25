@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { chatWithMilo, refreshUserMemorySummary } from "@/lib/milo";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
+import { consumeDailyUsage, dailyLimitResponse } from "@/lib/usage-limits";
 import { bumpMessageCount, getUserMemory, saveUserMemory, shouldRefreshMemory } from "@/lib/user-memory";
 import { Task, TaskInput } from "@/types/task";
 
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
   }
 
   const plan = await getUserPlan(userId);
+  const usage = await consumeDailyUsage(userId, "milo_chat", plan);
+  if (!usage.allowed) return dailyLimitResponse(usage.limit, plan);
+
   const canCreateTasks = plan !== "free";
 
   const userMemory = await getUserMemory(userId);

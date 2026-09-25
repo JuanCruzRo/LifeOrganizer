@@ -21,6 +21,11 @@ export async function POST(request: Request) {
   const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id");
   const topic = url.searchParams.get("type") ?? url.searchParams.get("topic");
 
+  if (!MP_WEBHOOK_SECRET && process.env.NODE_ENV === "production") {
+    console.error("MP_WEBHOOK_SECRET is not set; rejecting webhook");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
+  }
+
   if (MP_WEBHOOK_SECRET) {
     try {
       WebhookSignatureValidator.validate({

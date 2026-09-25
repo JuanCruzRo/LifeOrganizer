@@ -5,7 +5,8 @@ Organizador de vida personal con IA. Gestioná tus tareas y chateá con Milo, tu
 ## Stack
 
 - **Next.js 15** + TypeScript
-- **Supabase** — auth, tareas, sesiones de Milo
+- **Clerk** — autenticación
+- **Neon** (Postgres) + Drizzle — tareas, sesiones de Milo, planes
 - **Groq** — LLM (Llama 4 Scout)
 - **Tavily** — búsqueda web para plan Pro
 - **SearXNG** — búsqueda web para plan Free
@@ -24,8 +25,9 @@ Abrí `http://localhost:3000`.
 Copiá `.env.example` a `.env` y completá:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+DATABASE_URL=
 GROQ_API_KEY=
 GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 TAVILY_API_KEY=       # opcional, para plan Pro
@@ -33,9 +35,4 @@ TAVILY_API_KEY=       # opcional, para plan Pro
 
 ## Base de datos
 
-Ejecutá en orden en el SQL Editor de Supabase:
-
-1. `supabase/reset.sql` — tabla de tareas
-2. `supabase/milo.sql` — sesiones de Milo
-3. `supabase/add_completed_at.sql` — historial de tareas completadas
-4. `supabase/user_planes.sql` — planes de usuario (free/pro)
+Ejecutá `neon/schema.sql` en el SQL Editor de Neon.

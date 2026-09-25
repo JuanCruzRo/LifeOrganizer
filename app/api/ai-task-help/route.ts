@@ -5,6 +5,7 @@ import {
 } from "@/lib/ai-task-help-config";
 import { AppLanguage } from "@/lib/i18n";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
+import { consumeDailyUsage } from "@/lib/usage-limits";
 
 const MAX_QUESTION_LENGTH = 2000;
 const MAX_FIELD_LENGTH = 2000;
@@ -94,6 +95,21 @@ export async function POST(request: Request) {
             : "Missing data to ask for help with this task."
       },
       { status: 400 }
+    );
+  }
+
+  const usage = await consumeDailyUsage(userId, "ai_task_help", plan);
+  if (!usage.allowed) {
+    return NextResponse.json<AiTaskHelpApiResponse>(
+      {
+        enabled: true,
+        result: null,
+        error:
+          uiLanguage === "es"
+            ? "Llegaste al límite diario de consultas de IA. Se reinicia mañana."
+            : "You reached the daily AI limit. It resets tomorrow."
+      },
+      { status: 429 }
     );
   }
 

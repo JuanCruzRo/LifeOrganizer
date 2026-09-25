@@ -2,6 +2,7 @@
 
 import { useAppLanguage } from "@/components/language-provider";
 import LogoLoop from "@/components/logo-loop";
+import { LegalLinks } from "@/components/legal/legal-links";
 import {
   SiNextdotjs,
   SiMeta,
@@ -46,6 +47,7 @@ export function FooterLogoLoop() {
           speed={60}
         />
       </div>
+      <LegalLinks className="mt-4" />
     </footer>
   );
 }

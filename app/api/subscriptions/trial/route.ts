@@ -18,5 +18,8 @@ export async function POST() {
   }
 
   const trialEndsAt = await startPlusTrial(userId, TRIAL_DAYS);
+  if (!trialEndsAt) {
+    return NextResponse.json({ error: "Trial already used" }, { status: 409 });
+  }
   return NextResponse.json({ trialEndsAt: trialEndsAt.toISOString() });
 }

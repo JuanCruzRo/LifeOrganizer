@@ -5,6 +5,7 @@ import {
 } from "@/lib/ai-priority-config";
 import { AppLanguage } from "@/lib/i18n";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
+import { consumeDailyUsage } from "@/lib/usage-limits";
 
 const MAX_TASKS = 100;
 import {
@@ -61,6 +62,13 @@ export async function POST(request: Request) {
     tasks?: AiPriorityRequestTask[];
     uiLanguage?: AppLanguage;
   };
+  const usage = await consumeDailyUsage(userId, "ai_priority", plan);
+  if (!usage.allowed) {
+    return NextResponse.json<AiPriorityApiResponse>(
+      { enabled: true, recommendation: null, error: "Llegaste al límite diario de recomendaciones de IA. Se reinicia mañana." },
+      { status: 429 }
+    );
+  }
   const pendingTasks = Array.isArray(body.tasks) ? body.tasks.slice(0, MAX_TASKS) : [];
   const uiLanguage = body.uiLanguage === "es" ? "es" : "en";
 

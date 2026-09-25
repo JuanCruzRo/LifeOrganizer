@@ -1,5 +1,6 @@
 "use client";
 
+import { LegalLinks } from "@/components/legal/legal-links";
 import { Check, Loader2, Sparkles, X, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -44,7 +45,7 @@ export function PlansPage() {
     try {
       const res = await fetch("/api/subscriptions/trial", { method: "POST" });
       if (!res.ok) throw new Error("trial_failed");
-      router.push("/");
+      router.push("/app");
     } catch {
       setError(copy.errors.unexpected);
       setLoadingPlan(null);
@@ -92,7 +93,7 @@ export function PlansPage() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4 py-16">
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/app")}
         className="absolute left-4 top-4 z-10 flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         aria-label="Volver"
       >
@@ -206,7 +207,7 @@ export function PlansPage() {
                   disabled={loadingPlan === plan.id}
                   onClick={() =>
                     plan.id === "free"
-                      ? router.push("/")
+                      ? router.push("/app")
                       : plan.id === "plus"
                         ? handleStartTrial()
                         : handleCheckout("pro")
@@ -244,6 +245,7 @@ export function PlansPage() {
       >
         {plans.footer}
       </motion.p>
+      <LegalLinks className="relative z-10 mt-3" />
     </div>
   );
 }

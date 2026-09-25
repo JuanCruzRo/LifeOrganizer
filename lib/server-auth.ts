@@ -45,9 +45,10 @@ export async function getUserPlanRow(userId: string) {
   return rows[0] ?? null;
 }
 
-export async function startPlusTrial(userId: string, trialDays: number): Promise<Date> {
+export async function startPlusTrial(userId: string, trialDays: number): Promise<Date | null> {
   const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-  await sql`
+  // Only users who never had a trial or a subscription can start one.
+  const rows = await sql`
     INSERT INTO user_plans (user_id, plan, trial_ends_at, updated_at)
     VALUES (${userId}, 'plus', ${trialEndsAt.toISOString()}, NOW())
     ON CONFLICT (user_id) DO UPDATE SET
@@ -55,8 +56,11 @@ export async function startPlusTrial(userId: string, trialDays: number): Promise
       trial_ends_at = ${trialEndsAt.toISOString()},
       updated_at = NOW()
     WHERE user_plans.plan = 'free'
+      AND user_plans.trial_ends_at IS NULL
+      AND user_plans.mp_preapproval_id IS NULL
+    RETURNING user_id
   `;
-  return trialEndsAt;
+  return rows.length > 0 ? trialEndsAt : null;
 }
 
 export async function saveSubscription(params: {

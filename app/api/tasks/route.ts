@@ -9,6 +9,7 @@ import {
   deleteTaskById,
   countUserTasks
 } from "@/lib/storage";
+import { MAX_TASKS_PER_USER } from "@/lib/usage-limits";
 import { Task, TaskInput } from "@/types/task";
 
 const FREE_TASK_LIMIT = 15;
@@ -24,7 +25,12 @@ function isValidTask(v: unknown): v is Task {
     (t.priority === "low" || t.priority === "medium" || t.priority === "high") &&
     (t.duration === "short" || t.duration === "medium" || t.duration === "long") &&
     typeof t.dueDate === "string" &&
-    typeof t.done === "boolean"
+    typeof t.done === "boolean" &&
+    t.id.length <= 100 &&
+    t.title.length <= 200 &&
+    t.category.length <= 60 &&
+    t.description.length <= 2000 &&
+    t.dueDate.length <= 32
   );
 }
 
@@ -50,14 +56,15 @@ export async function POST(request: Request) {
   catch { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
 
   const plan = await getUserPlan(userId);
-  if (plan === "free") {
-    const count = await countUserTasks(userId);
-    if (count >= FREE_TASK_LIMIT) {
-      return NextResponse.json(
-        { error: "FREE_PLAN_LIMIT:task_limit_reached", limit: FREE_TASK_LIMIT },
-        { status: 403 }
-      );
-    }
+  const count = await countUserTasks(userId);
+  if (count >= MAX_TASKS_PER_USER) {
+    return NextResponse.json({ error: "TASK_LIMIT_REACHED", limit: MAX_TASKS_PER_USER }, { status: 403 });
+  }
+  if (plan === "free" && count >= FREE_TASK_LIMIT) {
+    return NextResponse.json(
+      { error: "FREE_PLAN_LIMIT:task_limit_reached", limit: FREE_TASK_LIMIT },
+      { status: 403 }
+    );
   }
 
   const body = (await request.json()) as unknown;

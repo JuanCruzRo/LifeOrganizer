@@ -49,7 +49,7 @@ export function StatsPage() {
   }, [planLoaded, plan, language]);
 
   if (planLoaded && plan !== "pro") {
-    return <StatsLocked onBack={() => router.push("/")} />;
+    return <StatsLocked onBack={() => router.push("/app")} />;
   }
 
   return (
@@ -61,7 +61,7 @@ export function StatsPage() {
             <p className="mt-1 text-sm text-muted-foreground">{copy.stats.subtitle}</p>
           </div>
           <Link
-            href="/"
+            href="/app"
             className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary"
           >
             {copy.stats.back}
