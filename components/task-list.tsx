@@ -1,7 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
@@ -90,66 +92,74 @@ function TaskGroup({
     <div className="rounded-xl border border-border bg-background/50 p-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold">{title}</h3>
-        <Badge variant="secondary">{tasks.length}</Badge>
+        <Badge variant="secondary"><AnimatedNumber value={tasks.length} /></Badge>
       </div>
 
       {tasks.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
-          {tasks.map((task) => (
-            <li key={task.id}>
-              <Card className="p-4">
-                <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
-                  <div className="min-w-0 pr-0 sm:pr-2">
-                    <p className={cn("text-sm font-semibold", task.done && "line-through text-muted-foreground")}>
-                      {task.title}
-                    </p>
-                    {task.description ? (
-                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                        {task.description}
+          <AnimatePresence initial={false}>
+            {tasks.map((task) => (
+              <motion.li
+                key={task.id}
+                initial={{ opacity: 0, scale: 0.85, y: -8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -8 }}
+                transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              >
+                <Card className="p-4">
+                  <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-start">
+                    <div className="min-w-0 pr-0 sm:pr-2">
+                      <p className={cn("text-sm font-semibold", task.done && "line-through text-muted-foreground")}>
+                        {task.title}
                       </p>
-                    ) : null}
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {task.category} · {getTaskPriorityLabel(task.priority, language)} ·{" "}
-                      {getTaskDurationLabel(task.duration, language)} · {getDueDateLabel(task.dueDate, language)} ·{" "}
-                      {formatDueDate(task.dueDate, language)}
-                    </p>
-                  </div>
+                      {task.description ? (
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                          {task.description}
+                        </p>
+                      ) : null}
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        {task.category} · {getTaskPriorityLabel(task.priority, language)} ·{" "}
+                        {getTaskDurationLabel(task.duration, language)} · {getDueDateLabel(task.dueDate, language)} ·{" "}
+                        {formatDueDate(task.dueDate, language)}
+                      </p>
+                    </div>
 
-                  <div className="grid w-full shrink-0 gap-2 sm:w-40">
-                    <Button
-                      disabled={isMutating}
-                      onClick={() => onEditTask(task.id)}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      {copy.taskList.edit}
-                    </Button>
-                    <Button
-                      disabled={isMutating}
-                      onClick={() => void onToggleTask(task.id)}
-                      size="sm"
-                      type="button"
-                      variant={task.done ? "secondary" : "default"}
-                    >
-                      {task.done ? copy.taskList.markPending : copy.taskList.markDone}
-                    </Button>
-                    <Button
-                      disabled={isMutating}
-                      onClick={() => void onDeleteTask(task.id)}
-                      size="sm"
-                      type="button"
-                      variant="destructive"
-                    >
-                      {copy.common.delete}
-                    </Button>
+                    <div className="grid w-full shrink-0 gap-2 sm:w-40">
+                      <Button
+                        disabled={isMutating}
+                        onClick={() => onEditTask(task.id)}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        {copy.taskList.edit}
+                      </Button>
+                      <Button
+                        disabled={isMutating}
+                        onClick={() => void onToggleTask(task.id)}
+                        size="sm"
+                        type="button"
+                        variant={task.done ? "secondary" : "default"}
+                      >
+                        {task.done ? copy.taskList.markPending : copy.taskList.markDone}
+                      </Button>
+                      <Button
+                        disabled={isMutating}
+                        onClick={() => void onDeleteTask(task.id)}
+                        size="sm"
+                        type="button"
+                        variant="destructive"
+                      >
+                        {copy.common.delete}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </li>
-          ))}
+                </Card>
+              </motion.li>
+            ))}
+          </AnimatePresence>
         </ul>
       )}
     </div>

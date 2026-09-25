@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { MiloLoader } from "@/components/milo-loader";
 import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
@@ -71,7 +70,7 @@ export function CalendarView({
   onEditTask,
   onToggleTask
 }: CalendarViewProps) {
-  const { language } = useAppLanguage();
+  const { language, copy } = useAppLanguage();
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -88,6 +87,8 @@ export function CalendarView({
     acc[task.dueDate].push(task);
     return acc;
   }, {});
+
+  const pendingCount = useMemo(() => allTasks.filter((t) => !t.done).length, [allTasks]);
 
   const displayedTasks = selectedKey
     ? (tasksByDate[selectedKey] ?? [])
@@ -107,11 +108,18 @@ export function CalendarView({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
-        <h2 className="text-sm font-semibold">Mis tareas</h2>
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {copy.calendar.myTasks}
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {pendingCount} {pendingCount === 1 ? "pendiente" : "pendientes"}
+          </p>
+        </div>
         <Button size="sm" onClick={onAddTask} className="gap-1.5">
           <Plus className="h-3.5 w-3.5" />
-          Nueva tarea
+          {copy.calendar.newTask}
         </Button>
       </div>
 
@@ -122,16 +130,21 @@ export function CalendarView({
             {isAiLoading ? (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <MiloLoader />
-                <span>Milo está analizando tus tareas...</span>
+                <span>{copy.calendar.analyzingTasks}</span>
               </div>
             ) : recommendedTask ? (
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                <div className="flex-shrink-0 mt-0.5">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    IA
+                  </span>
+                </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Recomendación de hoy
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {copy.calendar.todayRecommendation}
                   </p>
-                  <p className="mt-0.5 text-sm font-medium">{recommendedTask.title}</p>
+                  <p className="mt-0.5 text-sm font-semibold">{recommendedTask.title}</p>
                   {aiRecommendation?.recommendationReason && (
                     <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                       {aiRecommendation.recommendationReason}
@@ -165,53 +178,66 @@ export function CalendarView({
           </div>
 
           {/* Weekday headers */}
-          <div className="mb-1 grid grid-cols-7">
-            {WEEKDAYS.map((d) => (
-              <div key={d} className="py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-7">
+            {WEEKDAYS.map((d, i) => (
+              <div
+                key={d}
+                className={cn(
+                  "pb-1.5 text-center text-[10px] font-semibold uppercase tracking-wider",
+                  i === 0 || i === 6 ? "text-muted-foreground/60" : "text-muted-foreground"
+                )}
+              >
                 {d}
               </div>
             ))}
           </div>
 
           {/* Days grid */}
-          <div className="grid grid-cols-7 gap-y-0.5">
+          <div className="grid grid-cols-7 gap-x-0.5 gap-y-0.5">
             {calDays.map(({ key, date, currentMonth }) => {
               const dayTasks = tasksByDate[key] ?? [];
               const isToday = key === todayKey;
               const isSelected = key === selectedKey;
+              const hasHighPriority = dayTasks.some((t) => !t.done && t.priority === "high");
               const pendingCount = dayTasks.filter((t) => !t.done).length;
               const doneCount = dayTasks.filter((t) => t.done).length;
 
               return (
+                <div key={key} className="px-0.5">
                 <button
-                  key={key}
                   onClick={() => setSelectedKey(isSelected ? null : key)}
                   className={cn(
-                    "relative flex flex-col items-center rounded-lg py-1.5 text-xs transition-colors",
-                    currentMonth ? "text-foreground" : "text-muted-foreground/40",
+                    "relative flex h-9 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors",
+                    currentMonth ? "text-foreground" : "text-muted-foreground/30",
+                    !currentMonth && "pointer-events-none",
                     isSelected && "bg-primary text-primary-foreground",
-                    !isSelected && isToday && "bg-secondary font-semibold",
-                    !isSelected && !isToday && "hover:bg-secondary/60"
+                    !isSelected && isToday && "bg-primary/15 font-bold text-primary ring-1 ring-inset ring-primary/40",
+                    !isSelected && !isToday && currentMonth && "hover:bg-secondary/60"
                   )}
                 >
-                  <span>{date.getDate()}</span>
+                  <span className="leading-none">{date.getDate()}</span>
                   {dayTasks.length > 0 && (
-                    <div className="mt-0.5 flex gap-0.5">
+                    <div className="flex gap-0.5">
                       {pendingCount > 0 && (
                         <span className={cn(
-                          "h-1 w-1 rounded-full",
-                          isSelected ? "bg-primary-foreground" : "bg-primary"
+                          "h-1.5 w-1.5 rounded-full",
+                          isSelected
+                            ? "bg-primary-foreground"
+                            : hasHighPriority
+                              ? "bg-red-400"
+                              : "bg-primary"
                         )} />
                       )}
                       {doneCount > 0 && (
                         <span className={cn(
-                          "h-1 w-1 rounded-full",
-                          isSelected ? "bg-primary-foreground/50" : "bg-muted-foreground"
+                          "h-1.5 w-1.5 rounded-full",
+                          isSelected ? "bg-primary-foreground/50" : "bg-muted-foreground/60"
                         )} />
                       )}
                     </div>
                   )}
                 </button>
+                </div>
               );
             })}
           </div>
@@ -222,22 +248,22 @@ export function CalendarView({
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {selectedKey
-                ? `Tareas — ${new Date(selectedKey + "T12:00:00").toLocaleDateString("es-AR", { day: "numeric", month: "long" })}`
-                : "Todas las tareas"}
+                ? `${copy.calendar.tasksFor} ${new Date(selectedKey + "T12:00:00").toLocaleDateString(language === "es" ? "es-AR" : undefined, { day: "numeric", month: "long" })}`
+                : copy.calendar.allTasks}
             </p>
             {selectedKey && (
               <button
                 onClick={() => setSelectedKey(null)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Ver todas
+                {copy.calendar.viewAll}
               </button>
             )}
           </div>
 
           {displayedTasks.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              {selectedKey ? "No hay tareas para este día." : "No hay tareas guardadas."}
+              {selectedKey ? copy.calendar.noTasksDay : copy.calendar.noTasksSaved}
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -263,7 +289,7 @@ export function CalendarView({
 
 type TaskRowProps = {
   task: Task;
-  language: "en" | "es";
+  language: import("@/lib/i18n").AppLanguage;
   isMutating: boolean;
   isRecommended: boolean;
   onToggle: () => void;
@@ -300,7 +326,7 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
           <span className="text-xs text-muted-foreground">
             {getDueDateLabel(task.dueDate, language)} · {formatDueDate(task.dueDate, language)}
           </span>
-          <PriorityDot priority={task.priority} />
+          <PriorityPill priority={task.priority} />
         </div>
       </div>
 
@@ -326,16 +352,18 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
   );
 }
 
-function PriorityDot({ priority }: { priority: Task["priority"] }) {
+function PriorityPill({ priority }: { priority: Task["priority"] }) {
+  const labels: Record<Task["priority"], string> = { high: "Alta", medium: "Media", low: "Baja" };
   return (
     <span
       className={cn(
-        "inline-block h-1.5 w-1.5 rounded-full",
-        priority === "high" && "bg-destructive",
-        priority === "medium" && "bg-primary",
-        priority === "low" && "bg-muted-foreground"
+        "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+        priority === "high" && "bg-red-500/15 text-red-400",
+        priority === "medium" && "bg-amber-500/15 text-amber-400",
+        priority === "low" && "bg-muted/60 text-muted-foreground"
       )}
-      title={priority}
-    />
+    >
+      {labels[priority]}
+    </span>
   );
 }

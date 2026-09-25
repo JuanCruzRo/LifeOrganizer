@@ -9,6 +9,8 @@ import {
 } from "@/components/recommended-task-help";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Typewriter } from "@/components/ui/typewriter";
+import { useTimer } from "@/components/ui/timer";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskDurationLabel } from "@/lib/task-labels";
 import { cn } from "@/lib/utils";
@@ -33,12 +35,14 @@ export function RecommendationCard({
   const [helpState, setHelpState] = useState<RecommendedTaskHelpState>(() =>
     createInitialRecommendedTaskHelpState()
   );
+  const timer = useTimer();
 
   useEffect(() => {
     if (!recommendedTask) {
       setIsExpanded(false);
     }
-  }, [recommendedTask]);
+    timer.reset();
+  }, [recommendedTask?.id]);
 
   useEffect(() => {
     setHelpState(createInitialRecommendedTaskHelpState());
@@ -72,6 +76,7 @@ export function RecommendationCard({
           recommendationReason={recommendationReason}
           recommendedTask={recommendedTask}
           statusMessage={statusMessage}
+          timer={timer}
         />
       </section>
 
@@ -92,6 +97,7 @@ export function RecommendationCard({
                 recommendationReason={recommendationReason}
                 recommendedTask={recommendedTask}
                 statusMessage={statusMessage}
+                timer={timer}
               />
             </div>
           </div>
@@ -123,6 +129,7 @@ type RecommendationCardContentProps = RecommendationCardProps & {
   isExpanded: boolean;
   onExpand?: () => void;
   onHelpStateChange: Dispatch<SetStateAction<RecommendedTaskHelpState>>;
+  timer: ReturnType<typeof useTimer>;
 };
 
 function RecommendationCardContent({
@@ -134,7 +141,8 @@ function RecommendationCardContent({
   onHelpStateChange,
   recommendationReason,
   recommendedTask,
-  statusMessage
+  statusMessage,
+  timer
 }: RecommendationCardContentProps) {
   const { copy, language } = useAppLanguage();
   const heading = recommendedTask
@@ -167,7 +175,7 @@ function RecommendationCardContent({
                 isExpanded ? "max-w-3xl text-base leading-7 sm:text-lg" : "text-sm leading-6 sm:text-base"
               )}
             >
-              {recommendationReason}
+              <Typewriter key={recommendationReason} text={recommendationReason} />
             </p>
           ) : isAiLoading && hasPendingTasks ? (
             <div className="mt-4 flex flex-col gap-3">
@@ -236,6 +244,26 @@ function RecommendationCardContent({
             {recommendedTask.description}
           </p>
         </Card>
+      ) : null}
+
+      {recommendedTask ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            size="sm"
+            variant={timer.isRunning ? "outline" : "default"}
+            onClick={timer.isRunning ? timer.stop : timer.start}
+          >
+            {timer.isRunning ? "⏸ Pausar" : timer.elapsedMs > 0 ? "▶ Continuar" : "▶ Empezar tarea"}
+          </Button>
+          {timer.elapsedMs > 0 && (
+            <>
+              <span className="font-mono text-base tabular-nums">{timer.formattedTime}</span>
+              {!timer.isRunning && (
+                <Button size="sm" variant="ghost" onClick={timer.reset}>Reset</Button>
+              )}
+            </>
+          )}
+        </div>
       ) : null}
 
       {recommendedTask ? (

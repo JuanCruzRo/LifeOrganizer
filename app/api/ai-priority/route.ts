@@ -4,7 +4,7 @@ import {
   buildAiPriorityRepairInstructions
 } from "@/lib/ai-priority-config";
 import { AppLanguage } from "@/lib/i18n";
-import { verifyApiAuth } from "@/lib/supabase-server";
+import { requireAuth, getUserPlan } from "@/lib/server-auth";
 
 const MAX_TASKS = 100;
 import {
@@ -38,12 +38,23 @@ const aiRecommendationCache = new Map<
 >();
 
 export async function POST(request: Request) {
-  const userId = await verifyApiAuth(request);
-  if (!userId) {
+  let userId: string;
+  try { userId = await requireAuth(); }
+  catch {
     return NextResponse.json<AiPriorityApiResponse>(
       { enabled: true, recommendation: null, error: "Unauthorized" },
       { status: 401 }
     );
+  }
+
+  const plan = await getUserPlan(userId);
+
+  if (plan === "free") {
+    return NextResponse.json<AiPriorityApiResponse>({
+      enabled: false,
+      recommendation: null,
+      error: null
+    });
   }
 
   const body = (await request.json()) as {

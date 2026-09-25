@@ -35,6 +35,22 @@ export const languageFlags: Record<AppLanguage, string> = {
   pl: "🇵🇱"
 };
 
+export const languageSpeechCodes: Record<AppLanguage, string> = {
+  en: "en-US",
+  es: "es-AR",
+  pt: "pt-BR",
+  fr: "fr-FR",
+  de: "de-DE",
+  it: "it-IT",
+  zh: "zh-CN",
+  ja: "ja-JP",
+  ko: "ko-KR",
+  ru: "ru-RU",
+  tr: "tr-TR",
+  nl: "nl-NL",
+  pl: "pl-PL"
+};
+
 export const copy = {
   en: {
     common: {
@@ -128,7 +144,104 @@ export const copy = {
     },
     footer: { stackLabel: "Project stack" },
     language: { responseLanguage: "Response language", automatic: "Automatic", manual: "Manual", activeLanguage: "Active UI language" },
-    errors: { unexpected: "An unexpected error occurred." }
+    errors: { unexpected: "An unexpected error occurred." },
+    headerNav: {
+      greeting: "Hi,",
+      plans: "Plans",
+      logout: "Log out",
+      logoutLabel: "Sign out"
+    },
+    calendar: {
+      myTasks: "My tasks",
+      newTask: "New task",
+      todayRecommendation: "Today's recommendation",
+      analyzingTasks: "Milo is analyzing your tasks...",
+      tasksFor: "Tasks —",
+      allTasks: "All tasks",
+      viewAll: "View all",
+      noTasksDay: "No tasks for this day.",
+      noTasksSaved: "No tasks saved yet."
+    },
+    milo: {
+      name: "Milo",
+      subtitle: "Personal assistant",
+      clearChat: "Clear conversation",
+      greeting: "Hi, I'm Milo",
+      greetingSubtitle: "Ask me about your tasks, ask for help organizing yourself, or let's just chat.",
+      taskCreated: "Task created",
+      createTask: "Create task",
+      confirm: "Confirm",
+      dismiss: "Dismiss",
+      noConnection: "Couldn't connect to Milo.",
+      urgentWarning: (n: number) => `⚡ ${n} urgent task${n !== 1 ? "s" : ""} due in the next 2 days.`,
+      briefingGoodMorning: "Good morning! Your summary for today:",
+      briefingGoodAfternoon: "Good afternoon! Your summary for today:",
+      briefingGoodEvening: "Good evening! Your summary for today:",
+      briefingNoPending: "No pending tasks. Good time to add something new.",
+      briefingPending: (n: number) => `You have ${n} pending task${n !== 1 ? "s" : ""}.`,
+      briefingUrgent: (n: number, names: string) => `⚡ ${n} urgent${n !== 1 ? "" : ""}: ${names}`,
+      briefingCompleted: (n: number) => `✅ You completed ${n} task${n !== 1 ? "s" : ""} today. Nice!`,
+      briefingHelp: "How can I help you?",
+      inputPlaceholder: "Write a message...",
+      listening: "Listening...",
+      startListening: "Speak to Milo",
+      stopListening: "Stop recording"
+    },
+    plans: {
+      badge: "Plans",
+      title: "Simple and no surprises",
+      subtitle: "Start free. When you want more from Milo, upgrade whenever you like.",
+      mostPopular: "Most popular",
+      recommended: "Best value",
+      perMonth: "/mo",
+      free: "Free",
+      subscribePlus: "Try Plus free",
+      subscribePro: "Subscribe to Pro",
+      startFree: "Start for free",
+      footer: "Secure payments. Cancel anytime. No hidden fees.",
+      taskLimitReached: "You've reached the 15-task limit on the Free plan.",
+      upgradeToPro: "Upgrade to Pro",
+      trialBadge: (days: number) => `${days} days free`,
+      trialNote: "No card required to start your trial.",
+      trialActive: (days: number) => `${days} days left in your Plus trial`,
+      trialExpired: "Your Plus trial has ended",
+      manageBilling: "Manage billing",
+      currentPlan: "Current plan",
+      freeFeatures: [
+        "Up to 15 tasks",
+        "Chat with Milo",
+        "Calendar view",
+        "Organize by category and priority"
+      ],
+      plusFeatures: [
+        "Unlimited tasks",
+        "Create tasks by chatting with Milo",
+        "AI priority recommendation",
+        "Calendar view"
+      ],
+      proFeatures: [
+        "Everything in Plus",
+        "Deep AI help per task",
+        "Priority support",
+        "Early access to new features"
+      ]
+    },
+    stats: {
+      title: "Your stats",
+      subtitle: "A look at your productivity patterns.",
+      back: "Back",
+      loading: "Loading stats...",
+      completed: "Completed",
+      pending: "Pending",
+      streak: "Streak",
+      days: "days",
+      completionRate: "Completion rate",
+      weeklyTrend: "Completed per week",
+      byCategory: "By category",
+      lockedTitle: "Stats are a Pro feature",
+      lockedSubtitle: "Upgrade to Pro to see your productivity patterns, completion rate, and trends over time.",
+      upgradeToPro: "Upgrade to Pro"
+    }
   },
 
   es: {
@@ -223,7 +336,103 @@ export const copy = {
     },
     footer: { stackLabel: "Stack del proyecto" },
     language: { responseLanguage: "Idioma de respuesta", automatic: "Automatico", manual: "Manual", activeLanguage: "Idioma activo de la interfaz" },
-    errors: { unexpected: "Ocurrio un error inesperado." }
+    errors: { unexpected: "Ocurrio un error inesperado." },
+    headerNav: {
+      greeting: "Hola,",
+      plans: "Planes",
+      logout: "Cerrar sesión",
+      logoutLabel: "Cerrar sesión"
+    },
+    calendar: {
+      myTasks: "Mis tareas",
+      newTask: "Nueva tarea",
+      todayRecommendation: "Recomendación de hoy",
+      analyzingTasks: "Milo está analizando tus tareas...",
+      tasksFor: "Tareas —",
+      allTasks: "Todas las tareas",
+      viewAll: "Ver todas",
+      noTasksDay: "No hay tareas para este día.",
+      noTasksSaved: "No hay tareas guardadas."
+    },
+    milo: {
+      name: "Milo",
+      subtitle: "Asistente personal",
+      clearChat: "Limpiar conversación",
+      greeting: "Hola, soy Milo",
+      greetingSubtitle: "Preguntame sobre tus tareas, pedime ayuda para organizarte, o charlemos.",
+      taskCreated: "Tarea creada",
+      createTask: "Crear tarea",
+      confirm: "Confirmar",
+      dismiss: "Descartar",
+      noConnection: "No pude conectarme con Milo.",
+      urgentWarning: (n: number) => `⚡ ${n} tarea${n !== 1 ? "s" : ""} urgente${n !== 1 ? "s" : ""} vencen en los próximos 2 días.`,
+      briefingGoodMorning: "☀️ Buen día! Tu resumen de hoy:",
+      briefingGoodAfternoon: "👋 ¡Buenas tardes! Tu resumen de hoy:",
+      briefingGoodEvening: "🌙 ¡Buenas noches! Tu resumen de hoy:",
+      briefingNoPending: "No tenés tareas pendientes. Buen momento para agregar algo nuevo.",
+      briefingPending: (n: number) => `Tenés ${n} tarea${n !== 1 ? "s" : ""} pendiente${n !== 1 ? "s" : ""}.`,
+      briefingUrgent: (n: number, names: string) => `⚡ ${n} urgente${n !== 1 ? "s" : ""}: ${names}`,
+      briefingCompleted: (n: number) => `✅ Hoy ya completaste ${n} tarea${n !== 1 ? "s" : ""}. ¡Bien!`,
+      briefingHelp: "¿En qué te puedo ayudar?", inputPlaceholder: "Escribí un mensaje...",
+      listening: "Escuchando...",
+      startListening: "Hablarle a Milo",
+      stopListening: "Detener grabación"
+    },
+    plans: {
+      badge: "Planes",
+      title: "Simple y sin sorpresas",
+      subtitle: "Empezá gratis. Cuando quieras más de Milo, actualizá cuando quieras.",
+      mostPopular: "El más elegido",
+      recommended: "Mejor valor",
+      perMonth: "/mes",
+      free: "Gratis",
+      subscribePlus: "Probar Plus gratis",
+      subscribePro: "Suscribirse a Pro",
+      startFree: "Empezar gratis",
+      footer: "Pagos seguros. Cancelá cuando quieras. Sin costos ocultos.",
+      taskLimitReached: "Llegaste al límite de 15 tareas del plan Free.",
+      upgradeToPro: "Actualizar a Pro",
+      trialBadge: (days: number) => `${days} días gratis`,
+      trialNote: "No necesitás tarjeta para empezar tu prueba.",
+      trialActive: (days: number) => `Te quedan ${days} días de prueba de Plus`,
+      trialExpired: "Tu prueba de Plus terminó",
+      manageBilling: "Gestionar facturación",
+      currentPlan: "Plan actual",
+      freeFeatures: [
+        "Hasta 15 tareas",
+        "Chat con Milo",
+        "Vista de calendario",
+        "Organización por categoría y prioridad"
+      ],
+      plusFeatures: [
+        "Tareas ilimitadas",
+        "Creá tareas charlando con Milo",
+        "Recomendación de prioridad con IA",
+        "Vista de calendario"
+      ],
+      proFeatures: [
+        "Todo lo de Plus",
+        "Ayuda profunda por tarea con IA",
+        "Soporte prioritario",
+        "Acceso anticipado a nuevas funciones"
+      ]
+    },
+    stats: {
+      title: "Tus estadísticas",
+      subtitle: "Un vistazo a tus patrones de productividad.",
+      back: "Volver",
+      loading: "Cargando estadísticas...",
+      completed: "Completadas",
+      pending: "Pendientes",
+      streak: "Racha",
+      days: "días",
+      completionRate: "Tasa de cumplimiento",
+      weeklyTrend: "Completadas por semana",
+      byCategory: "Por categoría",
+      lockedTitle: "Las estadísticas son de Pro",
+      lockedSubtitle: "Actualizá a Pro para ver tus patrones de productividad, tasa de cumplimiento y tendencias en el tiempo.",
+      upgradeToPro: "Actualizar a Pro"
+    }
   },
 
   pt: {
@@ -318,7 +527,12 @@ export const copy = {
     },
     footer: { stackLabel: "Stack do projeto" },
     language: { responseLanguage: "Idioma de resposta", automatic: "Automático", manual: "Manual", activeLanguage: "Idioma ativo da interface" },
-    errors: { unexpected: "Ocorreu um erro inesperado." }
+    errors: { unexpected: "Ocorreu um erro inesperado." },
+    headerNav: { greeting: "Olá,", plans: "Planos", logout: "Sair", logoutLabel: "Sair" },
+    calendar: { myTasks: "Minhas tarefas", newTask: "Nova tarefa", todayRecommendation: "Recomendação de hoje", analyzingTasks: "Milo está analisando suas tarefas...", tasksFor: "Tarefas —", allTasks: "Todas as tarefas", viewAll: "Ver todas", noTasksDay: "Sem tarefas para este dia.", noTasksSaved: "Nenhuma tarefa salva." },
+    milo: { name: "Milo", subtitle: "Assistente pessoal", clearChat: "Limpar conversa", greeting: "Olá, sou o Milo", greetingSubtitle: "Pergunte sobre suas tarefas, peça ajuda para se organizar, ou só bate-papo.", taskCreated: "Tarefa criada", createTask: "Criar tarefa", confirm: "Confirmar", dismiss: "Descartar", noConnection: "Não consegui conectar ao Milo.", urgentWarning: (n: number) => `⚡ ${n} tarefa${n !== 1 ? "s" : ""} urgente${n !== 1 ? "s" : ""} vencem nos próximos 2 dias.`, briefingGoodMorning: "☀️ Bom dia! Seu resumo de hoje:", briefingGoodAfternoon: "👋 Boa tarde! Seu resumo de hoje:", briefingGoodEvening: "🌙 Boa noite! Seu resumo de hoje:", briefingNoPending: "Sem tarefas pendentes. Bom momento para adicionar algo novo.", briefingPending: (n: number) => `Você tem ${n} tarefa${n !== 1 ? "s" : ""} pendente${n !== 1 ? "s" : ""}.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} urgente${n !== 1 ? "s" : ""}: ${names}`, briefingCompleted: (n: number) => `✅ Você completou ${n} tarefa${n !== 1 ? "s" : ""} hoje. Ótimo!`, briefingHelp: "Como posso te ajudar?", inputPlaceholder: "Escreva uma mensagem...", listening: "Ouvindo...", startListening: "Falar com o Milo", stopListening: "Parar gravação" },
+    plans: { badge: "Planos", title: "Simples e sem surpresas", subtitle: "Comece grátis. Quando quiser mais do Milo, atualize quando quiser.", mostPopular: "Mais escolhido", recommended: "Melhor custo-benefício", perMonth: "/mês", free: "Grátis", subscribePlus: "Testar Plus grátis", subscribePro: "Assinar Pro", startFree: "Começar grátis", footer: "Pagamentos seguros. Cancele quando quiser. Sem taxas ocultas.", taskLimitReached: "Você atingiu o limite de 15 tarefas do plano Free.", upgradeToPro: "Atualizar para Pro", trialBadge: (days: number) => `${days} dias grátis`, trialNote: "Não precisa de cartão para começar seu teste.", trialActive: (days: number) => `Faltam ${days} dias do seu teste Plus`, trialExpired: "Seu teste Plus terminou", manageBilling: "Gerenciar cobrança", currentPlan: "Plano atual", freeFeatures: ["Até 15 tarefas", "Chat com Milo", "Vista de calendário", "Organização por categoria e prioridade"], plusFeatures: ["Tarefas ilimitadas", "Crie tarefas conversando com Milo", "Recomendação de prioridade com IA", "Vista de calendário"], proFeatures: ["Tudo do Plus", "Ajuda profunda por tarefa com IA", "Suporte prioritário", "Acesso antecipado a novos recursos"] },
+    stats: { title: "Suas estatísticas", subtitle: "Um panorama dos seus padrões de produtividade.", back: "Voltar", loading: "Carregando estatísticas...", completed: "Concluídas", pending: "Pendentes", streak: "Sequência", days: "dias", completionRate: "Taxa de conclusão", weeklyTrend: "Concluídas por semana", byCategory: "Por categoria", lockedTitle: "Estatísticas são do Pro", lockedSubtitle: "Atualize para o Pro para ver seus padrões de produtividade, taxa de conclusão e tendências ao longo do tempo.", upgradeToPro: "Atualizar para Pro" }
   },
 
   fr: {
@@ -413,7 +627,12 @@ export const copy = {
     },
     footer: { stackLabel: "Stack du projet" },
     language: { responseLanguage: "Langue de réponse", automatic: "Automatique", manual: "Manuel", activeLanguage: "Langue active de l'interface" },
-    errors: { unexpected: "Une erreur inattendue s'est produite." }
+    errors: { unexpected: "Une erreur inattendue s'est produite." },
+    headerNav: { greeting: "Bonjour,", plans: "Plans", logout: "Déconnexion", logoutLabel: "Se déconnecter" },
+    calendar: { myTasks: "Mes tâches", newTask: "Nouvelle tâche", todayRecommendation: "Recommandation du jour", analyzingTasks: "Milo analyse vos tâches...", tasksFor: "Tâches —", allTasks: "Toutes les tâches", viewAll: "Voir tout", noTasksDay: "Aucune tâche pour ce jour.", noTasksSaved: "Aucune tâche enregistrée." },
+    milo: { name: "Milo", subtitle: "Assistant personnel", clearChat: "Effacer la conversation", greeting: "Bonjour, je suis Milo", greetingSubtitle: "Posez-moi des questions sur vos tâches, demandez de l'aide pour vous organiser ou discutons.", taskCreated: "Tâche créée", createTask: "Créer une tâche", confirm: "Confirmer", dismiss: "Ignorer", noConnection: "Impossible de contacter Milo.", urgentWarning: (n: number) => `⚡ ${n} tâche${n !== 1 ? "s" : ""} urgente${n !== 1 ? "s" : ""} arrivent à échéance dans 2 jours.`, briefingGoodMorning: "☀️ Bonjour ! Votre résumé du jour :", briefingGoodAfternoon: "👋 Bon après-midi ! Votre résumé du jour :", briefingGoodEvening: "🌙 Bonsoir ! Votre résumé du jour :", briefingNoPending: "Aucune tâche en attente. Bon moment pour en ajouter.", briefingPending: (n: number) => `Vous avez ${n} tâche${n !== 1 ? "s" : ""} en attente.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} urgente${n !== 1 ? "s" : ""} : ${names}`, briefingCompleted: (n: number) => `✅ Vous avez complété ${n} tâche${n !== 1 ? "s" : ""} aujourd'hui. Bravo !`, briefingHelp: "Comment puis-je vous aider ?", inputPlaceholder: "Écrivez un message...", listening: "Écoute en cours...", startListening: "Parler à Milo", stopListening: "Arrêter l'enregistrement" },
+    plans: { badge: "Plans", title: "Simple et sans surprises", subtitle: "Commencez gratuitement. Pour plus de Milo, passez au niveau supérieur quand vous voulez.", mostPopular: "Le plus choisi", recommended: "Meilleur rapport qualité-prix", perMonth: "/mois", free: "Gratuit", subscribePlus: "Essayer Plus gratuitement", subscribePro: "S'abonner à Pro", startFree: "Commencer gratuitement", footer: "Paiements sécurisés. Annulez à tout moment. Sans frais cachés.", taskLimitReached: "Vous avez atteint la limite de 15 tâches du plan Free.", upgradeToPro: "Passer à Pro", trialBadge: (days: number) => `${days} jours gratuits`, trialNote: "Aucune carte requise pour commencer votre essai.", trialActive: (days: number) => `Il vous reste ${days} jours d'essai Plus`, trialExpired: "Votre essai Plus est terminé", manageBilling: "Gérer la facturation", currentPlan: "Plan actuel", freeFeatures: ["Jusqu'à 15 tâches", "Chat avec Milo", "Vue calendrier", "Organisation par catégorie et priorité"], plusFeatures: ["Tâches illimitées", "Créez des tâches en discutant avec Milo", "Recommandation de priorité par IA", "Vue calendrier"], proFeatures: ["Tout ce qui est dans Plus", "Aide approfondie par tâche avec IA", "Support prioritaire", "Accès anticipé aux nouvelles fonctionnalités"] },
+    stats: { title: "Vos statistiques", subtitle: "Un aperçu de vos habitudes de productivité.", back: "Retour", loading: "Chargement des statistiques...", completed: "Terminées", pending: "En attente", streak: "Série", days: "jours", completionRate: "Taux d'achèvement", weeklyTrend: "Terminées par semaine", byCategory: "Par catégorie", lockedTitle: "Les statistiques sont réservées à Pro", lockedSubtitle: "Passez à Pro pour voir vos habitudes de productivité, votre taux d'achèvement et vos tendances dans le temps.", upgradeToPro: "Passer à Pro" }
   },
 
   de: {
@@ -508,7 +727,12 @@ export const copy = {
     },
     footer: { stackLabel: "Projekt-Stack" },
     language: { responseLanguage: "Antwortsprache", automatic: "Automatisch", manual: "Manuell", activeLanguage: "Aktive Oberflächensprache" },
-    errors: { unexpected: "Ein unerwarteter Fehler ist aufgetreten." }
+    errors: { unexpected: "Ein unerwarteter Fehler ist aufgetreten." },
+    headerNav: { greeting: "Hallo,", plans: "Pläne", logout: "Abmelden", logoutLabel: "Abmelden" },
+    calendar: { myTasks: "Meine Aufgaben", newTask: "Neue Aufgabe", todayRecommendation: "Empfehlung des Tages", analyzingTasks: "Milo analysiert deine Aufgaben...", tasksFor: "Aufgaben —", allTasks: "Alle Aufgaben", viewAll: "Alle anzeigen", noTasksDay: "Keine Aufgaben für diesen Tag.", noTasksSaved: "Keine Aufgaben gespeichert." },
+    milo: { name: "Milo", subtitle: "Persönlicher Assistent", clearChat: "Gespräch löschen", greeting: "Hallo, ich bin Milo", greetingSubtitle: "Frag mich nach deinen Aufgaben, bitte um Hilfe beim Organisieren oder plaudern wir einfach.", taskCreated: "Aufgabe erstellt", createTask: "Aufgabe erstellen", confirm: "Bestätigen", dismiss: "Verwerfen", noConnection: "Verbindung zu Milo fehlgeschlagen.", urgentWarning: (n: number) => `⚡ ${n} dringende Aufgabe${n !== 1 ? "n" : ""} in den nächsten 2 Tagen fällig.`, briefingGoodMorning: "☀️ Guten Morgen! Deine heutige Zusammenfassung:", briefingGoodAfternoon: "👋 Guten Tag! Deine heutige Zusammenfassung:", briefingGoodEvening: "🌙 Guten Abend! Deine heutige Zusammenfassung:", briefingNoPending: "Keine ausstehenden Aufgaben. Guter Moment, etwas Neues hinzuzufügen.", briefingPending: (n: number) => `Du hast ${n} ausstehende Aufgabe${n !== 1 ? "n" : ""}.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} dringend${n !== 1 ? "e" : "e"}: ${names}`, briefingCompleted: (n: number) => `✅ Heute hast du ${n} Aufgabe${n !== 1 ? "n" : ""} erledigt. Super!`, briefingHelp: "Wie kann ich dir helfen?", inputPlaceholder: "Nachricht schreiben...", listening: "Höre zu...", startListening: "Mit Milo sprechen", stopListening: "Aufnahme stoppen" },
+    plans: { badge: "Pläne", title: "Einfach und ohne Überraschungen", subtitle: "Kostenlos starten. Für mehr von Milo jederzeit upgraden.", mostPopular: "Am beliebtesten", recommended: "Bestes Preis-Leistungs-Verhältnis", perMonth: "/Monat", free: "Kostenlos", subscribePlus: "Plus kostenlos testen", subscribePro: "Pro abonnieren", startFree: "Kostenlos starten", footer: "Sichere Zahlungen. Jederzeit kündbar. Keine versteckten Kosten.", taskLimitReached: "Du hast das Limit von 15 Aufgaben im Free-Plan erreicht.", upgradeToPro: "Auf Pro upgraden", trialBadge: (days: number) => `${days} Tage kostenlos`, trialNote: "Keine Karte nötig, um deine Testphase zu starten.", trialActive: (days: number) => `Noch ${days} Tage deiner Plus-Testphase`, trialExpired: "Deine Plus-Testphase ist beendet", manageBilling: "Abrechnung verwalten", currentPlan: "Aktueller Plan", freeFeatures: ["Bis zu 15 Aufgaben", "Chat mit Milo", "Kalenderansicht", "Organisation nach Kategorie und Priorität"], plusFeatures: ["Unbegrenzte Aufgaben", "Aufgaben durch Chatten mit Milo erstellen", "KI-Prioritätsempfehlung", "Kalenderansicht"], proFeatures: ["Alles aus Plus", "Tiefgehende KI-Hilfe pro Aufgabe", "Priorisierter Support", "Früher Zugang zu neuen Funktionen"] },
+    stats: { title: "Deine Statistiken", subtitle: "Ein Blick auf deine Produktivitätsmuster.", back: "Zurück", loading: "Statistiken werden geladen...", completed: "Erledigt", pending: "Ausstehend", streak: "Serie", days: "Tage", completionRate: "Erledigungsquote", weeklyTrend: "Erledigt pro Woche", byCategory: "Nach Kategorie", lockedTitle: "Statistiken sind eine Pro-Funktion", lockedSubtitle: "Upgrade auf Pro, um deine Produktivitätsmuster, Erledigungsquote und Trends im Zeitverlauf zu sehen.", upgradeToPro: "Auf Pro upgraden" }
   },
 
   it: {
@@ -603,7 +827,12 @@ export const copy = {
     },
     footer: { stackLabel: "Stack del progetto" },
     language: { responseLanguage: "Lingua di risposta", automatic: "Automatico", manual: "Manuale", activeLanguage: "Lingua attiva dell'interfaccia" },
-    errors: { unexpected: "Si è verificato un errore imprevisto." }
+    errors: { unexpected: "Si è verificato un errore imprevisto." },
+    headerNav: { greeting: "Ciao,", plans: "Piani", logout: "Disconnetti", logoutLabel: "Disconnettiti" },
+    calendar: { myTasks: "Le mie attività", newTask: "Nuova attività", todayRecommendation: "Raccomandazione di oggi", analyzingTasks: "Milo sta analizzando le tue attività...", tasksFor: "Attività —", allTasks: "Tutte le attività", viewAll: "Vedi tutte", noTasksDay: "Nessuna attività per questo giorno.", noTasksSaved: "Nessuna attività salvata." },
+    milo: { name: "Milo", subtitle: "Assistente personale", clearChat: "Cancella conversazione", greeting: "Ciao, sono Milo", greetingSubtitle: "Chiedimi delle tue attività, chiedi aiuto per organizzarti o chiacchieriamo.", taskCreated: "Attività creata", createTask: "Crea attività", confirm: "Conferma", dismiss: "Scarta", noConnection: "Impossibile connettersi a Milo.", urgentWarning: (n: number) => `⚡ ${n} attività urgenti scadono nei prossimi 2 giorni.`, briefingGoodMorning: "☀️ Buongiorno! Il tuo riepilogo di oggi:", briefingGoodAfternoon: "👋 Buon pomeriggio! Il tuo riepilogo di oggi:", briefingGoodEvening: "🌙 Buonasera! Il tuo riepilogo di oggi:", briefingNoPending: "Nessuna attività in sospeso. Buon momento per aggiungerne.", briefingPending: (n: number) => `Hai ${n} attività in sospeso.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} urgenti: ${names}`, briefingCompleted: (n: number) => `✅ Oggi hai completato ${n} attività. Ottimo!`, briefingHelp: "Come posso aiutarti?", inputPlaceholder: "Scrivi un messaggio...", listening: "In ascolto...", startListening: "Parla con Milo", stopListening: "Ferma registrazione" },
+    plans: { badge: "Piani", title: "Semplice e senza sorprese", subtitle: "Inizia gratuitamente. Per di più da Milo, esegui l'upgrade quando vuoi.", mostPopular: "Il più scelto", recommended: "Miglior rapporto qualità-prezzo", perMonth: "/mese", free: "Gratis", subscribePlus: "Prova Plus gratis", subscribePro: "Abbonati a Pro", startFree: "Inizia gratis", footer: "Pagamenti sicuri. Cancella quando vuoi. Senza costi nascosti.", taskLimitReached: "Hai raggiunto il limite di 15 attività del piano Free.", upgradeToPro: "Passa a Pro", trialBadge: (days: number) => `${days} giorni gratis`, trialNote: "Nessuna carta richiesta per iniziare la prova.", trialActive: (days: number) => `Ti restano ${days} giorni di prova Plus`, trialExpired: "La tua prova Plus è terminata", manageBilling: "Gestisci fatturazione", currentPlan: "Piano attuale", freeFeatures: ["Fino a 15 attività", "Chat con Milo", "Vista calendario", "Organizzazione per categoria e priorità"], plusFeatures: ["Attività illimitate", "Crea attività chattando con Milo", "Raccomandazione di priorità con IA", "Vista calendario"], proFeatures: ["Tutto ciò che è in Plus", "Aiuto approfondito per attività con IA", "Supporto prioritario", "Accesso anticipato alle nuove funzionalità"] },
+    stats: { title: "Le tue statistiche", subtitle: "Uno sguardo ai tuoi modelli di produttività.", back: "Indietro", loading: "Caricamento statistiche...", completed: "Completate", pending: "In sospeso", streak: "Serie", days: "giorni", completionRate: "Tasso di completamento", weeklyTrend: "Completate a settimana", byCategory: "Per categoria", lockedTitle: "Le statistiche sono una funzione Pro", lockedSubtitle: "Passa a Pro per vedere i tuoi modelli di produttività, il tasso di completamento e le tendenze nel tempo.", upgradeToPro: "Passa a Pro" }
   },
 
   zh: {
@@ -698,7 +927,12 @@ export const copy = {
     },
     footer: { stackLabel: "项目技术栈" },
     language: { responseLanguage: "响应语言", automatic: "自动", manual: "手动", activeLanguage: "当前界面语言" },
-    errors: { unexpected: "发生了意外错误。" }
+    errors: { unexpected: "发生了意外错误。" },
+    headerNav: { greeting: "你好，", plans: "计划", logout: "退出", logoutLabel: "退出登录" },
+    calendar: { myTasks: "我的任务", newTask: "新建任务", todayRecommendation: "今日推荐", analyzingTasks: "Milo 正在分析你的任务...", tasksFor: "任务 —", allTasks: "所有任务", viewAll: "查看全部", noTasksDay: "当天无任务。", noTasksSaved: "尚无任务。" },
+    milo: { name: "Milo", subtitle: "个人助理", clearChat: "清空对话", greeting: "你好，我是 Milo", greetingSubtitle: "问我关于你的任务，让我帮你整理，或者随便聊聊。", taskCreated: "任务已创建", createTask: "创建任务", confirm: "确认", dismiss: "忽略", noConnection: "无法连接到 Milo。", urgentWarning: (n: number) => `⚡ ${n} 个紧急任务将在 2 天内到期。`, briefingGoodMorning: "☀️ 早上好！今日摘要：", briefingGoodAfternoon: "👋 下午好！今日摘要：", briefingGoodEvening: "🌙 晚上好！今日摘要：", briefingNoPending: "没有待办任务。是添加新任务的好时机。", briefingPending: (n: number) => `你有 ${n} 个待办任务。`, briefingUrgent: (n: number, names: string) => `⚡ ${n} 个紧急：${names}`, briefingCompleted: (n: number) => `✅ 今天完成了 ${n} 个任务。不错！`, briefingHelp: "我能帮你什么？", inputPlaceholder: "写一条消息...", listening: "正在聆听...", startListening: "对 Milo 说话", stopListening: "停止录音" },
+    plans: { badge: "计划", title: "简单透明", subtitle: "免费开始。想要更多 Milo 功能，随时升级。", mostPopular: "最受欢迎", recommended: "性价比最高", perMonth: "/月", free: "免费", subscribePlus: "免费试用 Plus", subscribePro: "订阅 Pro", startFree: "免费开始", footer: "安全支付。随时取消。无隐藏费用。", taskLimitReached: "你已达到免费计划 15 个任务的上限。", upgradeToPro: "升级至 Pro", trialBadge: (days: number) => `${days} 天免费`, trialNote: "开始试用无需信用卡。", trialActive: (days: number) => `Plus 试用还剩 ${days} 天`, trialExpired: "你的 Plus 试用已结束", manageBilling: "管理账单", currentPlan: "当前计划", freeFeatures: ["最多 15 个任务", "与 Milo 聊天", "日历视图", "按类别和优先级组织"], plusFeatures: ["无限任务", "通过与 Milo 聊天创建任务", "AI 优先级推荐", "日历视图"], proFeatures: ["Plus 的所有功能", "每个任务的深度 AI 帮助", "优先支持", "抢先体验新功能"] },
+    stats: { title: "你的统计数据", subtitle: "一览你的生产力模式。", back: "返回", loading: "正在加载统计数据...", completed: "已完成", pending: "待办", streak: "连续天数", days: "天", completionRate: "完成率", weeklyTrend: "每周完成数", byCategory: "按类别", lockedTitle: "统计数据是 Pro 功能", lockedSubtitle: "升级至 Pro 以查看你的生产力模式、完成率和长期趋势。", upgradeToPro: "升级至 Pro" }
   },
 
   ja: {
@@ -793,7 +1027,12 @@ export const copy = {
     },
     footer: { stackLabel: "プロジェクトスタック" },
     language: { responseLanguage: "応答言語", automatic: "自動", manual: "手動", activeLanguage: "現在のUI言語" },
-    errors: { unexpected: "予期しないエラーが発生しました。" }
+    errors: { unexpected: "予期しないエラーが発生しました。" },
+    headerNav: { greeting: "こんにちは、", plans: "プラン", logout: "ログアウト", logoutLabel: "ログアウト" },
+    calendar: { myTasks: "マイタスク", newTask: "新しいタスク", todayRecommendation: "今日のおすすめ", analyzingTasks: "Miloがタスクを分析しています...", tasksFor: "タスク —", allTasks: "すべてのタスク", viewAll: "すべて見る", noTasksDay: "この日のタスクはありません。", noTasksSaved: "保存されたタスクはありません。" },
+    milo: { name: "Milo", subtitle: "パーソナルアシスタント", clearChat: "会話をクリア", greeting: "こんにちは、Miloです", greetingSubtitle: "タスクについて聞いてください、整理をお手伝いします、または気軽に話しましょう。", taskCreated: "タスク作成済み", createTask: "タスクを作成", confirm: "確認", dismiss: "却下", noConnection: "Miloに接続できませんでした。", urgentWarning: (n: number) => `⚡ ${n}件の緊急タスクが2日以内に期限切れになります。`, briefingGoodMorning: "☀️ おはようございます！本日のまとめ：", briefingGoodAfternoon: "👋 こんにちは！本日のまとめ：", briefingGoodEvening: "🌙 こんばんは！本日のまとめ：", briefingNoPending: "未完了のタスクはありません。新しいことを追加する良い機会です。", briefingPending: (n: number) => `${n}件の未完了タスクがあります。`, briefingUrgent: (n: number, names: string) => `⚡ ${n}件の緊急：${names}`, briefingCompleted: (n: number) => `✅ 本日${n}件のタスクを完了しました。素晴らしい！`, briefingHelp: "何かお手伝いできますか？", inputPlaceholder: "メッセージを入力...", listening: "聞いています...", startListening: "Miloに話しかける", stopListening: "録音を停止" },
+    plans: { badge: "プラン", title: "シンプルで驚きなし", subtitle: "無料で始めましょう。Miloをもっと使いたい時はいつでもアップグレード。", mostPopular: "一番人気", recommended: "お得なプラン", perMonth: "/月", free: "無料", subscribePlus: "Plusを無料で試す", subscribePro: "Proに登録", startFree: "無料で始める", footer: "安全な支払い。いつでもキャンセル。隠れた費用なし。", taskLimitReached: "無料プランの15タスク上限に達しました。", upgradeToPro: "Proにアップグレード", trialBadge: (days: number) => `${days}日間無料`, trialNote: "トライアル開始にカードは不要です。", trialActive: (days: number) => `Plusトライアル残り${days}日`, trialExpired: "Plusトライアルは終了しました", manageBilling: "請求管理", currentPlan: "現在のプラン", freeFeatures: ["最大15タスク", "Miloとチャット", "カレンダー表示", "カテゴリと優先度で整理"], plusFeatures: ["無制限のタスク", "Miloとチャットしてタスクを作成", "AI優先度レコメンド", "カレンダー表示"], proFeatures: ["Plusの全機能", "タスクごとの詳細なAIサポート", "優先サポート", "新機能への早期アクセス"] },
+    stats: { title: "あなたの統計", subtitle: "あなたの生産性パターンを一目で確認。", back: "戻る", loading: "統計を読み込み中...", completed: "完了", pending: "未完了", streak: "連続記録", days: "日", completionRate: "完了率", weeklyTrend: "週ごとの完了数", byCategory: "カテゴリ別", lockedTitle: "統計はPro機能です", lockedSubtitle: "Proにアップグレードして、生産性パターン、完了率、時間経過による傾向を確認しましょう。", upgradeToPro: "Proにアップグレード" }
   },
 
   ko: {
@@ -888,7 +1127,12 @@ export const copy = {
     },
     footer: { stackLabel: "프로젝트 스택" },
     language: { responseLanguage: "응답 언어", automatic: "자동", manual: "수동", activeLanguage: "현재 UI 언어" },
-    errors: { unexpected: "예상치 못한 오류가 발생했습니다." }
+    errors: { unexpected: "예상치 못한 오류가 발생했습니다." },
+    headerNav: { greeting: "안녕하세요,", plans: "플랜", logout: "로그아웃", logoutLabel: "로그아웃" },
+    calendar: { myTasks: "내 작업", newTask: "새 작업", todayRecommendation: "오늘의 추천", analyzingTasks: "Milo가 작업을 분석 중입니다...", tasksFor: "작업 —", allTasks: "모든 작업", viewAll: "전체 보기", noTasksDay: "이 날의 작업이 없습니다.", noTasksSaved: "저장된 작업이 없습니다." },
+    milo: { name: "Milo", subtitle: "개인 비서", clearChat: "대화 지우기", greeting: "안녕하세요, 저는 Milo입니다", greetingSubtitle: "작업에 대해 물어보거나 정리를 도와달라고 하거나 그냥 대화해요.", taskCreated: "작업 생성됨", createTask: "작업 만들기", confirm: "확인", dismiss: "무시", noConnection: "Milo에 연결할 수 없습니다.", urgentWarning: (n: number) => `⚡ ${n}개의 긴급 작업이 2일 이내에 마감됩니다.`, briefingGoodMorning: "☀️ 좋은 아침이에요! 오늘의 요약:", briefingGoodAfternoon: "👋 좋은 오후예요! 오늘의 요약:", briefingGoodEvening: "🌙 좋은 저녁이에요! 오늘의 요약:", briefingNoPending: "대기 중인 작업이 없습니다. 새 작업을 추가하기 좋은 시간입니다.", briefingPending: (n: number) => `대기 중인 작업이 ${n}개 있습니다.`, briefingUrgent: (n: number, names: string) => `⚡ ${n}개 긴급: ${names}`, briefingCompleted: (n: number) => `✅ 오늘 ${n}개의 작업을 완료했습니다. 잘했어요!`, briefingHelp: "어떻게 도와드릴까요?", inputPlaceholder: "메시지 입력...", listening: "듣고 있어요...", startListening: "Milo에게 말하기", stopListening: "녹음 중지" },
+    plans: { badge: "플랜", title: "간단하고 놀라움 없음", subtitle: "무료로 시작하세요. Milo를 더 원하시면 언제든지 업그레이드하세요.", mostPopular: "가장 인기", recommended: "최고 가성비", perMonth: "/월", free: "무료", subscribePlus: "Plus 무료 체험", subscribePro: "Pro 구독", startFree: "무료로 시작", footer: "안전한 결제. 언제든지 취소. 숨겨진 비용 없음.", taskLimitReached: "무료 플랜 15개 작업 한도에 도달했습니다.", upgradeToPro: "Pro로 업그레이드", trialBadge: (days: number) => `${days}일 무료`, trialNote: "체험 시작에 카드가 필요하지 않습니다.", trialActive: (days: number) => `Plus 체험이 ${days}일 남았습니다`, trialExpired: "Plus 체험이 종료되었습니다", manageBilling: "결제 관리", currentPlan: "현재 플랜", freeFeatures: ["최대 15개 작업", "Milo와 채팅", "캘린더 보기", "카테고리 및 우선순위별 정리"], plusFeatures: ["무제한 작업", "Milo와 채팅하여 작업 생성", "AI 우선순위 추천", "캘린더 보기"], proFeatures: ["Plus의 모든 기능", "작업별 심층 AI 도움", "우선 지원", "신기능 조기 액세스"] },
+    stats: { title: "내 통계", subtitle: "생산성 패턴을 한눈에 확인하세요.", back: "뒤로", loading: "통계 불러오는 중...", completed: "완료됨", pending: "대기 중", streak: "연속 기록", days: "일", completionRate: "완료율", weeklyTrend: "주간 완료 수", byCategory: "카테고리별", lockedTitle: "통계는 Pro 기능입니다", lockedSubtitle: "Pro로 업그레이드하여 생산성 패턴, 완료율, 시간에 따른 추세를 확인하세요.", upgradeToPro: "Pro로 업그레이드" }
   },
 
   ru: {
@@ -983,7 +1227,12 @@ export const copy = {
     },
     footer: { stackLabel: "Стек проекта" },
     language: { responseLanguage: "Язык ответа", automatic: "Автоматически", manual: "Вручную", activeLanguage: "Активный язык интерфейса" },
-    errors: { unexpected: "Произошла непредвиденная ошибка." }
+    errors: { unexpected: "Произошла непредвиденная ошибка." },
+    headerNav: { greeting: "Привет,", plans: "Планы", logout: "Выйти", logoutLabel: "Выйти" },
+    calendar: { myTasks: "Мои задачи", newTask: "Новая задача", todayRecommendation: "Рекомендация дня", analyzingTasks: "Milo анализирует твои задачи...", tasksFor: "Задачи —", allTasks: "Все задачи", viewAll: "Показать все", noTasksDay: "Нет задач на этот день.", noTasksSaved: "Задачи не сохранены." },
+    milo: { name: "Milo", subtitle: "Персональный ассистент", clearChat: "Очистить разговор", greeting: "Привет, я Milo", greetingSubtitle: "Спроси меня о задачах, попроси помочь с организацией или просто поговорим.", taskCreated: "Задача создана", createTask: "Создать задачу", confirm: "Подтвердить", dismiss: "Отклонить", noConnection: "Не удалось подключиться к Milo.", urgentWarning: (n: number) => `⚡ ${n} срочных задач истекают в ближайшие 2 дня.`, briefingGoodMorning: "☀️ Доброе утро! Твой итог на сегодня:", briefingGoodAfternoon: "👋 Добрый день! Твой итог на сегодня:", briefingGoodEvening: "🌙 Добрый вечер! Твой итог на сегодня:", briefingNoPending: "Нет ожидающих задач. Хороший момент добавить что-то новое.", briefingPending: (n: number) => `У тебя ${n} ожидающих задач.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} срочных: ${names}`, briefingCompleted: (n: number) => `✅ Сегодня ты завершил ${n} задачи. Молодец!`, briefingHelp: "Чем могу помочь?", inputPlaceholder: "Напишите сообщение...", listening: "Слушаю...", startListening: "Сказать Milo", stopListening: "Остановить запись" },
+    plans: { badge: "Планы", title: "Просто и без сюрпризов", subtitle: "Начни бесплатно. Для большего от Milo обновись, когда захочешь.", mostPopular: "Самый выбираемый", recommended: "Лучшая цена", perMonth: "/мес", free: "Бесплатно", subscribePlus: "Попробовать Plus бесплатно", subscribePro: "Подписаться на Pro", startFree: "Начать бесплатно", footer: "Безопасные платежи. Отмена в любое время. Без скрытых платежей.", taskLimitReached: "Ты достиг лимита 15 задач бесплатного плана.", upgradeToPro: "Перейти на Pro", trialBadge: (days: number) => `${days} дней бесплатно`, trialNote: "Карта не нужна для начала пробного периода.", trialActive: (days: number) => `Осталось ${days} дней пробного периода Plus`, trialExpired: "Твой пробный период Plus закончился", manageBilling: "Управление платежами", currentPlan: "Текущий план", freeFeatures: ["До 15 задач", "Чат с Milo", "Вид календаря", "Организация по категории и приоритету"], plusFeatures: ["Неограниченные задачи", "Создавай задачи, общаясь с Milo", "Рекомендация приоритета от ИИ", "Вид календаря"], proFeatures: ["Всё из Plus", "Глубокая помощь ИИ по задаче", "Приоритетная поддержка", "Ранний доступ к новым функциям"] },
+    stats: { title: "Твоя статистика", subtitle: "Взгляд на твои модели продуктивности.", back: "Назад", loading: "Загрузка статистики...", completed: "Выполнено", pending: "В ожидании", streak: "Серия", days: "дней", completionRate: "Процент выполнения", weeklyTrend: "Выполнено за неделю", byCategory: "По категории", lockedTitle: "Статистика доступна только в Pro", lockedSubtitle: "Перейди на Pro, чтобы видеть свои модели продуктивности, процент выполнения и тенденции во времени.", upgradeToPro: "Перейти на Pro" }
   },
 
   tr: {
@@ -1078,7 +1327,12 @@ export const copy = {
     },
     footer: { stackLabel: "Proje stack'i" },
     language: { responseLanguage: "Yanıt dili", automatic: "Otomatik", manual: "Manuel", activeLanguage: "Aktif arayüz dili" },
-    errors: { unexpected: "Beklenmedik bir hata oluştu." }
+    errors: { unexpected: "Beklenmedik bir hata oluştu." },
+    headerNav: { greeting: "Merhaba,", plans: "Planlar", logout: "Çıkış", logoutLabel: "Çıkış yap" },
+    calendar: { myTasks: "Görevlerim", newTask: "Yeni görev", todayRecommendation: "Günün tavsiyesi", analyzingTasks: "Milo görevlerini analiz ediyor...", tasksFor: "Görevler —", allTasks: "Tüm görevler", viewAll: "Tümünü gör", noTasksDay: "Bu gün için görev yok.", noTasksSaved: "Kaydedilmiş görev yok." },
+    milo: { name: "Milo", subtitle: "Kişisel asistan", clearChat: "Konuşmayı temizle", greeting: "Merhaba, ben Milo", greetingSubtitle: "Görevlerin hakkında sor, organize olmana yardım isteyebilir ya da sohbet edebiliriz.", taskCreated: "Görev oluşturuldu", createTask: "Görev oluştur", confirm: "Onayla", dismiss: "Reddet", noConnection: "Milo'ya bağlanılamadı.", urgentWarning: (n: number) => `⚡ ${n} acil görev önümüzdeki 2 günde bitiyor.`, briefingGoodMorning: "☀️ Günaydın! Bugünün özeti:", briefingGoodAfternoon: "👋 Tünaydın! Bugünün özeti:", briefingGoodEvening: "🌙 İyi akşamlar! Bugünün özeti:", briefingNoPending: "Bekleyen görev yok. Yeni bir şey eklemek için iyi zaman.", briefingPending: (n: number) => `${n} bekleyen görevin var.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} acil: ${names}`, briefingCompleted: (n: number) => `✅ Bugün ${n} görevi tamamladın. Harika!`, briefingHelp: "Nasıl yardımcı olabilirim?", inputPlaceholder: "Mesaj yaz...", listening: "Dinleniyor...", startListening: "Milo'ya konuş", stopListening: "Kaydı durdur" },
+    plans: { badge: "Planlar", title: "Basit ve sürprizsiz", subtitle: "Ücretsiz başla. Milo'dan daha fazlası için istediğin zaman yükselt.", mostPopular: "En çok tercih edilen", recommended: "En iyi değer", perMonth: "/ay", free: "Ücretsiz", subscribePlus: "Plus'ı ücretsiz dene", subscribePro: "Pro'ya abone ol", startFree: "Ücretsiz başla", footer: "Güvenli ödemeler. İstediğin zaman iptal et. Gizli ücret yok.", taskLimitReached: "Ücretsiz plandaki 15 görev limitine ulaştın.", upgradeToPro: "Pro'ya geç", trialBadge: (days: number) => `${days} gün ücretsiz`, trialNote: "Denemeyi başlatmak için kart gerekmez.", trialActive: (days: number) => `Plus denemenin ${days} günü kaldı`, trialExpired: "Plus deneme süren sona erdi", manageBilling: "Faturalandırmayı yönet", currentPlan: "Mevcut plan", freeFeatures: ["15 göreve kadar", "Milo ile sohbet", "Takvim görünümü", "Kategori ve önceliğe göre organizasyon"], plusFeatures: ["Sınırsız görev", "Milo ile sohbet ederek görev oluştur", "AI öncelik önerisi", "Takvim görünümü"], proFeatures: ["Plus'taki her şey", "Görev başına derin AI yardımı", "Öncelikli destek", "Yeni özelliklere erken erişim"] },
+    stats: { title: "İstatistiklerin", subtitle: "Verimlilik kalıplarına bir bakış.", back: "Geri", loading: "İstatistikler yükleniyor...", completed: "Tamamlandı", pending: "Bekliyor", streak: "Seri", days: "gün", completionRate: "Tamamlanma oranı", weeklyTrend: "Haftalık tamamlanan", byCategory: "Kategoriye göre", lockedTitle: "İstatistikler Pro özelliğidir", lockedSubtitle: "Verimlilik kalıplarını, tamamlanma oranını ve zaman içindeki eğilimleri görmek için Pro'ya yükselt.", upgradeToPro: "Pro'ya geç" }
   },
 
   nl: {
@@ -1173,7 +1427,12 @@ export const copy = {
     },
     footer: { stackLabel: "Projectstack" },
     language: { responseLanguage: "Antwoordtaal", automatic: "Automatisch", manual: "Handmatig", activeLanguage: "Actieve interfacetaal" },
-    errors: { unexpected: "Er is een onverwachte fout opgetreden." }
+    errors: { unexpected: "Er is een onverwachte fout opgetreden." },
+    headerNav: { greeting: "Hallo,", plans: "Plannen", logout: "Uitloggen", logoutLabel: "Uitloggen" },
+    calendar: { myTasks: "Mijn taken", newTask: "Nieuwe taak", todayRecommendation: "Aanbeveling van vandaag", analyzingTasks: "Milo analyseert je taken...", tasksFor: "Taken —", allTasks: "Alle taken", viewAll: "Alles zien", noTasksDay: "Geen taken voor deze dag.", noTasksSaved: "Geen taken opgeslagen." },
+    milo: { name: "Milo", subtitle: "Persoonlijke assistent", clearChat: "Gesprek wissen", greeting: "Hallo, ik ben Milo", greetingSubtitle: "Vraag me over je taken, vraag hulp bij het organiseren of we praten gewoon.", taskCreated: "Taak aangemaakt", createTask: "Taak aanmaken", confirm: "Bevestigen", dismiss: "Verwijderen", noConnection: "Kon geen verbinding maken met Milo.", urgentWarning: (n: number) => `⚡ ${n} urgente taak${n !== 1 ? "en" : ""} vervalt binnen 2 dagen.`, briefingGoodMorning: "☀️ Goedemorgen! Jouw samenvatting van vandaag:", briefingGoodAfternoon: "👋 Goedemiddag! Jouw samenvatting van vandaag:", briefingGoodEvening: "🌙 Goedenavond! Jouw samenvatting van vandaag:", briefingNoPending: "Geen taken in behandeling. Goed moment om iets toe te voegen.", briefingPending: (n: number) => `Je hebt ${n} taak${n !== 1 ? "en" : ""} in behandeling.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} urgent: ${names}`, briefingCompleted: (n: number) => `✅ Je hebt vandaag ${n} taak${n !== 1 ? "en" : ""} voltooid. Goed gedaan!`, briefingHelp: "Hoe kan ik je helpen?", inputPlaceholder: "Schrijf een bericht...", listening: "Aan het luisteren...", startListening: "Praat met Milo", stopListening: "Opname stoppen" },
+    plans: { badge: "Plannen", title: "Eenvoudig en zonder verrassingen", subtitle: "Begin gratis. Voor meer van Milo, upgrade wanneer je wilt.", mostPopular: "Meest gekozen", recommended: "Beste waarde", perMonth: "/maand", free: "Gratis", subscribePlus: "Plus gratis proberen", subscribePro: "Abonneer op Pro", startFree: "Gratis starten", footer: "Veilige betalingen. Op elk moment opzeggen. Geen verborgen kosten.", taskLimitReached: "Je hebt de limiet van 15 taken van het gratis plan bereikt.", upgradeToPro: "Upgraden naar Pro", trialBadge: (days: number) => `${days} dagen gratis`, trialNote: "Geen kaart nodig om je proefperiode te starten.", trialActive: (days: number) => `Nog ${days} dagen van je Plus-proefperiode`, trialExpired: "Je Plus-proefperiode is beëindigd", manageBilling: "Facturering beheren", currentPlan: "Huidig plan", freeFeatures: ["Tot 15 taken", "Chat met Milo", "Kalenderweergave", "Organisatie op categorie en prioriteit"], plusFeatures: ["Onbeperkte taken", "Maak taken aan door met Milo te chatten", "AI-prioriteitsaanbeveling", "Kalenderweergave"], proFeatures: ["Alles in Plus", "Diepgaande AI-hulp per taak", "Prioriteitsondersteuning", "Vroege toegang tot nieuwe functies"] },
+    stats: { title: "Jouw statistieken", subtitle: "Een blik op je productiviteitspatronen.", back: "Terug", loading: "Statistieken laden...", completed: "Voltooid", pending: "In behandeling", streak: "Reeks", days: "dagen", completionRate: "Voltooiingspercentage", weeklyTrend: "Voltooid per week", byCategory: "Per categorie", lockedTitle: "Statistieken zijn een Pro-functie", lockedSubtitle: "Upgrade naar Pro om je productiviteitspatronen, voltooiingspercentage en trends in de tijd te zien.", upgradeToPro: "Upgraden naar Pro" }
   },
 
   pl: {
@@ -1268,7 +1527,12 @@ export const copy = {
     },
     footer: { stackLabel: "Stack projektu" },
     language: { responseLanguage: "Język odpowiedzi", automatic: "Automatyczny", manual: "Ręczny", activeLanguage: "Aktywny język interfejsu" },
-    errors: { unexpected: "Wystąpił nieoczekiwany błąd." }
+    errors: { unexpected: "Wystąpił nieoczekiwany błąd." },
+    headerNav: { greeting: "Cześć,", plans: "Plany", logout: "Wyloguj", logoutLabel: "Wyloguj się" },
+    calendar: { myTasks: "Moje zadania", newTask: "Nowe zadanie", todayRecommendation: "Rekomendacja dnia", analyzingTasks: "Milo analizuje twoje zadania...", tasksFor: "Zadania —", allTasks: "Wszystkie zadania", viewAll: "Zobacz wszystkie", noTasksDay: "Brak zadań na ten dzień.", noTasksSaved: "Brak zapisanych zadań." },
+    milo: { name: "Milo", subtitle: "Osobisty asystent", clearChat: "Wyczyść rozmowę", greeting: "Cześć, jestem Milo", greetingSubtitle: "Pytaj o zadania, proś o pomoc w organizacji lub po prostu porozmawiajmy.", taskCreated: "Zadanie utworzone", createTask: "Utwórz zadanie", confirm: "Potwierdź", dismiss: "Odrzuć", noConnection: "Nie udało się połączyć z Milo.", urgentWarning: (n: number) => `⚡ ${n} pilnych zadań kończy się w ciągu 2 dni.`, briefingGoodMorning: "☀️ Dzień dobry! Twoje podsumowanie na dziś:", briefingGoodAfternoon: "👋 Dzień dobry! Twoje podsumowanie na dziś:", briefingGoodEvening: "🌙 Dobry wieczór! Twoje podsumowanie na dziś:", briefingNoPending: "Brak oczekujących zadań. Dobry moment na dodanie czegoś nowego.", briefingPending: (n: number) => `Masz ${n} oczekujące zadanie${n !== 1 ? "a" : ""}.`, briefingUrgent: (n: number, names: string) => `⚡ ${n} pilnych: ${names}`, briefingCompleted: (n: number) => `✅ Dziś ukończyłeś ${n} zadanie${n !== 1 ? "a" : ""}. Świetnie!`, briefingHelp: "Jak mogę ci pomóc?", inputPlaceholder: "Napisz wiadomość...", listening: "Słucham...", startListening: "Powiedz do Milo", stopListening: "Zatrzymaj nagrywanie" },
+    plans: { badge: "Plany", title: "Prosto i bez niespodzianek", subtitle: "Zacznij za darmo. Kiedy chcesz więcej od Milo, przejdź na wyższy plan, kiedy chcesz.", mostPopular: "Najczęściej wybierany", recommended: "Najlepsza wartość", perMonth: "/mies.", free: "Bezpłatnie", subscribePlus: "Wypróbuj Plus za darmo", subscribePro: "Subskrybuj Pro", startFree: "Zacznij bezpłatnie", footer: "Bezpieczne płatności. Anuluj kiedy chcesz. Brak ukrytych kosztów.", taskLimitReached: "Osiągnąłeś limit 15 zadań planu Free.", upgradeToPro: "Przejdź na Pro", trialBadge: (days: number) => `${days} dni za darmo`, trialNote: "Karta nie jest wymagana, aby rozpocząć okres próbny.", trialActive: (days: number) => `Zostało ${days} dni okresu próbnego Plus`, trialExpired: "Twój okres próbny Plus się zakończył", manageBilling: "Zarządzaj rozliczeniami", currentPlan: "Obecny plan", freeFeatures: ["Do 15 zadań", "Czat z Milo", "Widok kalendarza", "Organizacja według kategorii i priorytetu"], plusFeatures: ["Nieograniczone zadania", "Twórz zadania, rozmawiając z Milo", "Rekomendacja priorytetu AI", "Widok kalendarza"], proFeatures: ["Wszystko z Plus", "Głęboka pomoc AI dla każdego zadania", "Priorytetowe wsparcie", "Wczesny dostęp do nowych funkcji"] },
+    stats: { title: "Twoje statystyki", subtitle: "Spojrzenie na twoje wzorce produktywności.", back: "Wstecz", loading: "Ładowanie statystyk...", completed: "Ukończone", pending: "Oczekujące", streak: "Seria", days: "dni", completionRate: "Wskaźnik ukończenia", weeklyTrend: "Ukończone tygodniowo", byCategory: "Według kategorii", lockedTitle: "Statystyki to funkcja Pro", lockedSubtitle: "Przejdź na Pro, aby zobaczyć swoje wzorce produktywności, wskaźnik ukończenia i trendy w czasie.", upgradeToPro: "Przejdź na Pro" }
   }
 } as const;
 

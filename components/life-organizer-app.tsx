@@ -2,36 +2,34 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LogOut, Zap, X } from "lucide-react";
+import { BarChart3, LogOut, Zap, X, ArrowUpRight } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
 import { MiloChat } from "@/components/milo-chat";
+import { PlanZapIcon } from "@/components/plan-zap-icon";
 import { getUserDisplayName } from "@/lib/auth";
 import { TaskForm } from "@/components/task-form";
 import { Button } from "@/components/ui/button";
+import { TextAnimate } from "@/components/ui/text-animate";
 import { formatTodayLongDate } from "@/lib/task-date";
-import {
-  createTask,
-  deleteTaskById,
-  loadTasks,
-  setTaskDone,
-  updateTask as persistTaskUpdate
-} from "@/lib/storage";
-import { getAuthToken } from "@/lib/auth";
+import { useUserPlan } from "@/lib/use-user-plan";
 import { AiPriorityApiResponse, AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task, TaskInput } from "@/types/task";
 
 const FALLBACK_STORAGE_ERROR_MESSAGE = "An unexpected error occurred.";
+const FREE_PLAN_LIMIT_PREFIX = "FREE_PLAN_LIMIT:";
 
 export function LifeOrganizerApp() {
   const { copy, language } = useAppLanguage();
   const { user, logout } = useAuth();
   const displayName = getUserDisplayName(user);
+  const { plan, trialDaysLeft } = useUserPlan();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [storageError, setStorageError] = useState("");
+  const [taskLimitReached, setTaskLimitReached] = useState(false);
   const [aiRecommendation, setAiRecommendation] = useState<AiPriorityRecommendation | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -43,8 +41,10 @@ export function LifeOrganizerApp() {
     let active = true;
     async function load() {
       try {
-        const loaded = await loadTasks();
-        if (active) { setTasks(loaded); setStorageError(""); }
+        const res = await fetch("/api/tasks");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as { tasks: Task[] };
+        if (active) { setTasks(data.tasks); setStorageError(""); }
       } catch (err) {
         if (active) setStorageError(getErrorMessage(err, FALLBACK_STORAGE_ERROR_MESSAGE));
       } finally {
@@ -84,13 +84,9 @@ export function LifeOrganizerApp() {
 
     async function loadRec() {
       try {
-        const authToken = await getAuthToken();
         const res = await fetch("/api/ai-priority", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {})
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tasks: aiRequestTasks, uiLanguage: language }),
           signal: ctrl.signal
         });
@@ -117,12 +113,25 @@ export function LifeOrganizerApp() {
     setIsSyncing(true);
     try {
       const newTask: Task = { id: crypto.randomUUID(), ...input, done: false };
-      const created = await createTask(newTask);
-      setTasks((prev) => [created, ...prev]);
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTask)
+      });
+      if (res.status === 403) {
+        setTaskLimitReached(true);
+        setStorageError("");
+        return false;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { task: Task };
+      setTasks((prev) => [data.task, ...prev]);
       setStorageError("");
+      setTaskLimitReached(false);
       return true;
     } catch (err) {
       setStorageError(getErrorMessage(err, copy.errors.unexpected));
+      setTaskLimitReached(false);
       return false;
     } finally {
       setIsSyncing(false);
@@ -135,8 +144,14 @@ export function LifeOrganizerApp() {
     if (!current) { setEditingTaskId(null); return false; }
     setIsSyncing(true);
     try {
-      const updated = await persistTaskUpdate({ ...current, ...input });
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      const res = await fetch("/api/tasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...current, ...input })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { task: Task };
+      setTasks((prev) => prev.map((t) => (t.id === data.task.id ? data.task : t)));
       setEditingTaskId(null);
       setShowForm(false);
       setStorageError("");
@@ -154,8 +169,14 @@ export function LifeOrganizerApp() {
     if (!current) return;
     setIsSyncing(true);
     try {
-      const updated = await setTaskDone(taskId, !current.done);
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      const res = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, done: !current.done })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { task: Task };
+      setTasks((prev) => prev.map((t) => (t.id === data.task.id ? data.task : t)));
       setStorageError("");
     } catch (err) {
       setStorageError(getErrorMessage(err, copy.errors.unexpected));
@@ -167,7 +188,8 @@ export function LifeOrganizerApp() {
   async function handleDeleteTask(taskId: string) {
     setIsSyncing(true);
     try {
-      await deleteTaskById(taskId);
+      const res = await fetch(`/api/tasks?id=${encodeURIComponent(taskId)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (editingTaskId === taskId) { setEditingTaskId(null); setShowForm(false); }
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       setStorageError("");
@@ -197,31 +219,75 @@ export function LifeOrganizerApp() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex flex-shrink-0 items-center justify-between border-b border-border px-5 py-3">
+      <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-3">
         <div className="flex items-center gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {copy.header.title}
+              <PlanZapIcon plan={plan} />
             </p>
-            <h1 className="text-lg font-semibold tracking-tight">{todayLabel}</h1>
+            <h1 className="text-lg font-semibold tracking-tight"><TextAnimate text={todayLabel} /></h1>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted-foreground sm:inline">
-            Hola, <span className="font-medium text-foreground">{displayName}</span>
-          </span>
-          <Link
-            href="/plans"
-            className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
-          >
-            <Zap className="h-3 w-3" />
-            Planes
-          </Link>
+        <div className="flex items-center gap-2">
+          {plan === "free" ? (
+            <Link
+              href="/plans"
+              className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/20"
+            >
+              <Zap className="h-3 w-3" />
+              {copy.headerNav.plans}
+            </Link>
+          ) : (
+            <Link
+              href="/plans"
+              className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/20"
+            >
+              <Zap className="h-3 w-3" />
+              {plan === "pro" ? "Pro" : "Plus"}
+              {trialDaysLeft !== null && (
+                <span className="text-primary/70">· {trialDaysLeft}d</span>
+              )}
+            </Link>
+          )}
+
+          {plan === "pro" && (
+            <Link
+              href="/stats"
+              className="flex items-center gap-1.5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label={copy.stats.title}
+              title={copy.stats.title}
+            >
+              <BarChart3 className="h-4 w-4" />
+            </Link>
+          )}
+
+          <div className="mx-1 h-6 w-px bg-border" />
+
+          <div className="hidden items-center gap-2.5 sm:flex">
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xs font-semibold text-primary">
+              {user.imageUrl ? (
+                <img
+                  src={user.imageUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                getInitials(displayName)
+              )}
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-xs text-muted-foreground">{copy.headerNav.greeting}</span>
+              <span className="text-sm font-medium text-foreground">{displayName}</span>
+            </div>
+          </div>
+
           <button
             onClick={() => void logout()}
-            className="flex items-center gap-1.5 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
+            className="flex items-center gap-1.5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            aria-label={copy.headerNav.logoutLabel}
+            title={copy.headerNav.logoutLabel}
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -231,6 +297,19 @@ export function LifeOrganizerApp() {
       {storageError && (
         <div className="flex-shrink-0 border-b border-border bg-destructive/10 px-5 py-2 text-xs text-destructive">
           {storageError}
+        </div>
+      )}
+
+      {taskLimitReached && (
+        <div className="flex-shrink-0 border-b border-border bg-amber-500/10 px-5 py-2 text-xs text-amber-700 dark:text-amber-400 flex items-center justify-between gap-3">
+          <span>{copy.plans.taskLimitReached}</span>
+          <Link
+            href="/plans"
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 hover:opacity-80 whitespace-nowrap"
+          >
+            {copy.plans.upgradeToPro}
+            <ArrowUpRight className="h-3 w-3" />
+          </Link>
         </div>
       )}
 
@@ -291,4 +370,11 @@ export function LifeOrganizerApp() {
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message.trim()) return error.message;
   return fallback;
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

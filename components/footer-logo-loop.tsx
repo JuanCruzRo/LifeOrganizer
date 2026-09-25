@@ -6,7 +6,7 @@ import {
   SiNextdotjs,
   SiMeta,
   SiReact,
-  SiSupabase,
+  SiPostgresql,
   SiTailwindcss,
   SiTypescript
 } from "react-icons/si";
@@ -16,7 +16,7 @@ const techLogos = [
   { node: <SiNextdotjs />, title: "Next.js", href: "https://nextjs.org" },
   { node: <SiTypescript />, title: "TypeScript", href: "https://www.typescriptlang.org" },
   { node: <SiTailwindcss />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
-  { node: <SiSupabase />, title: "Supabase", href: "https://supabase.com" },
+  { node: <SiPostgresql />, title: "Neon (Postgres)", href: "https://neon.tech" },
   { node: <SiMeta />, title: "Groq + Llama", href: "https://groq.com" }
 ];
 

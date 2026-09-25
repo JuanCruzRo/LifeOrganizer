@@ -4,7 +4,7 @@ import {
   buildAiTaskHelpRepairInstructions
 } from "@/lib/ai-task-help-config";
 import { AppLanguage } from "@/lib/i18n";
-import { verifyApiAuth } from "@/lib/supabase-server";
+import { requireAuth, getUserPlan } from "@/lib/server-auth";
 
 const MAX_QUESTION_LENGTH = 2000;
 const MAX_FIELD_LENGTH = 2000;
@@ -49,12 +49,22 @@ const aiTaskHelpCache = new Map<
 >();
 
 export async function POST(request: Request) {
-  const userId = await verifyApiAuth(request);
-  if (!userId) {
+  let userId: string;
+  try { userId = await requireAuth(); }
+  catch {
     return NextResponse.json<AiTaskHelpApiResponse>(
       { enabled: true, result: null, error: "Unauthorized" },
       { status: 401 }
     );
+  }
+
+  const plan = await getUserPlan(userId);
+  if (plan !== "pro") {
+    return NextResponse.json<AiTaskHelpApiResponse>({
+      enabled: false,
+      result: null,
+      error: null
+    });
   }
 
   const body = (await request.json()) as {

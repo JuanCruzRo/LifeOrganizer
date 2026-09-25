@@ -1,10 +1,10 @@
+import "server-only";
+import sql from "@/lib/db";
 import { Task } from "@/types/task";
-import { supabase, getSupabaseBrowserClient } from "./supabase";
-
-const TASK_OWNER_TOKEN_KEY = "spark-owner-token";
 
 type TaskRow = {
   id: string;
+  user_id: string;
   title: string;
   category: string;
   description: string;
@@ -12,224 +12,89 @@ type TaskRow = {
   duration: Task["duration"];
   due_date: string;
   done: boolean;
-  completed_at?: string | null;
-  owner_token?: string;
+  completed_at: string | null;
 };
 
-export async function loadTasks(): Promise<Task[]> {
-  const client = await getSupabaseClient();
-
-  const { data, error } = await client.from("tasks").select("*").order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error loading tasks:", error);
-    throw new Error("Couldn't load tasks from Supabase.");
-  }
-
-  return data.map(normalizeTaskFromDB).filter((task): task is Task => task !== null);
+export async function loadTasks(userId: string): Promise<Task[]> {
+  const rows = await sql`
+    SELECT * FROM tasks
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  return rows.map(normalizeTask).filter((t): t is Task => t !== null);
 }
 
-export async function createTask(task: Task) {
-  const client = await getSupabaseClient();
-  const ownerToken = await getOwnerToken();
-  let data: unknown;
-  let error: unknown;
-
-  ({
-    data,
-    error
-  } = await client.from("tasks").insert(taskToDB(task, ownerToken)).select("*").single());
-
-  if (isMissingOwnerTokenColumnError(error)) {
-    ({
-      data,
-      error
-    } = await client.from("tasks").insert(taskToDB(task)).select("*").single());
-  }
-
-  if (error) {
-    console.error("Error creating task:", error);
-    throw new Error("Couldn't save the task in Supabase.");
-  }
-
-  const normalizedTask = normalizeTaskFromDB(data);
-
-  if (!normalizedTask) {
-    throw new Error("Supabase returned an invalid task while creating it.");
-  }
-
-  return normalizedTask;
+export async function createTask(task: Task, userId: string): Promise<Task> {
+  const rows = await sql`
+    INSERT INTO tasks (id, user_id, title, category, description, priority, duration, due_date, done)
+    VALUES (${task.id}, ${userId}, ${task.title}, ${task.category}, ${task.description},
+            ${task.priority}, ${task.duration}, ${task.dueDate}, ${task.done})
+    RETURNING *
+  `;
+  const created = normalizeTask(rows[0]);
+  if (!created) throw new Error("Failed to create task.");
+  return created;
 }
 
-export async function updateTask(task: Task) {
-  const client = await getSupabaseClient();
-  const { data, error } = await client
-    .from("tasks")
-    .update(taskToDB(task))
-    .eq("id", task.id)
-    .select("*")
-    .single();
-
-  if (error) {
-    console.error("Error updating task:", error);
-    throw new Error("Couldn't update the task in Supabase.");
-  }
-
-  const normalizedTask = normalizeTaskFromDB(data);
-
-  if (!normalizedTask) {
-    throw new Error("Supabase returned an invalid task while updating it.");
-  }
-
-  return normalizedTask;
+export async function updateTask(task: Task, userId: string): Promise<Task> {
+  const rows = await sql`
+    UPDATE tasks
+    SET title = ${task.title}, category = ${task.category}, description = ${task.description},
+        priority = ${task.priority}, duration = ${task.duration}, due_date = ${task.dueDate},
+        done = ${task.done}
+    WHERE id = ${task.id} AND user_id = ${userId}
+    RETURNING *
+  `;
+  const updated = normalizeTask(rows[0]);
+  if (!updated) throw new Error("Failed to update task.");
+  return updated;
 }
 
-export async function setTaskDone(taskId: string, done: boolean) {
-  const client = await getSupabaseClient();
-  let data: unknown;
-  let error: unknown;
-
-  ({ data, error } = await client
-    .from("tasks")
-    .update({ done, completed_at: done ? new Date().toISOString() : null })
-    .eq("id", taskId)
-    .select("*")
-    .single());
-
-  if (isMissingCompletedAtColumnError(error)) {
-    ({ data, error } = await client
-      .from("tasks")
-      .update({ done })
-      .eq("id", taskId)
-      .select("*")
-      .single());
-  }
-
-  if (error) {
-    console.error("Error toggling task:", error);
-    throw new Error("Couldn't update the task status in Supabase.");
-  }
-
-  const normalizedTask = normalizeTaskFromDB(data);
-
-  if (!normalizedTask) {
-    throw new Error("Supabase returned an invalid task while changing its status.");
-  }
-
-  return normalizedTask;
+export async function setTaskDone(taskId: string, done: boolean, userId: string): Promise<Task> {
+  const rows = await sql`
+    UPDATE tasks
+    SET done = ${done}, completed_at = ${done ? new Date().toISOString() : null}
+    WHERE id = ${taskId} AND user_id = ${userId}
+    RETURNING *
+  `;
+  const updated = normalizeTask(rows[0]);
+  if (!updated) throw new Error("Failed to toggle task.");
+  return updated;
 }
 
-export async function deleteTaskById(taskId: string) {
-  const client = await getSupabaseClient();
-  const { error } = await client.from("tasks").delete().eq("id", taskId);
-
-  if (error) {
-    console.error("Error deleting task:", error);
-    throw new Error("Couldn't delete the task in Supabase.");
-  }
+export async function deleteTaskById(taskId: string, userId: string): Promise<void> {
+  await sql`DELETE FROM tasks WHERE id = ${taskId} AND user_id = ${userId}`;
 }
 
-async function getSupabaseClient() {
-  const ownerToken = await getOwnerToken();
-  return getSupabaseBrowserClient(ownerToken);
+export async function countUserTasks(userId: string): Promise<number> {
+  const rows = await sql`SELECT COUNT(*) as count FROM tasks WHERE user_id = ${userId}`;
+  return Number(rows[0]?.count ?? 0);
 }
 
-async function getOwnerToken(): Promise<string> {
-  // Prefer the authenticated user's ID for proper data scoping
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.id) return user.id;
-
-  // Fallback to localStorage token for unauthenticated use
-  if (typeof window === "undefined") {
-    throw new Error("Task storage requires a browser environment.");
-  }
-  const existing = window.localStorage.getItem(TASK_OWNER_TOKEN_KEY);
-  if (existing) return existing;
-  const newToken = `task-owner-${crypto.randomUUID()}`;
-  window.localStorage.setItem(TASK_OWNER_TOKEN_KEY, newToken);
-  return newToken;
-}
-
-function getOrCreateTaskOwnerToken() {
-  if (typeof window === "undefined") {
-    throw new Error("Task storage requires a browser environment.");
-  }
-  const existing = window.localStorage.getItem(TASK_OWNER_TOKEN_KEY);
-  if (existing) return existing;
-  const newToken = `task-owner-${crypto.randomUUID()}`;
-  window.localStorage.setItem(TASK_OWNER_TOKEN_KEY, newToken);
-  return newToken;
-}
-
-function taskToDB(task: Task, ownerToken?: string) {
-  return {
-    id: task.id,
-    title: task.title,
-    category: task.category,
-    description: task.description,
-    priority: task.priority,
-    duration: task.duration,
-    due_date: task.dueDate,
-    done: task.done,
-    ...(task.completedAt !== undefined ? { completed_at: task.completedAt } : {}),
-    ...(ownerToken ? { owner_token: ownerToken } : {})
-  };
-}
-
-function normalizeTaskFromDB(value: unknown): Task | null {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-
-  const row = value as Partial<TaskRow>;
-
+function normalizeTask(row: unknown): Task | null {
+  if (!row || typeof row !== "object") return null;
+  const r = row as Partial<TaskRow>;
   if (
-    typeof row.id === "string" &&
-    typeof row.title === "string" &&
-    typeof row.category === "string" &&
-    typeof row.description === "string" &&
-    (row.priority === "low" || row.priority === "medium" || row.priority === "high") &&
-    (row.duration === "short" || row.duration === "medium" || row.duration === "long") &&
-    typeof row.due_date === "string" &&
-    typeof row.done === "boolean"
+    typeof r.id === "string" &&
+    typeof r.title === "string" &&
+    typeof r.category === "string" &&
+    typeof r.description === "string" &&
+    (r.priority === "low" || r.priority === "medium" || r.priority === "high") &&
+    (r.duration === "short" || r.duration === "medium" || r.duration === "long") &&
+    typeof r.due_date === "string" &&
+    typeof r.done === "boolean"
   ) {
     return {
-      id: row.id,
-      title: row.title,
-      category: row.category,
-      description: row.description,
-      priority: row.priority,
-      duration: row.duration,
-      dueDate: row.due_date,
-      done: row.done,
-      ...(row.completed_at ? { completedAt: row.completed_at } : {})
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      description: r.description,
+      priority: r.priority,
+      duration: r.duration,
+      dueDate: r.due_date,
+      done: r.done,
+      ...(r.completed_at ? { completedAt: r.completed_at } : {})
     };
   }
-
   return null;
-}
-
-function isMissingOwnerTokenColumnError(error: unknown) {
-  return isMissingColumnError(error, "owner_token");
-}
-
-function isMissingCompletedAtColumnError(error: unknown) {
-  return isMissingColumnError(error, "completed_at");
-}
-
-function isMissingColumnError(error: unknown, column: string) {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const supabaseError = error as {
-    code?: string;
-    message?: string;
-  };
-
-  return (
-    supabaseError.code === "PGRST204" &&
-    typeof supabaseError.message === "string" &&
-    supabaseError.message.includes(column)
-  );
 }

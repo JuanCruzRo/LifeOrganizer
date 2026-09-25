@@ -1,7 +1,8 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { chatWithMilo } from "@/lib/milo";
-import { verifyApiAuth, getAccessTokenFromRequest, getUserPlan } from "@/lib/supabase-server";
+import { chatWithMilo, refreshUserMemorySummary } from "@/lib/milo";
+import { requireAuth, getUserPlan } from "@/lib/server-auth";
+import { bumpMessageCount, getUserMemory, saveUserMemory, shouldRefreshMemory } from "@/lib/user-memory";
 import { Task, TaskInput } from "@/types/task";
 
 const MAX_MESSAGE_LENGTH = 4000;
@@ -17,12 +18,10 @@ type MiloChatRequest = {
 };
 
 export async function POST(request: Request) {
-  const userId = await verifyApiAuth(request);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let userId: string;
+  try { userId = await requireAuth(); }
+  catch { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
 
-  const ownerToken = request.headers.get("x-client-token") ?? "";
   const body = (await request.json()) as MiloChatRequest;
   const message = typeof body.message === "string" ? body.message.trim() : "";
 
@@ -36,10 +35,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many tasks" }, { status: 400 });
   }
 
-  const accessToken = getAccessTokenFromRequest(request);
-  const plan = await getUserPlan(accessToken);
+  const plan = await getUserPlan(userId);
+  const canCreateTasks = plan !== "free";
 
-  const context = buildTaskContext(body.tasks ?? [], body.pendingTaskAction ?? null);
+  const userMemory = await getUserMemory(userId);
+  const context = buildTaskContext(body.tasks ?? [], body.pendingTaskAction ?? null, canCreateTasks, userMemory);
   const rawHistory = Array.isArray(body.history) ? body.history : [];
   const history = rawHistory.slice(-20).map((m) => ({
     role: (m.role === "milo" ? "assistant" : "user") as "assistant" | "user",
@@ -48,9 +48,17 @@ export async function POST(request: Request) {
 
   try {
     const { content } = await chatWithMilo({ message, context, history, isPro: plan === "pro" });
-    const { text, taskAction } = parseTaskAction(content);
-    return NextResponse.json({ response: text, taskAction: taskAction ?? null });
+    const { text, taskActions } = parseTaskActions(content);
+    const cleanText = sanitizeResponse(text);
+
+    void updateMemoryInBackground(userId, userMemory, [...history, { role: "user", content: message }, { role: "assistant", content: cleanText }]);
+
+    return NextResponse.json({
+      response: cleanText,
+      taskActions: canCreateTasks && taskActions.length > 0 ? taskActions : null
+    });
   } catch (error) {
+    console.error("Milo chat failed", error);
     const isTimeout = error instanceof Error && error.name === "TimeoutError";
     return NextResponse.json(
       { error: isTimeout ? "Milo tardó demasiado en responder." : "No se pudo conectar con Milo." },
@@ -59,7 +67,31 @@ export async function POST(request: Request) {
   }
 }
 
-function buildTaskContext(tasks: Task[], pendingTaskAction: TaskInput | null): string {
+async function updateMemoryInBackground(
+  userId: string,
+  previousSummary: string,
+  recentHistory: Array<{ role: "user" | "assistant"; content: string }>
+) {
+  try {
+    const { count } = await bumpMessageCount(userId);
+    if (!shouldRefreshMemory(count)) return;
+
+    const updatedSummary = await refreshUserMemorySummary({
+      previousSummary,
+      history: recentHistory.slice(-20)
+    });
+    await saveUserMemory(userId, updatedSummary);
+  } catch (error) {
+    console.error("Failed to update user memory", error);
+  }
+}
+
+function buildTaskContext(
+  tasks: Task[],
+  pendingTaskAction: TaskInput | null,
+  canCreateTasks: boolean,
+  userMemory: string
+): string {
   const today = new Date().toISOString().split("T")[0];
   const lines: string[] = [
     `Fecha de hoy: ${today}`,
@@ -70,6 +102,13 @@ Reglas de honestidad (OBLIGATORIAS):
 - Si el usuario te hace una pregunta factual sobre el mundo real y no aparece en los resultados de búsqueda web, admití que no sabés.
 - Es mejor decir "no sé" que dar información incorrecta.`
   ];
+
+  if (userMemory) {
+    lines.push(`
+Lo que sabés de este usuario por conversaciones anteriores:
+${userMemory}
+Usá esto para personalizar tus respuestas cuando sea relevante, sin mencionar explícitamente que "tenés una memoria" salvo que te pregunten.`);
+  }
 
   const pending = tasks.filter((t) => !t.done);
   const completed = tasks.filter((t) => t.done);
@@ -108,50 +147,78 @@ Tarea pendiente de confirmación del usuario: "${pendingTaskAction.title}" (${pe
 - Si el usuario cambia claramente de tema, recordale brevemente que tiene esa tarea pendiente de confirmar o descartar antes de continuar.`);
   }
 
-  lines.push(`
-Instrucciones para creación de tareas:
-- Si el usuario pide crear, agregar o recordar una tarea, respondé normalmente y al final incluí exactamente este bloque en una nueva línea:
-TASK_ACTION:{"title":"...","category":"...","description":"...","priority":"low|medium|high","duration":"short|medium|long","dueDate":"YYYY-MM-DD"}
-- Usá la fecha de hoy (${today}) como base si no se menciona fecha. Por defecto usá 7 días desde hoy (${defaultDate}).
-- Defaults si falta info: category="general", priority="medium", duration="medium", description="".
-- Incluí TASK_ACTION solo cuando el usuario claramente quiere crear una tarea.
-- No incluyas nada después del bloque TASK_ACTION.`);
+  if (canCreateTasks) {
+    lines.push(`
+Creación de tareas:
+Podés crear una o varias tareas incluyendo al final de tu respuesta exactamente este bloque (sin nada después):
+TASKS_ACTION:[{"title":"...","category":"...","description":"...","priority":"low|medium|high","duration":"short|medium|long","dueDate":"YYYY-MM-DD"}]
+
+Para múltiples tareas (recurrentes, varios días, etc.) incluí varios objetos en el array:
+TASKS_ACTION:[{"title":"Banco","dueDate":"2026-07-08",...},{"title":"Banco","dueDate":"2026-07-15",...}]
+
+Usá TASKS_ACTION solo cuando el usuario pida explícitamente crear, agendar o recordar algo con verbos como "agendá", "creá", "recordame", "nueva tarea", "quiero agendar", "cada martes", "todos los jueves".
+Para tareas recurrentes (cada semana, todos los martes, etc.) creá una tarea por cada ocurrencia para las próximas 4 semanas.
+No uses TASKS_ACTION cuando el usuario haga preguntas, pida consejos, recomendaciones o información.
+Fecha base: hoy (${today}). Default: ${defaultDate}. Defaults: category="general", priority="medium", duration="medium", description="".`);
+  } else {
+    lines.push(`
+Creación de tareas:
+Este usuario está en el plan Free y NO puede crear tareas desde el chat (esa función es exclusiva de los planes Plus y Pro).
+Si pide crear, agendar o recordar algo con verbos como "agendá", "creá", "recordame", "nueva tarea", explicale amablemente que para crear tareas por chat necesita el plan Plus, y sugerile que puede crearla manualmente desde el botón "+" o hacer el upgrade en /plans.
+Nunca generes el bloque TASKS_ACTION para este usuario.`);
+  }
 
   return lines.join("\n");
 }
 
-function parseTaskAction(response: string): { text: string; taskAction?: TaskInput } {
-  const actionIndex = response.indexOf("TASK_ACTION:");
-  if (actionIndex === -1) return { text: response };
+function sanitizeResponse(text: string): string {
+  return text
+    .split("\n")
+    .filter((line) => !/TASKS?_ACTION/i.test(line))
+    .join("\n")
+    .trim();
+}
+
+function normalizeTaskInput(parsed: Partial<TaskInput>): TaskInput | null {
+  const sevenDaysLater = new Date();
+  sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+  const title = typeof parsed.title === "string" ? parsed.title.trim() : "";
+  if (!title) return null;
+  return {
+    title,
+    category: typeof parsed.category === "string" ? parsed.category.trim() : "general",
+    description: typeof parsed.description === "string" ? parsed.description.trim() : "",
+    priority: (["low", "medium", "high"] as const).includes(parsed.priority as TaskInput["priority"])
+      ? (parsed.priority as TaskInput["priority"])
+      : "medium",
+    duration: (["short", "medium", "long"] as const).includes(parsed.duration as TaskInput["duration"])
+      ? (parsed.duration as TaskInput["duration"])
+      : "medium",
+    dueDate:
+      typeof parsed.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.dueDate)
+        ? parsed.dueDate
+        : sevenDaysLater.toISOString().split("T")[0]
+  };
+}
+
+function parseTaskActions(response: string): { text: string; taskActions: TaskInput[] } {
+  const marker = "TASKS_ACTION:";
+  const actionIndex = response.indexOf(marker);
+  if (actionIndex === -1) return { text: response, taskActions: [] };
 
   const text = response.slice(0, actionIndex).trim();
-  const jsonStr = response.slice(actionIndex + "TASK_ACTION:".length).trim();
+  const jsonStr = response.slice(actionIndex + marker.length).trim();
 
   try {
-    const parsed = JSON.parse(jsonStr) as Partial<TaskInput>;
-    const sevenDaysLater = new Date();
-    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-
-    const taskAction: TaskInput = {
-      title: typeof parsed.title === "string" ? parsed.title.trim() : "",
-      category: typeof parsed.category === "string" ? parsed.category.trim() : "general",
-      description: typeof parsed.description === "string" ? parsed.description.trim() : "",
-      priority: (["low", "medium", "high"] as const).includes(parsed.priority as TaskInput["priority"])
-        ? (parsed.priority as TaskInput["priority"])
-        : "medium",
-      duration: (["short", "medium", "long"] as const).includes(parsed.duration as TaskInput["duration"])
-        ? (parsed.duration as TaskInput["duration"])
-        : "medium",
-      dueDate:
-        typeof parsed.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.dueDate)
-          ? parsed.dueDate
-          : sevenDaysLater.toISOString().split("T")[0]
-    };
-
-    if (!taskAction.title) return { text: response };
-
-    return { text, taskAction };
+    const parsed = JSON.parse(jsonStr) as unknown;
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    const taskActions = items
+      .map((item) => normalizeTaskInput(item as Partial<TaskInput>))
+      .filter((t): t is TaskInput => t !== null)
+      .slice(0, 12);
+    if (taskActions.length === 0) return { text: response, taskActions: [] };
+    return { text, taskActions };
   } catch {
-    return { text: response };
+    return { text: response, taskActions: [] };
   }
 }

@@ -1,13 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
-import { signOut } from "@/lib/auth";
+import { createContext, useContext, type ReactNode } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { MiloLoader } from "@/components/milo-loader";
 import { LoginForm } from "@/components/login-form";
 
 type AuthContextValue = {
-  user: User;
+  user: NonNullable<ReturnType<typeof useUser>["user"]>;
   logout: () => Promise<void>;
 };
 
@@ -20,23 +19,10 @@ export function useAuth() {
 }
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <span className="milo-loader">
@@ -50,12 +36,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user) {
-    return <LoginForm onLogin={setUser} />;
+  if (!isSignedIn || !user) {
+    return <LoginForm />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, logout: signOut }}>
+    <AuthContext.Provider value={{ user, logout: () => signOut() }}>
       {children}
     </AuthContext.Provider>
   );

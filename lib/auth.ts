@@ -1,32 +1,15 @@
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@clerk/nextjs";
 
-export async function getAuthToken(): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ?? "";
-}
-
-export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(error.message);
-  return data.user;
-}
-
-export async function signUp(email: string, password: string, name: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { full_name: name } }
-  });
-  if (error) throw new Error(error.message);
-  return data.user;
-}
-
-export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw new Error(error.message);
-}
-
-export function getUserDisplayName(user: { email?: string; user_metadata?: { full_name?: string } } | null) {
+export function getUserDisplayName(user: { firstName?: string | null; lastName?: string | null; emailAddresses?: { emailAddress: string }[] } | null) {
   if (!user) return "";
-  return user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuario";
+  const full = [user.firstName, user.lastName].filter(Boolean).join(" ");
+  if (full.trim()) return full.trim();
+  return user.emailAddresses?.[0]?.emailAddress?.split("@")[0] ?? "Usuario";
+}
+
+export function getAuthToken(): Promise<string> {
+  // Client-side: use Clerk's useAuth hook via getToken
+  // This is a placeholder — in components, use useAuth().getToken() directly
+  // In server routes, use auth() from @clerk/nextjs/server
+  return Promise.resolve("");
 }

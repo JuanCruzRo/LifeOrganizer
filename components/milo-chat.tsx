@@ -1,28 +1,76 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle, Send, Trash2, XCircle } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
+import { useAppLanguage } from "@/components/language-provider";
+import { languageSpeechCodes } from "@/lib/i18n";
+import { useSpeechRecognition } from "@/lib/use-speech-recognition";
 import { cn } from "@/lib/utils";
 import { Task, TaskInput } from "@/types/task";
-import { getAuthToken } from "@/lib/auth";
-import { supabase, getSupabaseBrowserClient } from "@/lib/supabase";
+import { useUser } from "@clerk/nextjs";
 
-const OWNER_TOKEN_KEY = "spark-owner-token";
 const LAST_BRIEFING_KEY = "milo_last_briefing";
+function sessionKey(userId: string) { return `milo_session_${userId}`; }
+
+function renderMarkdown(text: string): React.ReactNode[] {
+  return text.split("\n").map((line, i) => {
+    const parts: React.ReactNode[] = [];
+    let rest = line;
+
+    // listas con - o *
+    const listMatch = rest.match(/^(\s*[-*]\s+)(.*)/);
+    if (listMatch) {
+      rest = listMatch[2];
+      parts.push(<span key="bullet" className="mr-1 text-muted-foreground">•</span>);
+    }
+
+    // negrita **text** e itálica *text*
+    const segments = rest.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    for (const seg of segments) {
+      if (seg.startsWith("**") && seg.endsWith("**")) {
+        parts.push(<strong key={seg}>{seg.slice(2, -2)}</strong>);
+      } else if (seg.startsWith("*") && seg.endsWith("*")) {
+        parts.push(<em key={seg}>{seg.slice(1, -1)}</em>);
+      } else {
+        parts.push(seg);
+      }
+    }
+
+    return <div key={i}>{parts}</div>;
+  });
+}
 
 type Message = {
   role: "user" | "milo";
   content: string;
-  taskAction?: TaskInput;
+  taskActions?: TaskInput[];
   taskCreated?: boolean;
 };
 
 type PersistedMessage = Pick<Message, "role" | "content">;
 
-function buildDailyBriefing(tasks: Task[]): string {
+type MiloCopy = {
+  briefingGoodMorning: string;
+  briefingGoodAfternoon: string;
+  briefingGoodEvening: string;
+  briefingNoPending: string;
+  briefingPending: (n: number) => string;
+  briefingUrgent: (n: number, names: string) => string;
+  briefingCompleted: (n: number) => string;
+  briefingHelp: string;
+};
+
+function getGreetingByHour(miloCopy: MiloCopy): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return miloCopy.briefingGoodMorning;
+  if (hour < 19) return miloCopy.briefingGoodAfternoon;
+  return miloCopy.briefingGoodEvening;
+}
+
+function buildDailyBriefing(tasks: Task[], miloCopy: MiloCopy): string {
   const pending = tasks.filter((t) => !t.done);
   const urgent = pending.filter((t) => t.priority === "high");
   const today = new Date();
@@ -31,23 +79,23 @@ function buildDailyBriefing(tasks: Task[]): string {
     return new Date(t.completedAt).toDateString() === today.toDateString();
   });
 
-  const lines: string[] = ["☀️ Buen día! Tu resumen de hoy:"];
+  const lines: string[] = [getGreetingByHour(miloCopy)];
 
   if (pending.length === 0) {
-    lines.push("No tenés tareas pendientes. Buen momento para agregar algo nuevo.");
+    lines.push(miloCopy.briefingNoPending);
   } else {
-    lines.push(`Tenés ${pending.length} tarea${pending.length !== 1 ? "s" : ""} pendiente${pending.length !== 1 ? "s" : ""}.`);
+    lines.push(miloCopy.briefingPending(pending.length));
     if (urgent.length > 0) {
       const urgentNames = urgent.slice(0, 2).map((t) => t.title).join(", ");
-      lines.push(`⚡ ${urgent.length} urgente${urgent.length !== 1 ? "s" : ""}: ${urgentNames}${urgent.length > 2 ? "..." : ""}.`);
+      lines.push(miloCopy.briefingUrgent(urgent.length, urgentNames + (urgent.length > 2 ? "..." : "")));
     }
   }
 
   if (completedToday.length > 0) {
-    lines.push(`✅ Hoy ya completaste ${completedToday.length} tarea${completedToday.length !== 1 ? "s" : ""}. ¡Bien!`);
+    lines.push(miloCopy.briefingCompleted(completedToday.length));
   }
 
-  lines.push("¿En qué te puedo ayudar?");
+  lines.push(miloCopy.briefingHelp);
   return lines.join("\n");
 }
 
@@ -58,12 +106,15 @@ export function MiloChat({
   tasks: Task[];
   onCreateTask: (input: TaskInput) => Promise<boolean>;
 }) {
+  const { copy, language } = useAppLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const speech = useSpeechRecognition(languageSpeechCodes[language]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
+  const { user } = useUser();
+  const userId = user?.id ?? "";
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [ownerToken, setOwnerToken] = useState("");
   const briefingSentRef = useRef(false);
   const tasksLoadedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,7 +123,7 @@ export function MiloChat({
   const pendingTaskAction = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
-      if (m.taskAction && !m.taskCreated) return m.taskAction;
+      if (m.taskActions && m.taskActions.length > 0 && !m.taskCreated) return m.taskActions[0];
     }
     return null;
   }, [messages]);
@@ -87,51 +138,26 @@ export function MiloChat({
 
   const isOverloaded = overloadedTasks.length >= 3;
 
-  // Inicializar token usando el UID del usuario autenticado
+  // Cargar sesión desde localStorage cuando el userId esté disponible
   useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
-      let token: string;
-      if (user?.id) {
-        token = user.id;
-      } else {
-        const existing = window.localStorage.getItem(OWNER_TOKEN_KEY);
-        token = existing ?? `task-owner-${crypto.randomUUID()}`;
-        if (!existing) window.localStorage.setItem(OWNER_TOKEN_KEY, token);
+    if (!userId) return;
+    try {
+      const raw = localStorage.getItem(sessionKey(userId));
+      if (raw) {
+        const parsed = JSON.parse(raw) as Message[];
+        if (Array.isArray(parsed)) setMessages(parsed);
       }
-      setOwnerToken(token);
+    } catch { /* sin sesión previa */ }
+    setSessionLoaded(true);
+  }, [userId]);
 
-      // Cargar sesión con el token correcto
-      try {
-        const client = getSupabaseBrowserClient(token);
-        const { data } = await client
-          .from("milo_sessions")
-          .select("messages")
-          .eq("owner_token", token)
-          .single();
-        if (data?.messages && Array.isArray(data.messages)) {
-          setMessages(data.messages as Message[]);
-        }
-      } catch {
-        // Sin sesión previa
-      } finally {
-        setSessionLoaded(true);
-      }
-    }
-    void init();
-  }, []);
-
-  // Guardar sesión cuando cambian los mensajes
+  // Guardar sesión en localStorage cuando cambian los mensajes
   useEffect(() => {
-    if (!sessionLoaded || !ownerToken || messages.length === 0) return;
-    const toSave: PersistedMessage[] = messages.map(({ role, content }) => ({ role, content }));
-    const client = getSupabaseBrowserClient(ownerToken);
-    void client.from("milo_sessions").upsert({
-      owner_token: ownerToken,
-      messages: toSave,
-      updated_at: new Date().toISOString()
-    });
-  }, [messages, sessionLoaded, ownerToken]);
+    if (!sessionLoaded || !userId || messages.length === 0) return;
+    try {
+      localStorage.setItem(sessionKey(userId), JSON.stringify(messages));
+    } catch { /* cuota de localStorage */ }
+  }, [messages, sessionLoaded, userId]);
 
   // Briefing diario
   useEffect(() => {
@@ -145,7 +171,7 @@ export function MiloChat({
 
     briefingSentRef.current = true;
     localStorage.setItem(LAST_BRIEFING_KEY, today);
-    setMessages((prev) => [...prev, { role: "milo", content: buildDailyBriefing(tasks) }]);
+    setMessages((prev) => [...prev, { role: "milo", content: buildDailyBriefing(tasks, copy.milo) }]);
   }, [sessionLoaded, tasks]);
 
   // Auto-scroll
@@ -166,45 +192,40 @@ export function MiloChat({
         .filter((m) => m.role === "user" || m.role === "milo")
         .map(({ role, content }) => ({ role, content }));
 
-      const authToken = await getAuthToken();
       const response = await fetch("/api/milo/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
-          ...(ownerToken ? { "x-client-token": ownerToken } : {})
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, tasks, history, pendingTaskAction })
       });
 
       const data = (await response.json()) as {
         response?: string;
         error?: string;
-        taskAction?: TaskInput;
+        taskActions?: TaskInput[];
       };
 
       const newMessage: Message = {
         role: "milo",
         content: data.response ?? data.error ?? "Sin respuesta.",
-        ...(data.taskAction ? { taskAction: data.taskAction } : {})
+        ...(data.taskActions && data.taskActions.length > 0 ? { taskActions: data.taskActions } : {})
       };
       setMessages((prev) => [...prev, newMessage]);
     } catch {
-      setMessages((prev) => [...prev, { role: "milo", content: "No pude conectarme con Milo." }]);
+      setMessages((prev) => [...prev, { role: "milo", content: copy.milo.noConnection }]);
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function handleConfirmTask(msgIndex: number, action: TaskInput) {
+  async function handleConfirmTask(msgIndex: number, actions: TaskInput[]) {
     setIsCreatingTask(true);
     try {
-      const success = await onCreateTask(action);
-      if (success) {
-        setMessages((prev) =>
-          prev.map((m, i) => (i === msgIndex ? { ...m, taskAction: undefined, taskCreated: true } : m))
-        );
+      for (const action of actions) {
+        await onCreateTask(action);
       }
+      setMessages((prev) =>
+        prev.map((m, i) => (i === msgIndex ? { ...m, taskActions: undefined, taskCreated: true } : m))
+      );
     } finally {
       setIsCreatingTask(false);
     }
@@ -212,30 +233,36 @@ export function MiloChat({
 
   function handleDismissTask(msgIndex: number) {
     setMessages((prev) =>
-      prev.map((m, i) => (i === msgIndex ? { ...m, taskAction: undefined } : m))
+      prev.map((m, i) => (i === msgIndex ? { ...m, taskActions: undefined } : m))
     );
   }
 
-  async function clearMessages() {
+  function clearMessages() {
     setMessages([]);
-    if (!ownerToken) return;
-    const client = getSupabaseBrowserClient(ownerToken);
-    await client.from("milo_sessions").delete().eq("owner_token", ownerToken);
+    if (userId) localStorage.removeItem(sessionKey(userId));
   }
 
   return (
     <aside className="flex w-full flex-col border-r border-border lg:w-[360px] lg:flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold">Milo</p>
-          <p className="text-xs text-muted-foreground">Asistente personal</p>
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+              M
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[hsl(var(--background))] bg-emerald-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">{copy.milo.name}</p>
+            <p className="text-xs text-muted-foreground">{copy.milo.subtitle}</p>
+          </div>
         </div>
         <button
-          onClick={() => void clearMessages()}
+          onClick={clearMessages}
           disabled={messages.length === 0}
           className="flex items-center gap-1 rounded-md p-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
-          aria-label="Limpiar conversación"
+          aria-label={copy.milo.clearChat}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -244,7 +271,7 @@ export function MiloChat({
       {/* Overload warning */}
       {isOverloaded && (
         <div className="flex-shrink-0 border-b border-border bg-destructive/10 px-4 py-2 text-xs text-destructive">
-          ⚡ {overloadedTasks.length} tareas urgentes vencen en los próximos 2 días.
+          {copy.milo.urgentWarning(overloadedTasks.length)}
         </div>
       )}
 
@@ -253,12 +280,12 @@ export function MiloChat({
         {messages.length === 0 && !isLoading && sessionLoaded && (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-[220px] text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary text-lg font-bold">
                 M
               </div>
-              <p className="text-sm font-medium">Hola, soy Milo</p>
+              <p className="text-sm font-medium">{copy.milo.greeting}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Preguntame sobre tus tareas, pedime ayuda para organizarte, o charlemos.
+                {copy.milo.greetingSubtitle}
               </p>
             </div>
           </div>
@@ -277,24 +304,32 @@ export function MiloChat({
                   : "rounded-bl-sm bg-secondary text-foreground"
               )}
             >
-              {msg.content}
+              {msg.role === "milo" ? renderMarkdown(msg.content) : msg.content}
             </div>
 
-            {msg.taskAction && (
+            {msg.taskActions && msg.taskActions.length > 0 && (
               <div className="mt-2 max-w-[85%] w-full rounded-xl border border-border bg-card p-3 space-y-2">
-                <p className="text-xs font-semibold text-foreground">Crear tarea</p>
-                <p className="text-sm font-medium text-foreground">{msg.taskAction.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {msg.taskAction.category} · {msg.taskAction.priority} · vence {msg.taskAction.dueDate}
+                <p className="text-xs font-semibold text-foreground">
+                  {msg.taskActions.length === 1 ? copy.milo.createTask : `${copy.milo.createTask} (${msg.taskActions.length})`}
                 </p>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {msg.taskActions.map((action, idx) => (
+                    <div key={idx} className="rounded-lg bg-background/60 px-2.5 py-1.5">
+                      <p className="text-sm font-medium text-foreground">{action.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {action.category} · {action.priority} · {action.dueDate}
+                      </p>
+                    </div>
+                  ))}
+                </div>
                 <div className="flex gap-2 pt-1">
                   <button
-                    onClick={() => void handleConfirmTask(i, msg.taskAction!)}
+                    onClick={() => void handleConfirmTask(i, msg.taskActions!)}
                     disabled={isCreatingTask}
                     className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     <CheckCircle className="h-3 w-3" />
-                    Confirmar
+                    {copy.milo.confirm}
                   </button>
                   <button
                     onClick={() => handleDismissTask(i)}
@@ -302,7 +337,7 @@ export function MiloChat({
                     className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     <XCircle className="h-3 w-3" />
-                    Descartar
+                    {copy.milo.dismiss}
                   </button>
                 </div>
               </div>
@@ -311,7 +346,7 @@ export function MiloChat({
             {msg.taskCreated && (
               <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                 <CheckCircle className="h-3 w-3 text-green-500" />
-                Tarea creada
+                {copy.milo.taskCreated}
               </div>
             )}
           </div>
@@ -341,10 +376,27 @@ export function MiloChat({
                 void sendMessage();
               }
             }}
-            placeholder="Escribí un mensaje..."
-            disabled={isLoading}
+            placeholder={speech.isListening ? copy.milo.listening : copy.milo.inputPlaceholder}
+            disabled={isLoading || speech.isListening}
             className="flex-1 text-sm"
           />
+          {speech.isSupported && (
+            <Button
+              type="button"
+              onClick={() =>
+                speech.isListening
+                  ? speech.stop()
+                  : speech.start((text) => setInput((prev) => (prev ? `${prev} ${text}` : text)))
+              }
+              disabled={isLoading}
+              variant={speech.isListening ? "default" : "outline"}
+              size="icon"
+              aria-label={speech.isListening ? copy.milo.stopListening : copy.milo.startListening}
+              className={cn(speech.isListening && "animate-pulse")}
+            >
+              {speech.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+          )}
           <Button
             onClick={() => void sendMessage()}
             disabled={isLoading || !input.trim()}

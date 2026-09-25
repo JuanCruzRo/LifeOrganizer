@@ -16,7 +16,7 @@ type RecommendedTaskHelpProps = {
   onStateChange?: Dispatch<SetStateAction<RecommendedTaskHelpState>>;
   recommendationReason: string;
   task: Task;
-  uiLanguage: "en" | "es";
+  uiLanguage: import("@/lib/i18n").AppLanguage;
 };
 
 type HelpHistoryEntry = {
@@ -421,7 +421,7 @@ type HelpHistoryNavigatorProps = {
   activeIndex: number;
   entries: HelpHistoryEntry[];
   onSelectIndex: (index: number) => void;
-  uiLanguage: "en" | "es";
+  uiLanguage: import("@/lib/i18n").AppLanguage;
 };
 
 function HelpHistoryNavigator({
@@ -535,7 +535,7 @@ function createHelpHistoryId() {
   return `help-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function getDisplayedThreadLabel(language: "en" | "es", isViewingLatestHistory: boolean) {
+function getDisplayedThreadLabel(language: import("@/lib/i18n").AppLanguage, isViewingLatestHistory: boolean) {
   if (language === "es") {
     return isViewingLatestHistory ? "Conversacion actual" : "Pedido anterior";
   }
@@ -544,7 +544,7 @@ function getDisplayedThreadLabel(language: "en" | "es", isViewingLatestHistory: 
 }
 
 function getDisplayedContextLabel(
-  language: "en" | "es",
+  language: import("@/lib/i18n").AppLanguage,
   isViewingLatestHistory: boolean,
   fallbackLabel: string
 ) {
@@ -556,7 +556,7 @@ function getDisplayedContextLabel(
 }
 
 function getDisplayedPendingLabel(
-  language: "en" | "es",
+  language: import("@/lib/i18n").AppLanguage,
   isViewingLatestHistory: boolean,
   fallbackLabel: string
 ) {
@@ -567,6 +567,6 @@ function getDisplayedPendingLabel(
   return language === "es" ? "Pedido pendiente de aclaracion" : "Request pending clarification";
 }
 
-function getLatestLabel(language: "en" | "es") {
+function getLatestLabel(language: import("@/lib/i18n").AppLanguage) {
   return language === "es" ? "Ultimo" : "Latest";
 }
