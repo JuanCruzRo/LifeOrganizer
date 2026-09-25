@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useAppLanguage } from "@/components/language-provider";
 
-const MASCOT_SRC = "/Mascot.png";
+const MASCOT_SRC = "/milo-green.webp";
 
 export function HeaderMascot() {
   const [hasImageError, setHasImageError] = useState(false);

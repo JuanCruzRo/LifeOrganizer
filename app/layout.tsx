@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import { LanguageProvider } from "@/components/language-provider";
+import { LocalizedClerkProvider } from "@/components/localized-clerk-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,12 +29,12 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <ClerkProvider>
-      <html lang="es" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-        <body>
-          <LanguageProvider>{children}</LanguageProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="es" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <body>
+        <LanguageProvider>
+          <LocalizedClerkProvider>{children}</LocalizedClerkProvider>
+        </LanguageProvider>
+      </body>
+    </html>
   );
 }

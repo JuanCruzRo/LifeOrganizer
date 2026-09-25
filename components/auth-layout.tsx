@@ -2,21 +2,25 @@
 
 import { type ReactNode } from "react";
 import { motion } from "motion/react";
+import { useAppLanguage } from "@/components/language-provider";
+import { authHeadings, landingCopy } from "@/lib/landing-copy";
 
 const BOLT = "M 32 5 L 8 35 L 30 35 L 28 55 L 52 25 L 30 25 Z";
-
-const FEATURES = [
-  { icon: "✦", text: "Organizá tus tareas con IA" },
-  { icon: "✦", text: "Milo te ayuda a priorizar" },
-  { icon: "✦", text: "Calendario inteligente" },
-];
 
 type AuthLayoutProps = {
   children: ReactNode;
   mode: "sign-in" | "sign-up";
 };
 
-export function AuthLayout({ children }: AuthLayoutProps) {
+export function AuthLayout({ children, mode }: AuthLayoutProps) {
+  const { language } = useAppLanguage();
+  const t = landingCopy[language];
+  const FEATURES = [
+    { icon: "✦", text: t.badge },
+    { icon: "✦", text: t.features[0].title },
+    { icon: "✦", text: t.features[3].title },
+  ];
+  const heading = mode === "sign-up" ? authHeadings[language].signUp : authHeadings[language].signIn;
   return (
     <div className="flex min-h-screen bg-[hsl(228,12%,7%)]">
       {/* Left panel — branding */}
@@ -79,16 +83,12 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <path d={BOLT} fill="currentColor" />
           </motion.svg>
 
-          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-[hsl(220,10%,95%)]">
-            Tu asistente de
-            <br />
-            <span className="text-[hsl(168,100%,42%)]">productividad</span>
-            <br />
-            con IA
-          </h1>
+          <p className="font-display text-4xl font-bold leading-tight tracking-tight text-[hsl(220,10%,95%)]">
+            {t.heroTitle}
+          </p>
 
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-[hsl(220,5%,55%)]">
-            Milo organiza tus tareas, te recuerda lo importante y te ayuda a enfocarte en lo que realmente importa.
+            {t.heroText}
           </p>
 
           <ul className="mt-8 flex flex-col gap-3">
@@ -114,7 +114,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.7 }}
         >
-          Spark — AI-powered productivity
+          Spark — {t.badge}
         </motion.p>
       </div>
 
@@ -136,6 +136,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             Spark
           </span>
         </motion.div>
+
+        <h1 className="mb-5 w-full max-w-sm text-center font-display text-2xl font-semibold text-[hsl(220,10%,93%)]">
+          {heading}
+        </h1>
 
         <motion.div
           className="w-full max-w-sm overflow-hidden rounded-2xl bg-[hsl(228,10%,11%)] ring-1 ring-white/5"

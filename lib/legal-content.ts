@@ -6,7 +6,7 @@ const { serviceName: S, operatorName: OP, operatorTaxId: TAX, operatorAddress: A
 export const termsContent: { es: LegalContent; en: LegalContent } = {
   es: {
     title: "Términos y condiciones",
-    intro: `Estos términos regulan el uso de ${S} (el "Servicio"), operado por ${OP} (CUIT ${TAX}), con domicilio en ${ADDR} (el "Responsable"). Al crear una cuenta o usar el Servicio aceptás estos términos.`,
+    intro: `Estos términos regulan el uso de ${S} (el "Servicio"), operado por ${OP} (CUIT ${TAX}), con domicilio en ${ADDR} (el "Responsable"). Al crear una cuenta o usar el Servicio aceptas estos términos.`,
     sections: [
       {
         title: "El Servicio",
@@ -17,21 +17,21 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Cuenta y uso permitido",
         body: [
-          "Necesitás una cuenta para usar el Servicio. Sos responsable de la actividad de tu cuenta y de mantener seguro tu acceso. Tenés que ser mayor de 18 años, o contar con autorización de tu representante legal si sos menor.",
-          "No podés usar el Servicio para actividades ilegales, para intentar vulnerar su seguridad, para automatizar el acceso de forma abusiva ni para revenderlo sin autorización."
+          "Necesitás una cuenta para usar el Servicio. Eres responsable de la actividad de tu cuenta y de mantener seguro tu acceso. Tienes que ser mayor de 18 años, o contar con autorización de tu representante legal si eres menor.",
+          "No puedes usar el Servicio para actividades ilegales, para intentar vulnerar su seguridad, para automatizar el acceso de forma abusiva ni para revenderlo sin autorización."
         ]
       },
       {
         title: "Inteligencia artificial",
         body: [
-          "Milo genera respuestas con modelos de lenguaje de terceros. Las respuestas pueden ser incorrectas, incompletas o desactualizadas. No constituyen asesoramiento médico, legal, financiero ni profesional. Verificá la información importante antes de actuar en base a ella.",
-          "Los mensajes que le enviás a Milo y las tareas relevantes se envían a proveedores de IA para generar la respuesta (ver la Política de privacidad)."
+          "Milo genera respuestas con modelos de lenguaje de terceros. Las respuestas pueden ser incorrectas, incompletas o desactualizadas. No constituyen asesoramiento médico, legal, financiero ni profesional. Verifica la información importante antes de actuar en base a ella.",
+          "Los mensajes que le envías a Milo y las tareas relevantes se envían a proveedores de IA para generar la respuesta (ver la Política de privacidad)."
         ]
       },
       {
         title: "Planes, precios y pagos",
         body: [
-          `El Servicio ofrece un plan gratuito y planes pagos por suscripción mensual (Plus y Pro). Los precios de referencia son USD ${LEGAL.prices.plus} (Plus) y USD ${LEGAL.prices.pro} (Pro) por mes. En Argentina los cobros pueden realizarse en pesos argentinos a través de Mercado Pago, según el valor informado al momento de suscribirte.`,
+          `El Servicio ofrece un plan gratuito y planes pagos por suscripción mensual (Plus y Pro). Los precios de referencia son USD ${LEGAL.prices.plus} (Plus) y USD ${LEGAL.prices.pro} (Pro) por mes. En Argentina los cobros pueden realizarse en peeres argentinos a través de Mercado Pago, según el valor informado al momento de suscribirte.`,
           "Los pagos son procesados por terceros (Mercado Pago y, cuando esté disponible, otro procesador para pagos internacionales). El Responsable no almacena los datos de tu tarjeta.",
           `El plan Plus puede incluir un período de prueba gratuito de ${LEGAL.trialDays} días, por única vez por persona. Los planes y precios pueden modificarse; los cambios se comunican con anticipación y no afectan el período ya abonado.`,
           "Los límites de uso diario de las funciones de IA dependen del plan y pueden ajustarse."
@@ -40,15 +40,15 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Renovación, cancelación y reembolsos",
         body: [
-          "La suscripción se renueva automáticamente cada mes hasta que la canceles. Podés cancelarla en cualquier momento desde tu cuenta o escribiendo a " + MAIL + "; seguirás con acceso al plan hasta el final del período ya pagado, sin cargos posteriores.",
-          "Si contrataste a distancia desde Argentina, tenés derecho a revocar la contratación dentro de los 10 días corridos desde que la contrataste (art. 34 de la Ley 24.240 de Defensa del Consumidor), pidiéndolo a " + MAIL + ". En ese caso se reembolsa el importe pagado.",
+          "La suscripción se renueva automáticamente cada mes hasta que la canceles. Puedes cancelarla en cualquier momento desde tu cuenta o escribiendo a " + MAIL + "; seguirás con acceso al plan hasta el final del período ya pagado, sin cargos posteriores.",
+          "Si contrataste a distancia desde Argentina, tienes derecho a revocar la contratación dentro de los 10 días corridos desde que la contrataste (art. 34 de la Ley 24.240 de Defensa del Consumidor), pidiéndolo a " + MAIL + ". En ese caso se reembolsa el importe pagado.",
           "Fuera de ese plazo, y salvo que la ley disponga otra cosa, los períodos ya iniciados no se reembolsan."
         ]
       },
       {
         title: "Tu contenido",
         body: [
-          "Sos titular del contenido que cargás (tareas, mensajes). Le otorgás al Responsable el permiso limitado necesario para almacenarlo y procesarlo con el único fin de prestarte el Servicio. Podés eliminar tus tareas cuando quieras y pedir la eliminación de tu cuenta escribiendo a " + MAIL + "."
+          "Eres titular del contenido que cargas (tareas, mensajes). Le otorgas al Responsable el permiso limitado necesario para almacenarlo y procesarlo con el único fin de prestarte el Servicio. Puedes eliminar tus tareas cuando quieras y pedir la eliminación de tu cuenta escribiendo a " + MAIL + "."
         ]
       },
       {
@@ -66,13 +66,13 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Suspensión y baja",
         body: [
-          "Podemos suspender o cerrar cuentas que incumplan estos términos o hagan un uso abusivo del Servicio. Vos podés dejar de usarlo y eliminar tu cuenta en cualquier momento."
+          "Podemos suspender o cerrar cuentas que incumplan estos términos o hagan un uso abusivo del Servicio. Vos puedes dejar de usarlo y eliminar tu cuenta en cualquier momento."
         ]
       },
       {
         title: "Ley aplicable y contacto",
         body: [
-          `Estos términos se rigen por las leyes de la República Argentina. Para reclamos de consumo podés acudir a la autoridad de Defensa del Consumidor de tu jurisdicción (argentina.gob.ar/produccion/defensadelconsumidor). Consultas: ${MAIL}.`
+          `Estos términos se rigen por las leyes de la República Argentina. Para reclamos de consumo puedes acudir a la autoridad de Defensa del Consumidor de tu jurisdicción (argentina.gob.ar/produccion/defensadelconsumidor). Consultas: ${MAIL}.`
         ]
       }
     ]
@@ -104,7 +104,7 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Plans, prices and payments",
         body: [
-          `The Service offers a free plan and paid monthly subscriptions (Plus and Pro). Reference prices are USD ${LEGAL.prices.plus} (Plus) and USD ${LEGAL.prices.pro} (Pro) per month. In Argentina, charges may be made in Argentine pesos through Mercado Pago at the amount shown when you subscribe.`,
+          `The Service offers a free plan and paid monthly subscriptions (Plus and Pro). Reference prices are USD ${LEGAL.prices.plus} (Plus) and USD ${LEGAL.prices.pro} (Pro) per month. In Argentina, charges may be made in Argentine peeres through Mercado Pago at the amount shown when you subscribe.`,
           "Payments are processed by third parties (Mercado Pago and, when available, another processor for international payments). The Operator does not store your card details.",
           `The Plus plan may include a free ${LEGAL.trialDays}-day trial, once per person. Plans and prices may change; changes are announced in advance and do not affect an already-paid period.`,
           "Daily usage limits for AI features depend on your plan and may be adjusted."
@@ -155,7 +155,7 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
 export const privacyContent: { es: LegalContent; en: LegalContent } = {
   es: {
     title: "Política de privacidad",
-    intro: `${OP} (CUIT ${TAX}), con domicilio en ${ADDR}, es el responsable del tratamiento de tus datos personales en ${S}. Esta política explica qué datos tratamos, para qué y qué derechos tenés. Contacto: ${MAIL}.`,
+    intro: `${OP} (CUIT ${TAX}), con domicilio en ${ADDR}, es el responsable del tratamiento de tus datos personales en ${S}. Esta política explica qué datos tratamos, para qué y qué derechos tienes. Contacto: ${MAIL}.`,
     sections: [
       {
         title: "Qué datos recolectamos",
@@ -169,7 +169,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Para qué los usamos",
         body: [
-          "Para prestarte el Servicio (guardar tus tareas, responder con Milo, recomendarte prioridades), gestionar tu suscripción, aplicar límites de uso, prevenir abusos y mejorar la estabilidad del Servicio. No vendemos tus datos ni los usamos para publicidad."
+          "Para prestarte el Servicio (guardar tus tareas, responder con Milo, recomendarte prioridades), gestionar tu suscripción, aplicar límites de uso, prevenir abueres y mejorar la estabilidad del Servicio. No vendemos tus datos ni los usamos para publicidad."
         ]
       },
       {
@@ -182,7 +182,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Inteligencia artificial",
         body: [
-          "Lo que escribís en el chat de Milo y las tareas relevantes se envían al proveedor de IA para generar respuestas. No ingreses información sensible (contraseñas, datos bancarios, datos de salud) en el chat."
+          "Lo que escribes en el chat de Milo y las tareas relevantes se envían al proveedor de IA para generar respuestas. No introduzcas información sensible (contraseñas, datos bancarios, datos de salud) en el chat."
         ]
       },
       {
@@ -194,15 +194,15 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Conservación",
         body: [
-          "Conservamos tus datos mientras tu cuenta esté activa. Si pedís la eliminación de tu cuenta, borramos tus tareas, tu memoria de Milo y tus datos asociados, salvo lo que debamos conservar por obligaciones legales o contables (por ejemplo, registros de facturación)."
+          "Conservamos tus datos mientras tu cuenta esté activa. Si pides la eliminación de tu cuenta, borramos tus tareas, tu memoria de Milo y tus datos asociados, salvo lo que debamos conservar por obligaciones legales o contables (por ejemplo, registros de facturación)."
         ]
       },
       {
         title: "Tus derechos",
         body: [
-          `Podés acceder, rectificar y suprimir tus datos y oponerte a su tratamiento escribiendo a ${MAIL}. Respondemos dentro de los plazos legales.`,
+          `Puedes acceder, rectificar y suprimir tus datos y oponerte a su tratamiento escribiendo a ${MAIL}. Respondemos dentro de los plazos legales.`,
           "En Argentina, la Agencia de Acceso a la Información Pública (AAIP), órgano de control de la Ley 25.326 de Protección de Datos Personales, tiene la atribución de atender denuncias y reclamos relacionados con el incumplimiento de las normas de protección de datos personales.",
-          "Si estás en el Espacio Económico Europeo o el Reino Unido, también tenés los derechos que reconoce el GDPR, incluido el de reclamar ante tu autoridad de control."
+          "Si estás en el Espacio Económico Europeo o el Reino Unido, también tienes los derechos que reconoce el GDPR, incluido el de reclamar ante tu autoridad de control."
         ]
       },
       {

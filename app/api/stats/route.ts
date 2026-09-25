@@ -66,7 +66,7 @@ async function getEncouragementMessage(params: {
 - Racha de días activos seguidos: ${params.activeStreak}
 - Categoría con más tareas: ${params.topCategory ?? "ninguna"}
 
-Escribí UN mensaje corto (máximo 2 frases, sin emojis excesivos, tono cálido y motivador pero honesto, no genérico ni cursi) que reaccione a estos datos específicos. Si la racha o tasa son bajas, animá sin culpar. Si son altas, celebrá concretamente. Respondé SOLO con el mensaje, sin comillas ni explicaciones.`
+Escribe UN mensaje corto (máximo 2 frases, sin emojis excesivos, tono cálido y motivador pero honesto, no genérico ni cursi) que reaccione a estos datos específicos. Si la racha o tasa son bajas, animá sin culpar. Si son altas, celebrá concretamente. Respondé SOLO con el mensaje, sin comillas ni explicaciones.`
     : `You are Milo, a warm and motivating personal organization assistant. Here is the user's productivity data:
 - Completed tasks: ${params.totalCompleted}
 - Pending tasks: ${params.totalPending}

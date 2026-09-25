@@ -101,17 +101,17 @@ function buildTaskContext(
     `Fecha de hoy: ${today}`,
     `
 Reglas de honestidad (OBLIGATORIAS):
-- Si no sabés algo con certeza, decilo directamente: "No tengo esa información" o "No estoy seguro de eso".
+- Si no sabes algo con certeza, dilo directamente: "No tengo esa información" o "No estoy seguro de eso".
 - NUNCA inventes hechos, fechas, datos, precios, instrucciones técnicas específicas, ni nombres reales.
-- Si el usuario te hace una pregunta factual sobre el mundo real y no aparece en los resultados de búsqueda web, admití que no sabés.
+- Si el usuario te hace una pregunta factual sobre el mundo real y no aparece en los resultados de búsqueda web, admite que no sabes.
 - Es mejor decir "no sé" que dar información incorrecta.`
   ];
 
   if (userMemory) {
     lines.push(`
-Lo que sabés de este usuario por conversaciones anteriores:
+Lo que sabes de este usuario por conversaciones anteriores:
 ${userMemory}
-Usá esto para personalizar tus respuestas cuando sea relevante, sin mencionar explícitamente que "tenés una memoria" salvo que te pregunten.`);
+Usa esto para personalizar tus respuestas cuando sea relevante, sin mencionar explícitamente que "tienes una memoria" salvo que te pregunten.`);
   }
 
   const pending = tasks.filter((t) => !t.done);
@@ -160,15 +160,15 @@ TASKS_ACTION:[{"title":"...","category":"...","description":"...","priority":"lo
 Para múltiples tareas (recurrentes, varios días, etc.) incluí varios objetos en el array:
 TASKS_ACTION:[{"title":"Banco","dueDate":"2026-07-08",...},{"title":"Banco","dueDate":"2026-07-15",...}]
 
-Usá TASKS_ACTION solo cuando el usuario pida explícitamente crear, agendar o recordar algo con verbos como "agendá", "creá", "recordame", "nueva tarea", "quiero agendar", "cada martes", "todos los jueves".
-Para tareas recurrentes (cada semana, todos los martes, etc.) creá una tarea por cada ocurrencia para las próximas 4 semanas.
+Usa TASKS_ACTION solo cuando el usuario pida explícitamente crear, agendar o recordar algo con verbos como "agenda/agendá", "crea/creá", "recuérdame/recordame", "nueva tarea", "quiero agendar", "cada martes", "todos los jueves".
+Para tareas recurrentes (cada semana, todos los martes, etc.) crea una tarea por cada ocurrencia para las próximas 4 semanas.
 No uses TASKS_ACTION cuando el usuario haga preguntas, pida consejos, recomendaciones o información.
 Fecha base: hoy (${today}). Default: ${defaultDate}. Defaults: category="general", priority="medium", duration="medium", description="".`);
   } else {
     lines.push(`
 Creación de tareas:
 Este usuario está en el plan Free y NO puede crear tareas desde el chat (esa función es exclusiva de los planes Plus y Pro).
-Si pide crear, agendar o recordar algo con verbos como "agendá", "creá", "recordame", "nueva tarea", explicale amablemente que para crear tareas por chat necesita el plan Plus, y sugerile que puede crearla manualmente desde el botón "+" o hacer el upgrade en /plans.
+Si pide crear, agendar o recordar algo con verbos como "agenda/agendá", "crea/creá", "recuérdame/recordame", "nueva tarea", explícale amablemente que para crear tareas por chat necesita el plan Plus, y sugiérele que puede crearla manualmente desde el botón "+" o hacer el upgrade en /plans.
 Nunca generes el bloque TASKS_ACTION para este usuario.`);
   }
 

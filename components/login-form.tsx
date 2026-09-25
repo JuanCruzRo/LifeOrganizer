@@ -4,6 +4,8 @@ import { useState } from "react";
 import { SignIn, SignUp } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "motion/react";
 import { AnimatedLogo } from "@/components/animated-logo";
+import { useAppLanguage } from "@/components/language-provider";
+import { authHeadings } from "@/lib/landing-copy";
 import { cn } from "@/lib/utils";
 
 type Mode = "login" | "register";
@@ -11,6 +13,8 @@ type Mode = "login" | "register";
 export function LoginForm() {
   const [logoComplete, setLogoComplete] = useState(false);
   const [mode, setMode] = useState<Mode>("login");
+  const { language } = useAppLanguage();
+  const headings = authHeadings[language];
 
   return (
     <div className="flex h-screen items-center justify-center bg-background px-4">
@@ -44,7 +48,7 @@ export function LoginForm() {
                       "relative z-10 transition-colors duration-200",
                       mode === m ? "text-primary-foreground" : "text-muted-foreground"
                     )}>
-                      {m === "login" ? "Iniciar sesión" : "Registrarse"}
+                      {m === "login" ? headings.signIn : headings.signUp}
                     </span>
                   </button>
                 ))}

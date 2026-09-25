@@ -23,7 +23,7 @@ export function SignUpConsent() {
   const es = language === "es";
   return (
     <p className="mt-4 max-w-sm text-center text-xs text-[hsl(220,8%,60%)]">
-      {es ? "Al crear tu cuenta aceptás los " : "By creating an account you accept the "}
+      {es ? "Al crear tu cuenta aceptas los " : "By creating an account you accept the "}
       <Link href="/terms" className="underline">
         {es ? "Términos y condiciones" : "Terms of Service"}
       </Link>

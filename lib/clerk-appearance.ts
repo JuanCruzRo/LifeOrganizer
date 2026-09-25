@@ -14,6 +14,11 @@ export const clerkAppearance: any = {
     headerTitle: "hidden",
     headerSubtitle: "hidden",
     socialButtonsBlockButton: "!bg-[#1a1d21] !border-[#2a2d33] !text-[#edf0f5]",
+    // Monochrome provider logos ship in black; force them white so they read on the dark buttons.
+    socialButtonsProviderIcon__x: "!brightness-0 !invert",
+    socialButtonsProviderIcon__twitter: "!brightness-0 !invert",
+    socialButtonsProviderIcon__github: "!brightness-0 !invert",
+    socialButtonsProviderIcon__apple: "!brightness-0 !invert",
     alternativeMethodsBlockButton: "!bg-[#1a1d21] !border-[#2a2d33] !text-[#edf0f5] !font-normal",
     alternativeMethodsBlockButtonText: "!font-normal !text-[#edf0f5]",
     formFieldLabel: "!text-[#9ea3b0]",

@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
+import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
 import { languageSpeechCodes } from "@/lib/i18n";
 import { useSpeechRecognition } from "@/lib/use-speech-recognition";
@@ -65,8 +67,9 @@ type MiloCopy = {
 
 function getGreetingByHour(miloCopy: MiloCopy): string {
   const hour = new Date().getHours();
-  if (hour < 12) return miloCopy.briefingGoodMorning;
-  if (hour < 19) return miloCopy.briefingGoodAfternoon;
+  // Late night (00:00-04:59) counts as "evening/night", not morning.
+  if (hour >= 5 && hour < 12) return miloCopy.briefingGoodMorning;
+  if (hour >= 12 && hour < 19) return miloCopy.briefingGoodAfternoon;
   return miloCopy.briefingGoodEvening;
 }
 
@@ -206,7 +209,7 @@ export function MiloChat({
 
       const newMessage: Message = {
         role: "milo",
-        content: data.response ?? data.error ?? "Sin respuesta.",
+        content: data.response ?? data.error ?? copy.milo.noConnection,
         ...(data.taskActions && data.taskActions.length > 0 ? { taskActions: data.taskActions } : {})
       };
       setMessages((prev) => [...prev, newMessage]);
@@ -243,14 +246,12 @@ export function MiloChat({
   }
 
   return (
-    <aside className="flex w-full flex-col border-r border-border lg:w-[360px] lg:flex-shrink-0">
+    <aside className="flex h-full w-full flex-col border-r border-border">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-              M
-            </div>
+            <Image src="/milo-green.webp" alt="Milo" width={32} height={32} className="h-8 w-8 rounded-full bg-primary/10 object-contain" />
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[hsl(var(--background))] bg-emerald-500" />
           </div>
           <div>
@@ -280,9 +281,7 @@ export function MiloChat({
         {messages.length === 0 && !isLoading && sessionLoaded && (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-[220px] text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary text-lg font-bold">
-                M
-              </div>
+              <Image src="/milo-green.webp" alt="Milo" width={96} height={96} className="mx-auto mb-3 h-24 w-24 object-contain" />
               <p className="text-sm font-medium">{copy.milo.greeting}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 {copy.milo.greetingSubtitle}
@@ -378,7 +377,7 @@ export function MiloChat({
             }}
             placeholder={speech.isListening ? copy.milo.listening : copy.milo.inputPlaceholder}
             disabled={isLoading || speech.isListening}
-            className="flex-1 text-sm"
+            className="h-11 flex-1 text-base sm:text-sm"
           />
           {speech.isSupported && (
             <Button
@@ -401,7 +400,7 @@ export function MiloChat({
             onClick={() => void sendMessage()}
             disabled={isLoading || !input.trim()}
             size="icon"
-            aria-label="Enviar"
+            aria-label={sendLabels[language]}
           >
             <Send className="h-4 w-4" />
           </Button>

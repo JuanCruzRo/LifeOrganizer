@@ -42,7 +42,7 @@ export async function consumeDailyUsage(
 }
 
 export function dailyLimitResponse(limit: number, plan: UserPlan) {
-  const upsell = plan === "pro" ? "" : " Podés subir de plan en /plans para tener más.";
+  const upsell = plan === "pro" ? "" : " Puedes subir de plan en /plans para tener más.";
   return NextResponse.json(
     {
       error: `Llegaste al límite diario de ${limit} mensajes.${upsell} Se reinicia mañana.`,

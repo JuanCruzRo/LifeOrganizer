@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BarChart3, LogOut, Zap, X, ArrowUpRight } from "lucide-react";
+import { BarChart3, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { formatTodayLongDate } from "@/lib/task-date";
 import { useUserPlan } from "@/lib/use-user-plan";
+import { cn } from "@/lib/utils";
 import { AiPriorityApiResponse, AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task, TaskInput } from "@/types/task";
 
@@ -34,6 +35,8 @@ export function LifeOrganizerApp() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  // On small screens the tasks and the Milo chat are separate tabs; on desktop both are visible.
+  const [mobileTab, setMobileTab] = useState<"tasks" | "chat">("tasks");
   const aiRecommendationCacheRef = useRef(new Map<string, AiPriorityRecommendation>());
   const todayLabel = formatTodayLongDate(language);
 
@@ -217,16 +220,16 @@ export function LifeOrganizerApp() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="flex h-dvh flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-3">
-        <div className="flex items-center gap-3">
-          <div>
+      <header className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 sm:gap-4 sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="min-w-0">
             <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {copy.header.title}
               <PlanZapIcon plan={plan} />
             </p>
-            <h1 className="text-lg font-semibold tracking-tight"><TextAnimate text={todayLabel} /></h1>
+            <h1 className="text-base font-semibold tracking-tight sm:text-lg"><TextAnimate text={todayLabel} /></h1>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -316,10 +319,12 @@ export function LifeOrganizerApp() {
       {/* Main two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Milo chat */}
-        <MiloChat tasks={tasks} onCreateTask={handleCreateTask} />
+        <div className={cn("min-h-0 w-full lg:flex lg:w-[360px] lg:flex-shrink-0", mobileTab === "chat" ? "flex" : "hidden")}>
+          <MiloChat tasks={tasks} onCreateTask={handleCreateTask} />
+        </div>
 
         {/* Right: Calendar + tasks */}
-        <main className="flex-1 overflow-hidden">
+        <main className={cn("min-w-0 flex-1 overflow-hidden lg:block", mobileTab === "tasks" ? "block" : "hidden")}>
           <CalendarView
             allTasks={tasks}
             isMutating={isSyncing}
@@ -333,6 +338,27 @@ export function LifeOrganizerApp() {
         </main>
       </div>
 
+      {/* Mobile tab bar */}
+      <nav className="grid flex-shrink-0 grid-cols-2 border-t border-border bg-background lg:hidden">
+        {([
+          { id: "tasks", label: copy.calendar.myTasks, Icon: ListChecks },
+          { id: "chat", label: copy.milo.name, Icon: MessageCircle }
+        ] as const).map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setMobileTab(id)}
+            aria-current={mobileTab === id ? "page" : undefined}
+            className={cn(
+              "flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors",
+              mobileTab === id ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            {label}
+          </button>
+        ))}
+      </nav>
+
       {/* Task form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -342,7 +368,7 @@ export function LifeOrganizerApp() {
               size="icon"
               onClick={handleCloseForm}
               className="absolute -right-2 -top-2 z-10 h-8 w-8 rounded-full bg-secondary"
-              aria-label="Cerrar"
+              aria-label={copy.common.close}
             >
               <X className="h-4 w-4" />
             </Button>

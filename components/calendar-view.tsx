@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { MiloLoader } from "@/components/milo-loader";
@@ -11,11 +11,17 @@ import { getTaskPriorityLabel } from "@/lib/task-labels";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task } from "@/types/task";
 
-const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
+// Weekday / month names come from Intl so they follow the app language.
+function getWeekdayLabels(language: string) {
+  const fmt = new Intl.DateTimeFormat(language, { weekday: "short" });
+  // 2023-01-01 was a Sunday; the grid starts on Sunday.
+  return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2023, 0, 1 + i)).replace(/\.$/, ""));
+}
+
+function getMonthLabel(language: string, year: number, month: number) {
+  const label = new Intl.DateTimeFormat(language, { month: "long", year: "numeric" }).format(new Date(year, month, 1));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 function toDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -76,10 +82,18 @@ export function CalendarView({
 
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(true);
+  const [showDone, setShowDone] = useState(false);
+
+  // Small screens start with the calendar collapsed so the task list is visible right away.
+  useEffect(() => {
+    if (window.innerWidth < 1024) setCalendarOpen(false);
+  }, []);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const calDays = getCalendarDays(year, month);
+  const weekdays = getWeekdayLabels(language);
 
   const tasksByDate = allTasks.reduce<Record<string, Task[]>>((acc, task) => {
     if (!task.dueDate) return acc;
@@ -90,9 +104,15 @@ export function CalendarView({
 
   const pendingCount = useMemo(() => allTasks.filter((t) => !t.done).length, [allTasks]);
 
-  const displayedTasks = selectedKey
-    ? (tasksByDate[selectedKey] ?? [])
-    : [...allTasks].sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1));
+  // Pending first (soonest due date first); completed ones after, most recent first.
+  const byDueAsc = (a: Task, b: Task) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0);
+  const byDoneDesc = (a: Task, b: Task) =>
+    (b.completedAt ?? b.dueDate).localeCompare(a.completedAt ?? a.dueDate);
+
+  const dayTasksSelected = selectedKey ? (tasksByDate[selectedKey] ?? []) : null;
+  const pendingList = (dayTasksSelected ?? allTasks).filter((t) => !t.done).sort(byDueAsc);
+  const doneList = (dayTasksSelected ?? allTasks).filter((t) => t.done).sort(byDoneDesc);
+  const displayedTasks = [...pendingList, ...(selectedKey || showDone ? doneList : [])];
 
   const recommendedTask = aiRecommendation
     ? allTasks.find((t) => t.id === aiRecommendation.recommendedTaskId && !t.done)
@@ -114,7 +134,7 @@ export function CalendarView({
             {copy.calendar.myTasks}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {pendingCount} {pendingCount === 1 ? "pendiente" : "pendientes"}
+            {pendingCount} {copy.taskList.pending.toLowerCase()}
           </p>
         </div>
         <Button size="sm" onClick={onAddTask} className="gap-1.5">
@@ -124,32 +144,47 @@ export function CalendarView({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* AI Recommendation bar */}
+        {/* AI recommendation — the star of the screen */}
         {(recommendedTask || isAiLoading) && (
-          <div className="border-b border-border px-5 py-3">
+          <div className="px-5 pt-4">
             {isAiLoading ? (
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 text-sm text-muted-foreground">
                 <MiloLoader />
                 <span>{copy.calendar.analyzingTasks}</span>
               </div>
             ) : recommendedTask ? (
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-                    <Sparkles className="h-2.5 w-2.5" />
+              <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-widest text-primary">
+                    <Sparkles className="h-3 w-3" />
                     IA
                   </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">
                     {copy.calendar.todayRecommendation}
                   </p>
-                  <p className="mt-0.5 text-sm font-semibold">{recommendedTask.title}</p>
-                  {aiRecommendation?.recommendationReason && (
-                    <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                      {aiRecommendation.recommendationReason}
-                    </p>
-                  )}
+                </div>
+                <p className="mt-3 text-xl font-semibold leading-snug tracking-tight sm:text-2xl">
+                  {recommendedTask.title}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>{recommendedTask.category}</span>
+                  <span>·</span>
+                  <span>{getDueDateLabel(recommendedTask.dueDate, language)}</span>
+                  <PriorityPill priority={recommendedTask.priority} language={language} />
+                </div>
+                {aiRecommendation?.recommendationReason && (
+                  <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+                    {aiRecommendation.recommendationReason}
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button size="sm" disabled={isMutating} onClick={() => void onToggleTask(recommendedTask.id)} className="gap-1.5">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {copy.taskList.markDone}
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={isMutating} onClick={() => onEditTask(recommendedTask.id)}>
+                    {copy.taskList.edit}
+                  </Button>
                 </div>
               </div>
             ) : null}
@@ -162,28 +197,43 @@ export function CalendarView({
           <div className="mb-3 flex items-center justify-between">
             <button
               onClick={prevMonth}
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              disabled={!calendarOpen}
+              aria-label="‹"
+              className={cn("rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground", !calendarOpen && "invisible")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <p className="text-sm font-semibold">
-              {MONTHS[month]} {year}
+              {getMonthLabel(language, year, month)}
             </p>
-            <button
-              onClick={nextMonth}
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCalendarOpen((v) => !v)}
+                aria-expanded={calendarOpen}
+                aria-label={getMonthLabel(language, year, month)}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                {calendarOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+              <button
+                onClick={nextMonth}
+                disabled={!calendarOpen}
+                aria-label="›"
+                className={cn("rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground", !calendarOpen && "invisible")}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
+          {calendarOpen && (<>
           {/* Weekday headers */}
           <div className="grid grid-cols-7">
-            {WEEKDAYS.map((d, i) => (
+            {weekdays.map((d, i) => (
               <div
                 key={d}
                 className={cn(
-                  "pb-1.5 text-center text-[10px] font-semibold uppercase tracking-wider",
+                  "pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wider",
                   i === 0 || i === 6 ? "text-muted-foreground/60" : "text-muted-foreground"
                 )}
               >
@@ -241,6 +291,7 @@ export function CalendarView({
               );
             })}
           </div>
+          </>)}
         </div>
 
         {/* Task list */}
@@ -248,7 +299,7 @@ export function CalendarView({
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {selectedKey
-                ? `${copy.calendar.tasksFor} ${new Date(selectedKey + "T12:00:00").toLocaleDateString(language === "es" ? "es-AR" : undefined, { day: "numeric", month: "long" })}`
+                ? `${copy.calendar.tasksFor} ${new Date(selectedKey + "T12:00:00").toLocaleDateString(language, { day: "numeric", month: "long" })}`
                 : copy.calendar.allTasks}
             </p>
             {selectedKey && (
@@ -281,6 +332,17 @@ export function CalendarView({
               ))}
             </ul>
           )}
+
+          {!selectedKey && doneList.length > 0 && (
+            <button
+              onClick={() => setShowDone((v) => !v)}
+              aria-expanded={showDone}
+              className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {showDone ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {copy.taskList.completed} ({doneList.length})
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -298,6 +360,7 @@ type TaskRowProps = {
 };
 
 function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, onDelete }: TaskRowProps) {
+  const { copy } = useAppLanguage();
   return (
     <li
       className={cn(
@@ -309,7 +372,7 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
         onClick={onToggle}
         disabled={isMutating}
         className="mt-0.5 flex-shrink-0 text-muted-foreground transition-colors hover:text-primary disabled:opacity-50"
-        aria-label={task.done ? "Marcar pendiente" : "Marcar hecho"}
+        aria-label={task.done ? copy.taskList.markPending : copy.taskList.markDone}
       >
         {task.done
           ? <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -326,16 +389,16 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
           <span className="text-xs text-muted-foreground">
             {getDueDateLabel(task.dueDate, language)} · {formatDueDate(task.dueDate, language)}
           </span>
-          <PriorityPill priority={task.priority} />
+          <PriorityPill priority={task.priority} language={language} />
         </div>
       </div>
 
-      <div className="flex flex-shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex flex-shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
         <button
           onClick={onEdit}
           disabled={isMutating}
           className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          aria-label="Editar"
+          aria-label={copy.taskList.edit}
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
@@ -343,7 +406,7 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
           onClick={onDelete}
           disabled={isMutating}
           className="rounded-md p-1 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
-          aria-label="Eliminar"
+          aria-label={copy.common.delete}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -352,8 +415,7 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
   );
 }
 
-function PriorityPill({ priority }: { priority: Task["priority"] }) {
-  const labels: Record<Task["priority"], string> = { high: "Alta", medium: "Media", low: "Baja" };
+function PriorityPill({ priority, language }: { priority: Task["priority"]; language: import("@/lib/i18n").AppLanguage }) {
   return (
     <span
       className={cn(
@@ -363,7 +425,7 @@ function PriorityPill({ priority }: { priority: Task["priority"] }) {
         priority === "low" && "bg-muted/60 text-muted-foreground"
       )}
     >
-      {labels[priority]}
+      {getTaskPriorityLabel(priority, language)}
     </span>
   );
 }
