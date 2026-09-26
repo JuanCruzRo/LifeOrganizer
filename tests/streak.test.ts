@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getStreakFromCompletions,
   getBadgeProgress,
   getCurrentBadge,
   getDaysToNextBadge,
@@ -80,5 +81,38 @@ describe("getBadgeProgress", () => {
     expect(getBadgeProgress(7)).toBe(0);
     expect(getBadgeProgress(10)).toBeGreaterThan(0);
     expect(getBadgeProgress(13)).toBeLessThan(1);
+  });
+});
+
+describe("getStreakFromCompletions", () => {
+  const dayAgo = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString();
+  };
+
+  it("is zero with no completions", () => {
+    expect(getStreakFromCompletions([])).toBe(0);
+    expect(getStreakFromCompletions([undefined, ""])).toBe(0);
+  });
+
+  it("counts consecutive days ending today", () => {
+    expect(getStreakFromCompletions([dayAgo(0), dayAgo(1), dayAgo(2)])).toBe(3);
+  });
+
+  it("keeps the run alive when today has nothing yet", () => {
+    expect(getStreakFromCompletions([dayAgo(1), dayAgo(2)])).toBe(2);
+  });
+
+  it("stops at the first missing day", () => {
+    expect(getStreakFromCompletions([dayAgo(0), dayAgo(1), dayAgo(3), dayAgo(4)])).toBe(2);
+  });
+
+  it("is zero when the last completion is older than yesterday", () => {
+    expect(getStreakFromCompletions([dayAgo(2), dayAgo(3)])).toBe(0);
+  });
+
+  it("counts a day once even with several tasks finished on it", () => {
+    expect(getStreakFromCompletions([dayAgo(0), dayAgo(0), dayAgo(0), dayAgo(1)])).toBe(2);
   });
 });

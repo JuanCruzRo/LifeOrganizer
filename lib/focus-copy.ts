@@ -176,3 +176,23 @@ export const streakCopy: Record<AppLanguage, {
   nl: { streak: "Reeks", best: "Record", badges: "Badges", days: "dagen", day: "dag", toNext: "Nog %d dagen tot de volgende badge", allUnlocked: "Alle badges vrijgespeeld", startToday: "Begin vandaag", names: ["Kwarts", "Jade", "Smaragd", "Malachiet", "Saffier", "Amethist", "Barnsteen", "Topaas", "Robijn", "Diamant", "Alexandriet", "Painiet"] },
   pl: { streak: "Seria", best: "Rekord", badges: "Odznaki", days: "dni", day: "dzień", toNext: "%d dni do kolejnej odznaki", allUnlocked: "Wszystkie odznaki zdobyte", startToday: "Zacznij dziś", names: ["Kwarc", "Jadeit", "Szmaragd", "Malachit", "Szafir", "Ametyst", "Bursztyn", "Topaz", "Rubin", "Diament", "Aleksandryt", "Painit"] }
 };
+
+
+// Shown once, full screen, when a streak milestone unlocks a gem.
+export const gemUnlockCopy: Record<AppLanguage, {
+  unlocked: string; dayStreak: string; keepGoing: string;
+}> = {
+  en: { unlocked: "New gem unlocked", dayStreak: "day streak", keepGoing: "Keep it up" },
+  es: { unlocked: "Nueva gema desbloqueada", dayStreak: "días de racha", keepGoing: "Sigue así" },
+  pt: { unlocked: "Nova gema desbloqueada", dayStreak: "dias de sequência", keepGoing: "Continue assim" },
+  fr: { unlocked: "Nouvelle gemme débloquée", dayStreak: "jours de série", keepGoing: "Continuez comme ça" },
+  de: { unlocked: "Neuer Edelstein freigeschaltet", dayStreak: "Tage Serie", keepGoing: "Weiter so" },
+  it: { unlocked: "Nuova gemma sbloccata", dayStreak: "giorni di serie", keepGoing: "Continua così" },
+  zh: { unlocked: "解锁新宝石", dayStreak: "天连续", keepGoing: "继续保持" },
+  ja: { unlocked: "新しい宝石を獲得", dayStreak: "日連続", keepGoing: "この調子で" },
+  ko: { unlocked: "새 보석 획득", dayStreak: "일 연속", keepGoing: "계속 이대로" },
+  ru: { unlocked: "Новый камень открыт", dayStreak: "дней подряд", keepGoing: "Так держать" },
+  tr: { unlocked: "Yeni taş açıldı", dayStreak: "günlük seri", keepGoing: "Böyle devam" },
+  nl: { unlocked: "Nieuwe edelsteen vrijgespeeld", dayStreak: "dagen op rij", keepGoing: "Ga zo door" },
+  pl: { unlocked: "Nowy klejnot zdobyty", dayStreak: "dni z rzędu", keepGoing: "Tak trzymaj" }
+};

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle, PanelLeft } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { FocusMode } from "@/components/focus-mode";
+import { GemUnlock } from "@/components/gem-unlock";
 import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
 import { MiloChat } from "@/components/milo-chat";
@@ -15,9 +16,11 @@ import { Button } from "@/components/ui/button";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { formatTodayLongDate } from "@/lib/task-date";
 import { celebrate } from "@/lib/celebrate";
+import { getCurrentBadge, getStreakFromCompletions } from "@/lib/streak";
 import { focusCopy, reminderCopy } from "@/lib/focus-copy";
 import { useReminders } from "@/lib/use-reminders";
 import { useUserPlan } from "@/lib/use-user-plan";
+import { AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { AiPriorityApiResponse, AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task, TaskInput, TaskStep } from "@/types/task";
@@ -25,6 +28,8 @@ import { Task, TaskInput, TaskStep } from "@/types/task";
 const FALLBACK_STORAGE_ERROR_MESSAGE = "An unexpected error occurred.";
 const FREE_PLAN_LIMIT_PREFIX = "FREE_PLAN_LIMIT:";
 const CHAT_OPEN_KEY = "spark-chat-open";
+// Highest milestone already celebrated, per account, so it never repeats.
+const celebratedKey = (userId: string) => `spark-gem-celebrated_${userId}`;
 
 export function LifeOrganizerApp() {
   const { copy, language } = useAppLanguage();
@@ -44,6 +49,7 @@ export function LifeOrganizerApp() {
   const [mobileTab, setMobileTab] = useState<"tasks" | "chat">("tasks");
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [breakingDownTaskId, setBreakingDownTaskId] = useState<string | null>(null);
+  const [unlockedGem, setUnlockedGem] = useState<{ level: number; days: number } | null>(null);
   // Desktop only: the chat can be put away so the screen holds one thing at a time.
   const [chatOpen, setChatOpen] = useState(true);
 
@@ -209,7 +215,11 @@ export function LifeOrganizerApp() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { task: Task };
-      setTasks((prev) => prev.map((t) => (t.id === data.task.id ? data.task : t)));
+      setTasks((prev) => {
+        const next = prev.map((t) => (t.id === data.task.id ? data.task : t));
+        if (data.task.done) checkGemUnlock(next);
+        return next;
+      });
       setStorageError("");
     } catch (err) {
       setStorageError(getErrorMessage(err, copy.errors.unexpected));
@@ -231,6 +241,28 @@ export function LifeOrganizerApp() {
     } finally {
       setIsSyncing(false);
     }
+  }
+
+  /** Shows the celebration the first time a milestone is reached. */
+  function checkGemUnlock(nextTasks: Task[]) {
+    const streak = getStreakFromCompletions(nextTasks.map((t) => (t.done ? t.completedAt : undefined)));
+    const badge = getCurrentBadge(streak);
+    if (!badge) return;
+
+    let celebrated = 0;
+    try {
+      celebrated = Number(localStorage.getItem(celebratedKey(user.id)) ?? 0);
+    } catch {
+      return;
+    }
+    if (badge.level <= celebrated) return;
+
+    try {
+      localStorage.setItem(celebratedKey(user.id), String(badge.level));
+    } catch {
+      /* storage can be blocked */
+    }
+    setUnlockedGem({ level: badge.level, days: streak });
   }
 
   // Persists a task and keeps local state in sync. Used by steps + focus mode.
@@ -462,6 +494,16 @@ export function LifeOrganizerApp() {
           />
         </main>
       </div>
+
+      <AnimatePresence>
+        {unlockedGem && (
+          <GemUnlock
+            level={unlockedGem.level}
+            days={unlockedGem.days}
+            onClose={() => setUnlockedGem(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {focusTask && (
         <FocusMode
