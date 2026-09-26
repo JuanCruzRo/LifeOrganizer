@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   title: "Spark",
   description: "AI-powered task organizer.",
   appleWebApp: { capable: true, title: "Spark", statusBarStyle: "black-translucent" },
-  icons: { icon: "/icon-192.png", apple: "/apple-icon.png" }
+  icons: { apple: "/apple-icon.png" }
 };
 
 export const viewport: Viewport = {

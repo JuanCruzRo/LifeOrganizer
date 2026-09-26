@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle, Mic, MicOff, PanelLeftClose, Send, Trash2, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
@@ -104,12 +105,10 @@ function buildDailyBriefing(tasks: Task[], miloCopy: MiloCopy): string {
 
 export function MiloChat({
   tasks,
-  onCreateTask,
-  onCollapse
+  onCreateTask
 }: {
   tasks: Task[];
   onCreateTask: (input: TaskInput) => Promise<boolean>;
-  onCollapse?: () => void;
 }) {
   const { copy, language } = useAppLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -250,7 +249,6 @@ export function MiloChat({
             <p className="text-xs text-muted-foreground">{copy.milo.subtitle}</p>
           </div>
         </div>
-        <div className="flex items-center gap-0.5">
         <button
           onClick={clearMessages}
           disabled={messages.length === 0}
@@ -259,17 +257,6 @@ export function MiloChat({
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
-        {onCollapse && (
-          <button
-            onClick={onCollapse}
-            className="hidden rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:block"
-            aria-label={copy.common.close}
-            title={copy.common.close}
-          >
-            <PanelLeftClose className="h-3.5 w-3.5" />
-          </button>
-        )}
-        </div>
       </div>
 
       {/* Overload warning */}
@@ -282,7 +269,12 @@ export function MiloChat({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && !isLoading && sessionLoaded && (
-          <div className="flex h-full items-center justify-center">
+          <motion.div
+            className="flex h-full items-center justify-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
             <div className="max-w-[220px] text-center">
               <Image src="/milo-avatar.webp" alt="Milo" width={80} height={80} className="mx-auto mb-3 h-20 w-20 object-contain" />
               <p className="text-sm font-medium">{copy.milo.greeting}</p>
@@ -290,12 +282,15 @@ export function MiloChat({
                 {copy.milo.greetingSubtitle}
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {messages.map((msg, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
             className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}
           >
             <div
@@ -351,16 +346,24 @@ export function MiloChat({
                 {copy.milo.taskCreated}
               </div>
             )}
-          </div>
+          </motion.div>
         ))}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-3">
-              <MiloLoader />
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              className="flex justify-start"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-3">
+                <MiloLoader />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div ref={messagesEndRef} />
       </div>

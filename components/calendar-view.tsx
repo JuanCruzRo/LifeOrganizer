@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Play, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -269,7 +269,13 @@ export function CalendarView({
                 <span>{copy.calendar.analyzingTasks}</span>
               </div>
             ) : recommendedTask ? (
-              <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
+              <motion.div
+                key={recommendedTask.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4"
+              >
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-widest text-primary">
                     <Sparkles className="h-3 w-3" />
@@ -324,7 +330,7 @@ export function CalendarView({
                     {copy.taskList.edit}
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             ) : null}
           </div>
         )}
@@ -435,7 +441,7 @@ export function CalendarView({
             ) : null
           ) : (
             <ul className="flex flex-col gap-2">
-              {displayedTasks.map(renderRow)}
+              <AnimatePresence initial={false}>{displayedTasks.map(renderRow)}</AnimatePresence>
             </ul>
           )}
 
@@ -450,7 +456,9 @@ export function CalendarView({
                 {copy.taskList.completed} ({doneList.length})
               </button>
               <Collapsible open={showDone}>
-                <ul className="flex flex-col gap-2 pt-3">{doneList.map(renderRow)}</ul>
+                <ul className="flex flex-col gap-2 pt-3">
+                  <AnimatePresence initial={false}>{doneList.map(renderRow)}</AnimatePresence>
+                </ul>
               </Collapsible>
             </>
           )}
@@ -476,7 +484,12 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
   const focusT = focusCopy[language];
   const steps = task.steps ?? [];
   return (
-    <li
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -12 }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
         "group flex items-start gap-3 rounded-xl border p-3 transition-colors",
         isRecommended ? "border-primary/40 bg-primary/5" : "border-border hover:border-border/80 hover:bg-secondary/30"
@@ -540,7 +553,7 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
-    </li>
+    </motion.li>
   );
 }
 

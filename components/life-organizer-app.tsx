@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle, PanelLeftOpen } from "lucide-react";
+import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle, PanelLeft } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { FocusMode } from "@/components/focus-mode";
 import { useAuth } from "@/components/auth-gate";
@@ -317,6 +317,15 @@ export function LifeOrganizerApp() {
       {/* Header */}
       <header className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 sm:gap-4 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
+          <button
+            onClick={() => toggleChat(!chatOpen)}
+            aria-expanded={chatOpen}
+            aria-label={copy.milo.name}
+            title={copy.milo.name}
+            className="hidden flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:block"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
           <div className="min-w-0">
             <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {copy.header.title}
@@ -345,17 +354,6 @@ export function LifeOrganizerApp() {
                 <span className="text-primary/70">· {trialDaysLeft}d</span>
               )}
             </Link>
-          )}
-
-          {!chatOpen && (
-            <button
-              onClick={() => toggleChat(true)}
-              className="hidden items-center gap-1.5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:flex"
-              aria-label={copy.milo.name}
-              title={copy.milo.name}
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </button>
           )}
 
           {reminders.permission !== "unsupported" && !reminders.optedIn && reminders.permission !== "denied" && (
@@ -436,12 +434,14 @@ export function LifeOrganizerApp() {
         {/* Left: Milo chat */}
         <div
           className={cn(
-            "min-h-0 w-full lg:flex-shrink-0",
+            "min-h-0 w-full overflow-hidden transition-[width] duration-300 ease-in-out lg:flex lg:flex-shrink-0",
             mobileTab === "chat" ? "flex" : "hidden",
-            chatOpen ? "lg:flex lg:w-[360px]" : "lg:hidden"
+            chatOpen ? "lg:w-[360px]" : "lg:w-0"
           )}
         >
-          <MiloChat tasks={tasks} onCreateTask={handleCreateTask} onCollapse={() => toggleChat(false)} />
+          <div className="flex w-full lg:w-[360px] lg:flex-shrink-0">
+            <MiloChat tasks={tasks} onCreateTask={handleCreateTask} />
+          </div>
         </div>
 
         {/* Right: Calendar + tasks */}
