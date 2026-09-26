@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
 import { emptyStateCopy, focusCopy, quickAddCopy } from "@/lib/focus-copy";
+import { miloFace } from "@/lib/milo-face";
 import { Input } from "@/components/ui/input";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task } from "@/types/task";
@@ -422,7 +423,7 @@ export function CalendarView({
             ) : allTasks.length === 0 ? (
               // First run: aim the user straight at the thing they are avoiding.
               <div className="flex flex-col items-center px-4 py-10 text-center">
-                <Image src="/milo-green.webp" alt="" width={120} height={120} className="h-28 w-28 object-contain" />
+                <Image src={miloFace("saludando")} alt="" width={112} height={112} className="h-28 w-28 object-contain" />
                 <h3 className="mt-3 text-lg font-semibold tracking-tight">{emptyT.title}</h3>
                 <p className="mt-2 max-w-sm text-sm text-muted-foreground">{emptyT.text}</p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2">

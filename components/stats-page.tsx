@@ -10,6 +10,7 @@ import { useAppLanguage } from "@/components/language-provider";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
 import { statsExtraCopy } from "@/lib/focus-copy";
+import { miloFace } from "@/lib/milo-face";
 import { useUserPlan } from "@/lib/use-user-plan";
 import { cn } from "@/lib/utils";
 
@@ -95,7 +96,13 @@ export function StatsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <Image src="/milo-avatar.webp" alt="" width={32} height={32} className="h-8 w-8 flex-shrink-0 object-contain" />
+                <Image
+                  src={miloFace(data.activeStreak >= 3 ? "orgulloso" : "animando")}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 flex-shrink-0 object-contain"
+                />
                 <p className="mt-1 text-sm leading-relaxed text-foreground">{data.encouragement}</p>
               </motion.div>
             )}

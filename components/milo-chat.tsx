@@ -10,6 +10,7 @@ import { MiloLoader } from "@/components/milo-loader";
 import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
 import { languageSpeechCodes } from "@/lib/i18n";
+import { miloFace, type MiloFace } from "@/lib/milo-face";
 import { formatDueDate } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
 import { useSpeechRecognition } from "@/lib/use-speech-recognition";
@@ -121,6 +122,7 @@ export function MiloChat({
   const { user } = useUser();
   const userId = user?.id ?? "";
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+
   const briefingSentRef = useRef(false);
   const tasksLoadedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -143,6 +145,14 @@ export function MiloChat({
   }, [tasks]);
 
   const isOverloaded = overloadedTasks.length >= 3;
+
+  const headerFace: MiloFace = speech.isListening
+    ? "escuchando"
+    : isLoading
+      ? "pensando"
+      : isOverloaded
+        ? "alerta"
+        : "avatar";
 
   // The conversation stays in memory for this session only. Milo still remembers
   // the user through the server-side summary, but old text never reappears here.
@@ -244,7 +254,7 @@ export function MiloChat({
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
-            <Image src="/milo-avatar.webp" alt="Milo" width={36} height={36} className="h-9 w-9 object-contain" />
+            <Image src={miloFace(headerFace)} alt="Milo" width={36} height={36} className="h-9 w-9 object-contain" />
           </div>
           <div>
             <p className="text-sm font-semibold">{copy.milo.name}</p>
@@ -278,7 +288,7 @@ export function MiloChat({
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
             <div className="max-w-[220px] text-center">
-              <Image src="/milo-avatar.webp" alt="Milo" width={80} height={80} className="mx-auto mb-3 h-20 w-20 object-contain" />
+              <Image src={miloFace("saludando")} alt="Milo" width={80} height={80} className="mx-auto mb-3 h-20 w-20 object-contain" />
               <p className="text-sm font-medium">{copy.milo.greeting}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 {copy.milo.greetingSubtitle}

@@ -8,6 +8,7 @@ import { AnimatePresence } from "motion/react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { companionCopy, focusCopy, reminderCopy } from "@/lib/focus-copy";
+import { miloFace, type MiloFace } from "@/lib/milo-face";
 import { showNotification } from "@/lib/use-reminders";
 import { cn } from "@/lib/utils";
 import type { Task, TaskStep } from "@/types/task";
@@ -32,6 +33,7 @@ export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDow
   const t = focusCopy[language];
   const c = companionCopy[language];
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
+  const [companionFace, setCompanionFace] = useState<MiloFace>("enfocado");
   const [companionBusy, setCompanionBusy] = useState(false);
   const halfwaySentRef = useRef(false);
   const [minutes, setMinutes] = useState(25);
@@ -67,7 +69,10 @@ export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDow
           })
         });
         const data = (await res.json()) as { message?: string | null };
-        if (data.message) setCompanionMessage(data.message);
+        if (data.message) {
+          setCompanionMessage(data.message);
+          setCompanionFace(moment === "stuck" ? "animando" : moment === "end" ? "celebrando" : "enfocado");
+        }
       } catch {
         /* the companion is a bonus: never interrupt the session */
       } finally {
@@ -185,7 +190,7 @@ export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDow
                   transition={{ duration: 0.25 }}
                   className="flex items-start gap-2.5 rounded-2xl border border-border bg-card px-4 py-3 text-left"
                 >
-                  <Image src="/milo-avatar.webp" alt="" width={32} height={32} className="h-8 w-8 flex-shrink-0 object-contain" />
+                  <Image src={miloFace(companionFace)} alt="" width={32} height={32} className="h-8 w-8 flex-shrink-0 object-contain" />
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">{c.withYou}</p>
                     <p className="mt-0.5 text-sm leading-relaxed">{companionMessage}</p>
