@@ -128,10 +128,16 @@ export function LandingContent({ initialLanguage }: { initialLanguage: AppLangua
                 <p className="mt-3 text-sm leading-relaxed text-foreground/80">{demo.reason}</p>
               </div>
               <ul className="mt-3 space-y-2">
-                {demo.tasks.map((task) => (
-                  <li key={task} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 text-sm">
-                    <span className="h-4 w-4 flex-shrink-0 rounded-full border border-muted-foreground/60" />
-                    {task}
+                {demo.steps.map((step, i) => (
+                  <li key={step} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 text-sm">
+                    {i === 0 ? (
+                      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="h-4 w-4 flex-shrink-0 rounded-full border border-muted-foreground/60" />
+                    )}
+                    <span className={i === 0 ? "text-muted-foreground line-through" : undefined}>{step}</span>
                   </li>
                 ))}
               </ul>

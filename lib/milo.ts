@@ -13,6 +13,9 @@ type MiloChatParams = {
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   timeoutMs?: number;
   isPro?: boolean;
+  /** Cap the reply size. Groq enforces an output-tokens-per-minute limit, so short
+   *  structured answers should ask for less than the 1024 default. */
+  maxTokens?: number;
 };
 
 export async function chatWithMilo({
@@ -20,7 +23,8 @@ export async function chatWithMilo({
   context = "",
   history = [],
   timeoutMs = 30000,
-  isPro = false
+  isPro = false,
+  maxTokens
 }: MiloChatParams) {
   const messages: Groq.Chat.ChatCompletionMessageParam[] = [
     ...(context ? [{ role: "system" as const, content: context }] : []),
@@ -41,7 +45,8 @@ export async function chatWithMilo({
   const response = await createChatCompletionWithFallback(
     messages,
     timeoutMs,
-    isPro ? GROQ_PRO_MODEL : GROQ_MODEL
+    isPro ? GROQ_PRO_MODEL : GROQ_MODEL,
+    maxTokens
   );
 
   return {
@@ -82,11 +87,12 @@ Actualizá la memoria en 3-6 líneas cortas (bullet points), integrando lo nuevo
 async function createChatCompletionWithFallback(
   messages: Groq.Chat.ChatCompletionMessageParam[],
   timeoutMs: number,
-  primaryModel: string = GROQ_MODEL
+  primaryModel: string = GROQ_MODEL,
+  maxTokens = 1024
 ) {
   try {
     return await groq.chat.completions.create(
-      { model: primaryModel, messages, temperature: 0.7, max_tokens: 1024 },
+      { model: primaryModel, messages, temperature: 0.7, max_tokens: maxTokens },
       { signal: AbortSignal.timeout(timeoutMs) }
     );
   } catch (error) {
@@ -98,7 +104,7 @@ async function createChatCompletionWithFallback(
     const fallbackModel = primaryModel === GROQ_FALLBACK_MODEL ? GROQ_MODEL : GROQ_FALLBACK_MODEL;
     console.warn(`Groq model "${primaryModel}" failed, retrying with fallback "${fallbackModel}"`, error);
     return groq.chat.completions.create(
-      { model: fallbackModel, messages, temperature: 0.7, max_tokens: 1024 },
+      { model: fallbackModel, messages, temperature: 0.7, max_tokens: maxTokens },
       { signal: AbortSignal.timeout(timeoutMs) }
     );
   }

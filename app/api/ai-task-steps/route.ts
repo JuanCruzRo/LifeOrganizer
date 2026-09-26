@@ -42,18 +42,22 @@ export async function POST(request: Request) {
   }
 
   const context = `You break tasks down for people who get stuck starting them (ADHD, executive dysfunction).
-Return ONLY a JSON object: {"steps":["...","..."]}
+Return ONLY a JSON object, nothing else: {"steps":["...","..."]}
 Rules:
-- Between 3 and ${MAX_STEPS} steps, in order, each a single concrete physical action (start with a verb), max 12 words.
-- The FIRST step must be tiny and take under 2 minutes, so starting feels effortless.
-- No vague steps ("plan", "organize", "think about it"). No numbering, no emojis, no explanations.
-- Write every step in ${LANGUAGE_NAMES[language]}.`;
+- Between 3 and ${MAX_STEPS} steps, in order.
+- Each step is ONE concrete physical action someone could film, max 12 words.
+- Write every step as a direct command to the reader (imperative), never as an infinitive, and keep that form for all of them.
+- The FIRST step must take under 2 minutes, so starting feels effortless.
+- Never use vague verbs like plan, organize, think, understand, decide, prepare or review on their own.
+- No numbering, no emojis, no explanations, no sub-steps.
+- Write every step in ${LANGUAGE_NAMES[language]}, with correct grammar and gender agreement.`;
 
   try {
     const { content } = await chatWithMilo({
       message: JSON.stringify({ title, description, category, estimatedDuration: duration }),
       context,
-      timeoutMs: 20000
+      timeoutMs: 20000,
+      maxTokens: 400
     });
     const parsed = parseJsonObject<{ steps?: unknown }>(content);
     const steps = Array.isArray(parsed?.steps)

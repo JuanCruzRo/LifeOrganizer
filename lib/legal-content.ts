@@ -25,7 +25,8 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
         title: "Inteligencia artificial",
         body: [
           "Milo genera respuestas con modelos de lenguaje de terceros. Las respuestas pueden ser incorrectas, incompletas o desactualizadas. No constituyen asesoramiento médico, legal, financiero ni profesional. Verifica la información importante antes de actuar en base a ella.",
-          "Los mensajes que le envías a Milo y las tareas relevantes se envían a proveedores de IA para generar la respuesta (ver la Política de privacidad)."
+          "Los mensajes que le envías a Milo y las tareas relevantes se envían a proveedores de IA para generar la respuesta (ver la Política de privacidad).",
+          "El Servicio es una herramienta de organización y productividad. No es un producto sanitario, ni brinda diagnóstico, tratamiento o terapia de ninguna condición, incluido el TDAH. Si necesitas orientación clínica, consulta a un profesional de la salud."
         ]
       },
       {
@@ -98,7 +99,8 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
         title: "Artificial intelligence",
         body: [
           "Milo generates answers using third-party language models. Answers may be incorrect, incomplete or outdated, and are not medical, legal, financial or professional advice. Verify important information before acting on it.",
-          "The messages you send to Milo and relevant tasks are sent to AI providers to generate a response (see the Privacy Policy)."
+          "The messages you send to Milo and relevant tasks are sent to AI providers to generate a response (see the Privacy Policy).",
+          "The Service is an organization and productivity tool. It is not a medical device and does not provide diagnosis, treatment or therapy for any condition, including ADHD. If you need clinical guidance, consult a health professional."
         ]
       },
       {
@@ -161,7 +163,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
         title: "Qué datos recolectamos",
         body: [
           "Cuenta: email, nombre y datos de acceso, gestionados por nuestro proveedor de autenticación (Clerk).",
-          "Contenido: tus tareas (título, categoría, descripción, prioridad, duración, fecha), tus mensajes a Milo y un resumen breve generado por IA sobre tus hábitos y preferencias (la \"memoria\" de Milo).",
+          "Contenido: tus tareas (título, categoría, descripción, prioridad, duración, fecha), los pasos que la IA genera para dividirlas, tus mensajes a Milo y un resumen breve generado por IA sobre tus hábitos y preferencias (la \"memoria\" de Milo).",
           "Suscripción: plan contratado, estado y email de pago. Los datos de tarjeta los procesa el procesador de pagos y no llegan a nosotros.",
           "Uso: contadores de uso diario de las funciones de IA y registros técnicos de errores."
         ]
@@ -182,13 +184,13 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Inteligencia artificial",
         body: [
-          "Lo que escribes en el chat de Milo y las tareas relevantes se envían al proveedor de IA para generar respuestas. No introduzcas información sensible (contraseñas, datos bancarios, datos de salud) en el chat."
+          "Lo que escribes en el chat de Milo, las tareas relevantes y el título de la tarea que pides dividir en pasos se envían al proveedor de IA para generar respuestas. No introduzcas información sensible (contraseñas, datos bancarios, datos de salud) en el chat ni en los títulos de tus tareas."
         ]
       },
       {
         title: "Cookies y almacenamiento local",
         body: [
-          "Usamos cookies esenciales para mantener tu sesión iniciada (Clerk) y almacenamiento local del navegador para recordar tu idioma. No usamos cookies publicitarias ni de seguimiento de terceros."
+          "Usamos cookies esenciales para mantener tu sesión iniciada (Clerk) y almacenamiento local del navegador para recordar tu idioma y tus preferencias de recordatorios. No usamos cookies publicitarias ni de seguimiento de terceros. Si activas los recordatorios, tu navegador nos concede permiso para mostrarte notificaciones; puedes revocarlo cuando quieras desde la configuración del navegador."
         ]
       },
       {
@@ -227,7 +229,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
         title: "Data we collect",
         body: [
           "Account: email, name and sign-in data, managed by our authentication provider (Clerk).",
-          "Content: your tasks (title, category, description, priority, duration, date), your messages to Milo, and a short AI-generated summary of your habits and preferences (Milo's \"memory\").",
+          "Content: your tasks (title, category, description, priority, duration, date), the steps the AI generates to break them down, your messages to Milo, and a short AI-generated summary of your habits and preferences (Milo's \"memory\").",
           "Subscription: plan, status and billing email. Card details are handled by the payment processor and never reach us.",
           "Usage: daily usage counters for AI features and technical error logs."
         ]
@@ -248,13 +250,13 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Artificial intelligence",
         body: [
-          "What you type in Milo's chat and relevant tasks are sent to the AI provider to generate answers. Do not enter sensitive information (passwords, banking or health data) in the chat."
+          "What you type in Milo's chat, relevant tasks and the title of any task you ask to break down are sent to the AI provider to generate answers. Do not enter sensitive information (passwords, banking or health data) in the chat or in your task titles."
         ]
       },
       {
         title: "Cookies and local storage",
         body: [
-          "We use essential cookies to keep you signed in (Clerk) and browser local storage to remember your language. We do not use advertising or third-party tracking cookies."
+          "We use essential cookies to keep you signed in (Clerk) and browser local storage to remember your language and your reminder preferences. We do not use advertising or third-party tracking cookies. If you turn on reminders, your browser grants us permission to show you notifications; you can revoke it at any time in your browser settings."
         ]
       },
       {
