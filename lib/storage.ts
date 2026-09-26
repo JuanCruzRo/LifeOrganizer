@@ -1,6 +1,6 @@
 import "server-only";
 import sql from "@/lib/db";
-import { Task } from "@/types/task";
+import { Task, TaskStep } from "@/types/task";
 
 type TaskRow = {
   id: string;
@@ -13,6 +13,7 @@ type TaskRow = {
   due_date: string;
   done: boolean;
   completed_at: string | null;
+  steps: unknown;
 };
 
 export async function loadTasks(userId: string): Promise<Task[]> {
@@ -26,9 +27,10 @@ export async function loadTasks(userId: string): Promise<Task[]> {
 
 export async function createTask(task: Task, userId: string): Promise<Task> {
   const rows = await sql`
-    INSERT INTO tasks (id, user_id, title, category, description, priority, duration, due_date, done)
+    INSERT INTO tasks (id, user_id, title, category, description, priority, duration, due_date, done, steps)
     VALUES (${task.id}, ${userId}, ${task.title}, ${task.category}, ${task.description},
-            ${task.priority}, ${task.duration}, ${task.dueDate}, ${task.done})
+            ${task.priority}, ${task.duration}, ${task.dueDate}, ${task.done},
+            ${JSON.stringify(task.steps ?? [])}::jsonb)
     RETURNING *
   `;
   const created = normalizeTask(rows[0]);
@@ -41,7 +43,7 @@ export async function updateTask(task: Task, userId: string): Promise<Task> {
     UPDATE tasks
     SET title = ${task.title}, category = ${task.category}, description = ${task.description},
         priority = ${task.priority}, duration = ${task.duration}, due_date = ${task.dueDate},
-        done = ${task.done}
+        done = ${task.done}, steps = ${JSON.stringify(task.steps ?? [])}::jsonb
     WHERE id = ${task.id} AND user_id = ${userId}
     RETURNING *
   `;
@@ -93,8 +95,22 @@ function normalizeTask(row: unknown): Task | null {
       duration: r.duration,
       dueDate: r.due_date,
       done: r.done,
-      ...(r.completed_at ? { completedAt: r.completed_at } : {})
+      ...(r.completed_at ? { completedAt: r.completed_at } : {}),
+      steps: normalizeSteps(r.steps)
     };
   }
   return null;
+}
+
+function normalizeSteps(value: unknown): TaskStep[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (s): s is TaskStep =>
+        !!s && typeof s === "object" &&
+        typeof (s as TaskStep).id === "string" &&
+        typeof (s as TaskStep).text === "string" &&
+        typeof (s as TaskStep).done === "boolean"
+    )
+    .slice(0, 20);
 }

@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BarChart3, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle } from "lucide-react";
+import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
+import { FocusMode } from "@/components/focus-mode";
 import { useAuth } from "@/components/auth-gate";
 import { useAppLanguage } from "@/components/language-provider";
 import { MiloChat } from "@/components/milo-chat";
@@ -13,10 +14,12 @@ import { TaskForm } from "@/components/task-form";
 import { Button } from "@/components/ui/button";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { formatTodayLongDate } from "@/lib/task-date";
+import { focusCopy, reminderCopy } from "@/lib/focus-copy";
+import { useReminders } from "@/lib/use-reminders";
 import { useUserPlan } from "@/lib/use-user-plan";
 import { cn } from "@/lib/utils";
 import { AiPriorityApiResponse, AiPriorityRecommendation } from "@/types/ai-priority";
-import { Task, TaskInput } from "@/types/task";
+import { Task, TaskInput, TaskStep } from "@/types/task";
 
 const FALLBACK_STORAGE_ERROR_MESSAGE = "An unexpected error occurred.";
 const FREE_PLAN_LIMIT_PREFIX = "FREE_PLAN_LIMIT:";
@@ -37,6 +40,8 @@ export function LifeOrganizerApp() {
   const [showForm, setShowForm] = useState(false);
   // On small screens the tasks and the Milo chat are separate tabs; on desktop both are visible.
   const [mobileTab, setMobileTab] = useState<"tasks" | "chat">("tasks");
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
   const aiRecommendationCacheRef = useRef(new Map<string, AiPriorityRecommendation>());
   const todayLabel = formatTodayLongDate(language);
 
@@ -110,6 +115,8 @@ export function LifeOrganizerApp() {
     return () => ctrl.abort();
   }, [aiRequestKey, aiRequestTasks, isLoaded, language, pendingTasks.length]);
 
+  const reminders = useReminders(tasks, language, isLoaded);
+  const focusTask = focusTaskId ? tasks.find((t) => t.id === focusTaskId) ?? null : null;
   const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) ?? null : null;
 
   async function handleCreateTask(input: TaskInput) {
@@ -203,6 +210,55 @@ export function LifeOrganizerApp() {
     }
   }
 
+  // Persists a task and keeps local state in sync. Used by steps + focus mode.
+  async function persistTask(next: Task) {
+    setTasks((prev) => prev.map((t) => (t.id === next.id ? next : t)));
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { task: Task };
+      setTasks((prev) => prev.map((t) => (t.id === data.task.id ? data.task : t)));
+    } catch (err) {
+      setStorageError(getErrorMessage(err, copy.errors.unexpected));
+    }
+  }
+
+  async function handleBreakDown(taskId: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || isBreakingDown) return;
+    setIsBreakingDown(true);
+    try {
+      const res = await fetch("/api/ai-task-steps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task, uiLanguage: language })
+      });
+      const data = (await res.json()) as { steps?: string[] };
+      if (!res.ok || !data.steps?.length) {
+        setStorageError(res.status === 429 ? focusCopy[language].limit : focusCopy[language].aiError);
+        return;
+      }
+      const steps: TaskStep[] = data.steps.map((text) => ({ id: crypto.randomUUID(), text, done: false }));
+      setStorageError("");
+      await persistTask({ ...task, steps });
+    } catch {
+      setStorageError(focusCopy[language].aiError);
+    } finally {
+      setIsBreakingDown(false);
+    }
+  }
+
+  function handleToggleStep(taskId: string, stepId: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task?.steps) return;
+    const steps = task.steps.map((s) => (s.id === stepId ? { ...s, done: !s.done } : s));
+    void persistTask({ ...task, steps });
+  }
+
   function handleAddTask() {
     setEditingTaskId(null);
     setShowForm(true);
@@ -252,6 +308,17 @@ export function LifeOrganizerApp() {
                 <span className="text-primary/70">· {trialDaysLeft}d</span>
               )}
             </Link>
+          )}
+
+          {reminders.permission !== "unsupported" && !reminders.optedIn && reminders.permission !== "denied" && (
+            <button
+              onClick={() => void reminders.enable()}
+              className="flex items-center gap-1.5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label={reminderCopy[language].enable}
+              title={reminderCopy[language].enable}
+            >
+              <Bell className="h-4 w-4" />
+            </button>
           )}
 
           {plan === "pro" && (
@@ -334,9 +401,23 @@ export function LifeOrganizerApp() {
             onDeleteTask={handleDeleteTask}
             onEditTask={handleEditTask}
             onToggleTask={handleToggleTask}
+            onFocusTask={setFocusTaskId}
+            onBreakDown={handleBreakDown}
+            breakingDownTaskId={isBreakingDown ? focusTaskId : null}
           />
         </main>
       </div>
+
+      {focusTask && (
+        <FocusMode
+          task={focusTask}
+          isBreaking={isBreakingDown}
+          onClose={() => setFocusTaskId(null)}
+          onBreakDown={() => void handleBreakDown(focusTask.id)}
+          onToggleStep={(stepId) => handleToggleStep(focusTask.id, stepId)}
+          onCompleteTask={() => { void handleToggleTask(focusTask.id); setFocusTaskId(null); }}
+        />
+      )}
 
       {/* Mobile tab bar */}
       <nav className="grid flex-shrink-0 grid-cols-2 border-t border-border bg-background lg:hidden">

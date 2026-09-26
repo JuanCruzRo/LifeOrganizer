@@ -43,3 +43,6 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   count   INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, day, kind)
 );
+
+-- Sub-steps for a task (AI-generated "break it down" checklist).
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS steps JSONB NOT NULL DEFAULT '[]';

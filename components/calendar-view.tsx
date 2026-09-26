@@ -2,13 +2,14 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Trash2, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Play, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { MiloLoader } from "@/components/milo-loader";
 import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
+import { focusCopy } from "@/lib/focus-copy";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task } from "@/types/task";
 
@@ -65,6 +66,9 @@ type CalendarViewProps = {
   onDeleteTask: (id: string) => Promise<void>;
   onEditTask: (id: string) => void;
   onToggleTask: (id: string) => Promise<void>;
+  onFocusTask: (id: string) => void;
+  onBreakDown: (id: string) => void;
+  breakingDownTaskId: string | null;
 };
 
 export function CalendarView({
@@ -75,9 +79,13 @@ export function CalendarView({
   onAddTask,
   onDeleteTask,
   onEditTask,
-  onToggleTask
+  onToggleTask,
+  onFocusTask,
+  onBreakDown,
+  breakingDownTaskId
 }: CalendarViewProps) {
   const { language, copy } = useAppLanguage();
+  const focusT = focusCopy[language];
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -147,6 +155,7 @@ export function CalendarView({
         onToggle={() => void onToggleTask(task.id)}
         onEdit={() => onEditTask(task.id)}
         onDelete={() => void onDeleteTask(task.id)}
+        onFocus={() => onFocusTask(task.id)}
       />
     );
   }
@@ -250,12 +259,34 @@ export function CalendarView({
                     {aiRecommendation.recommendationReason}
                   </p>
                 )}
+                {recommendedTask.steps && recommendedTask.steps.length > 0 && (
+                  <p className="mt-2 text-xs font-medium text-primary/90">
+                    {recommendedTask.steps.filter((s) => s.done).length}/{recommendedTask.steps.length} ·{" "}
+                    {recommendedTask.steps.find((s) => !s.done)?.text ?? copy.taskList.completed}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" disabled={isMutating} onClick={() => void onToggleTask(recommendedTask.id)} className="gap-1.5">
+                  <Button size="sm" onClick={() => onFocusTask(recommendedTask.id)} className="gap-1.5">
+                    <Play className="h-4 w-4" />
+                    {focusT.focus}
+                  </Button>
+                  {!recommendedTask.steps?.length && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      disabled={breakingDownTaskId === recommendedTask.id}
+                      onClick={() => onBreakDown(recommendedTask.id)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {breakingDownTaskId === recommendedTask.id ? focusT.breaking : focusT.breakDown}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" disabled={isMutating} onClick={() => void onToggleTask(recommendedTask.id)} className="gap-1.5">
                     <CheckCircle2 className="h-4 w-4" />
                     {copy.taskList.markDone}
                   </Button>
-                  <Button size="sm" variant="outline" disabled={isMutating} onClick={() => onEditTask(recommendedTask.id)}>
+                  <Button size="sm" variant="ghost" disabled={isMutating} onClick={() => onEditTask(recommendedTask.id)}>
                     {copy.taskList.edit}
                   </Button>
                 </div>
@@ -386,10 +417,13 @@ type TaskRowProps = {
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onFocus: () => void;
 };
 
-function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, onDelete }: TaskRowProps) {
+function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, onDelete, onFocus }: TaskRowProps) {
   const { copy } = useAppLanguage();
+  const focusT = focusCopy[language];
+  const steps = task.steps ?? [];
   return (
     <li
       className={cn(
@@ -419,10 +453,25 @@ function TaskRow({ task, language, isMutating, isRecommended, onToggle, onEdit, 
             {getDueDateLabel(task.dueDate, language)} · {formatDueDate(task.dueDate, language)}
           </span>
           <PriorityPill priority={task.priority} language={language} />
+          {steps.length > 0 && (
+            <span className="text-xs font-medium text-primary/90">
+              {steps.filter((s) => s.done).length}/{steps.length}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="flex flex-shrink-0 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
+        {!task.done && (
+          <button
+            onClick={onFocus}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:text-primary"
+            aria-label={focusT.focus}
+            title={focusT.focus}
+          >
+            <Play className="h-3.5 w-3.5" />
+          </button>
+        )}
         <button
           onClick={onEdit}
           disabled={isMutating}

@@ -10,8 +10,16 @@ export interface TaskInput {
   dueDate: string;
 }
 
+export interface TaskStep {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface Task extends TaskInput {
   id: string;
   done: boolean;
   completedAt?: string;
+  // Small concrete sub-steps (AI-generated or edited by the user).
+  steps?: TaskStep[];
 }
