@@ -94,3 +94,23 @@ export const emptyStateCopy: Record<AppLanguage, { title: string; text: string; 
   nl: { title: "Wat stel je steeds uit?", text: "Schrijf het hierboven, ook al is het vaag. Milo maakt er stappen van die klein genoeg zijn om te beginnen.", examples: ["Bureau opruimen", "Die mail beantwoorden", "Afspraak maken"] },
   pl: { title: "Co ciągle odkładasz?", text: "Napisz to u góry, nawet ogólnie. Milo zamieni to w kroki na tyle małe, żeby zacząć.", examples: ["Uporządkuj biurko", "Odpisz na tego maila", "Umów wizytę"] }
 };
+
+
+// Body doubling ("modo acompañado"): Milo checks in during a Pro focus session.
+export const companionCopy: Record<AppLanguage, {
+  withYou: string; keepGoing: string; stuck: string; modeName: string; proOnly: string;
+}> = {
+  en: { withYou: "Milo is with you", keepGoing: "I'm going", stuck: "I'm stuck", modeName: "Companion mode", proOnly: "Only on Pro" },
+  es: { withYou: "Milo te acompaña", keepGoing: "Sigo", stuck: "Me trabé", modeName: "Modo acompañado", proOnly: "Solo en Pro" },
+  pt: { withYou: "O Milo está com você", keepGoing: "Sigo", stuck: "Travei", modeName: "Modo acompanhado", proOnly: "Só no Pro" },
+  fr: { withYou: "Milo est avec toi", keepGoing: "Je continue", stuck: "Je bloque", modeName: "Mode accompagné", proOnly: "Uniquement sur Pro" },
+  de: { withYou: "Milo ist bei dir", keepGoing: "Ich mach weiter", stuck: "Ich häng fest", modeName: "Begleitmodus", proOnly: "Nur mit Pro" },
+  it: { withYou: "Milo è con te", keepGoing: "Vado avanti", stuck: "Sono bloccato", modeName: "Modalità accompagnata", proOnly: "Solo su Pro" },
+  zh: { withYou: "Milo 陪着你", keepGoing: "我继续", stuck: "我卡住了", modeName: "陪伴模式", proOnly: "仅限 Pro" },
+  ja: { withYou: "Miloがそばにいます", keepGoing: "続けます", stuck: "行き詰まった", modeName: "伴走モード", proOnly: "Proのみ" },
+  ko: { withYou: "Milo가 함께 있어요", keepGoing: "계속할게요", stuck: "막혔어요", modeName: "동행 모드", proOnly: "Pro 전용" },
+  ru: { withYou: "Milo рядом", keepGoing: "Продолжаю", stuck: "Застрял", modeName: "Режим сопровождения", proOnly: "Только в Pro" },
+  tr: { withYou: "Milo yanında", keepGoing: "Devam ediyorum", stuck: "Takıldım", modeName: "Eşlik modu", proOnly: "Sadece Pro'da" },
+  nl: { withYou: "Milo is bij je", keepGoing: "Ik ga door", stuck: "Ik loop vast", modeName: "Gezelschapsmodus", proOnly: "Alleen bij Pro" },
+  pl: { withYou: "Milo jest z Tobą", keepGoing: "Idę dalej", stuck: "Utknąłem", modeName: "Tryb towarzyszenia", proOnly: "Tylko w Pro" }
+};

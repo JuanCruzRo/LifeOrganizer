@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle } from "lucide-react";
+import { BarChart3, Bell, LogOut, Zap, X, ArrowUpRight, ListChecks, MessageCircle, PanelLeftOpen } from "lucide-react";
 import { CalendarView } from "@/components/calendar-view";
 import { FocusMode } from "@/components/focus-mode";
 import { useAuth } from "@/components/auth-gate";
@@ -24,6 +24,7 @@ import { Task, TaskInput, TaskStep } from "@/types/task";
 
 const FALLBACK_STORAGE_ERROR_MESSAGE = "An unexpected error occurred.";
 const FREE_PLAN_LIMIT_PREFIX = "FREE_PLAN_LIMIT:";
+const CHAT_OPEN_KEY = "spark-chat-open";
 
 export function LifeOrganizerApp() {
   const { copy, language } = useAppLanguage();
@@ -43,6 +44,26 @@ export function LifeOrganizerApp() {
   const [mobileTab, setMobileTab] = useState<"tasks" | "chat">("tasks");
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
   const [breakingDownTaskId, setBreakingDownTaskId] = useState<string | null>(null);
+  // Desktop only: the chat can be put away so the screen holds one thing at a time.
+  const [chatOpen, setChatOpen] = useState(true);
+
+  useEffect(() => {
+    try {
+      setChatOpen(localStorage.getItem(CHAT_OPEN_KEY) !== "0");
+    } catch {
+      /* storage can be blocked */
+    }
+  }, []);
+
+  function toggleChat(next: boolean) {
+    setChatOpen(next);
+    try {
+      localStorage.setItem(CHAT_OPEN_KEY, next ? "1" : "0");
+    } catch {
+      /* storage can be blocked */
+    }
+  }
+
   const aiRecommendationCacheRef = useRef(new Map<string, AiPriorityRecommendation>());
   const todayLabel = formatTodayLongDate(language);
 
@@ -326,6 +347,17 @@ export function LifeOrganizerApp() {
             </Link>
           )}
 
+          {!chatOpen && (
+            <button
+              onClick={() => toggleChat(true)}
+              className="hidden items-center gap-1.5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:flex"
+              aria-label={copy.milo.name}
+              title={copy.milo.name}
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+          )}
+
           {reminders.permission !== "unsupported" && !reminders.optedIn && reminders.permission !== "denied" && (
             <button
               onClick={() => void reminders.enable()}
@@ -402,8 +434,14 @@ export function LifeOrganizerApp() {
       {/* Main two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Milo chat */}
-        <div className={cn("min-h-0 w-full lg:flex lg:w-[360px] lg:flex-shrink-0", mobileTab === "chat" ? "flex" : "hidden")}>
-          <MiloChat tasks={tasks} onCreateTask={handleCreateTask} />
+        <div
+          className={cn(
+            "min-h-0 w-full lg:flex-shrink-0",
+            mobileTab === "chat" ? "flex" : "hidden",
+            chatOpen ? "lg:flex lg:w-[360px]" : "lg:hidden"
+          )}
+        >
+          <MiloChat tasks={tasks} onCreateTask={handleCreateTask} onCollapse={() => toggleChat(false)} />
         </div>
 
         {/* Right: Calendar + tasks */}
@@ -428,6 +466,7 @@ export function LifeOrganizerApp() {
       {focusTask && (
         <FocusMode
           task={focusTask}
+          isPro={plan === "pro"}
           isBreaking={breakingDownTaskId === focusTask.id}
           onClose={() => setFocusTaskId(null)}
           onBreakDown={() => void handleBreakDown(focusTask.id)}

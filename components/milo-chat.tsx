@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
+import { CheckCircle, Mic, MicOff, PanelLeftClose, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
@@ -15,7 +15,7 @@ import { Task, TaskInput } from "@/types/task";
 import { useUser } from "@clerk/nextjs";
 
 const LAST_BRIEFING_KEY = "milo_last_briefing";
-function sessionKey(userId: string) { return `milo_session_${userId}`; }
+const LEGACY_SESSION_PREFIX = "milo_session_";
 
 function renderMarkdown(text: string): React.ReactNode[] {
   return text.split("\n").map((line, i) => {
@@ -104,10 +104,12 @@ function buildDailyBriefing(tasks: Task[], miloCopy: MiloCopy): string {
 
 export function MiloChat({
   tasks,
-  onCreateTask
+  onCreateTask,
+  onCollapse
 }: {
   tasks: Task[];
   onCreateTask: (input: TaskInput) => Promise<boolean>;
+  onCollapse?: () => void;
 }) {
   const { copy, language } = useAppLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -141,26 +143,17 @@ export function MiloChat({
 
   const isOverloaded = overloadedTasks.length >= 3;
 
-  // Cargar sesión desde localStorage cuando el userId esté disponible
+  // The conversation stays in memory for this session only. Milo still remembers
+  // the user through the server-side summary, but old text never reappears here.
   useEffect(() => {
     if (!userId) return;
     try {
-      const raw = localStorage.getItem(sessionKey(userId));
-      if (raw) {
-        const parsed = JSON.parse(raw) as Message[];
-        if (Array.isArray(parsed)) setMessages(parsed);
-      }
-    } catch { /* sin sesión previa */ }
+      localStorage.removeItem(LEGACY_SESSION_PREFIX + userId);
+    } catch {
+      /* storage can be blocked */
+    }
     setSessionLoaded(true);
   }, [userId]);
-
-  // Guardar sesión en localStorage cuando cambian los mensajes
-  useEffect(() => {
-    if (!sessionLoaded || !userId || messages.length === 0) return;
-    try {
-      localStorage.setItem(sessionKey(userId), JSON.stringify(messages));
-    } catch { /* cuota de localStorage */ }
-  }, [messages, sessionLoaded, userId]);
 
   // Briefing diario
   useEffect(() => {
@@ -242,7 +235,6 @@ export function MiloChat({
 
   function clearMessages() {
     setMessages([]);
-    if (userId) localStorage.removeItem(sessionKey(userId));
   }
 
   return (
@@ -251,14 +243,14 @@ export function MiloChat({
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
-            <Image src="/milo-green.webp" alt="Milo" width={32} height={32} className="h-8 w-8 rounded-full bg-primary/10 object-contain" />
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[hsl(var(--background))] bg-emerald-500" />
+            <Image src="/milo-avatar.webp" alt="Milo" width={36} height={36} className="h-9 w-9 object-contain" />
           </div>
           <div>
             <p className="text-sm font-semibold">{copy.milo.name}</p>
             <p className="text-xs text-muted-foreground">{copy.milo.subtitle}</p>
           </div>
         </div>
+        <div className="flex items-center gap-0.5">
         <button
           onClick={clearMessages}
           disabled={messages.length === 0}
@@ -267,6 +259,17 @@ export function MiloChat({
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
+        {onCollapse && (
+          <button
+            onClick={onCollapse}
+            className="hidden rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:block"
+            aria-label={copy.common.close}
+            title={copy.common.close}
+          >
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          </button>
+        )}
+        </div>
       </div>
 
       {/* Overload warning */}
@@ -281,7 +284,7 @@ export function MiloChat({
         {messages.length === 0 && !isLoading && sessionLoaded && (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-[220px] text-center">
-              <Image src="/milo-green.webp" alt="Milo" width={96} height={96} className="mx-auto mb-3 h-24 w-24 object-contain" />
+              <Image src="/milo-avatar.webp" alt="Milo" width={80} height={80} className="mx-auto mb-3 h-20 w-20 object-contain" />
               <p className="text-sm font-medium">{copy.milo.greeting}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 {copy.milo.greetingSubtitle}

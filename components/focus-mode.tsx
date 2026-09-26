@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { CheckCircle2, Circle, Pause, Play, Sparkles, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { focusCopy, reminderCopy } from "@/lib/focus-copy";
+import { companionCopy, focusCopy, reminderCopy } from "@/lib/focus-copy";
 import { showNotification } from "@/lib/use-reminders";
 import { cn } from "@/lib/utils";
 import type { Task, TaskStep } from "@/types/task";
 
 const DURATIONS = [10, 25, 45];
 
+type CompanionMoment = "start" | "middle" | "end" | "stuck";
+
 type FocusModeProps = {
   task: Task;
+  isPro?: boolean;
   isBreaking: boolean;
   onClose: () => void;
   onBreakDown: () => void;
@@ -22,15 +27,55 @@ type FocusModeProps = {
 };
 
 // One task, one step, one timer: everything else is hidden on purpose.
-export function FocusMode({ task, isBreaking, onClose, onBreakDown, onToggleStep, onCompleteTask }: FocusModeProps) {
+export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDown, onToggleStep, onCompleteTask }: FocusModeProps) {
   const { language } = useAppLanguage();
   const t = focusCopy[language];
+  const c = companionCopy[language];
+  const [companionMessage, setCompanionMessage] = useState<string | null>(null);
+  const [companionBusy, setCompanionBusy] = useState(false);
+  const halfwaySentRef = useRef(false);
   const [minutes, setMinutes] = useState(25);
   const [remaining, setRemaining] = useState(25 * 60);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const taskRef = useRef(task);
+  taskRef.current = task;
+  const minutesRef = useRef(minutes);
+  minutesRef.current = minutes;
+
+  // Body doubling: Milo says something at the start, at the halfway point,
+  // when the timer ends, and whenever the user says they are stuck.
+  const askCompanion = useCallback(
+    async (moment: CompanionMoment) => {
+      if (!isPro) return;
+      setCompanionBusy(true);
+      try {
+        const steps = taskRef.current.steps ?? [];
+        const res = await fetch("/api/milo/companion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            moment,
+            taskTitle: taskRef.current.title,
+            currentStep: steps.find((s) => !s.done)?.text ?? "",
+            stepsDone: steps.filter((s) => s.done).length,
+            stepsTotal: steps.length,
+            minutes: minutesRef.current,
+            uiLanguage: language
+          })
+        });
+        const data = (await res.json()) as { message?: string | null };
+        if (data.message) setCompanionMessage(data.message);
+      } catch {
+        /* the companion is a bonus: never interrupt the session */
+      } finally {
+        setCompanionBusy(false);
+      }
+    },
+    [isPro, language]
+  );
 
   // Tick once per second while running.
   useEffect(() => {
@@ -42,13 +87,18 @@ export function FocusMode({ task, isBreaking, onClose, onBreakDown, onToggleStep
           setFinished(true);
           const rt = reminderCopy[language];
           showNotification(rt.focusDone, rt.focusDoneBody);
+          void askCompanion("end");
           return 0;
+        }
+        if (!halfwaySentRef.current && r <= Math.floor((minutesRef.current * 60) / 2)) {
+          halfwaySentRef.current = true;
+          void askCompanion("middle");
         }
         return r - 1;
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running, language]);
+  }, [running, language, askCompanion]);
 
   // Esc closes; lock page scroll behind the overlay.
   useEffect(() => {
@@ -71,6 +121,7 @@ export function FocusMode({ task, isBreaking, onClose, onBreakDown, onToggleStep
     setRemaining(m * 60);
     setRunning(false);
     setFinished(false);
+    halfwaySentRef.current = false;
   }
 
   const steps: TaskStep[] = task.steps ?? [];
@@ -121,6 +172,37 @@ export function FocusMode({ task, isBreaking, onClose, onBreakDown, onToggleStep
           </div>
         )}
 
+        {/* Milo sitting with you (Pro) */}
+        {isPro && (
+          <div className="mt-4 w-full">
+            <AnimatePresence mode="wait">
+              {companionMessage && (
+                <motion.div
+                  key={companionMessage}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex items-start gap-2.5 rounded-2xl border border-border bg-card px-4 py-3 text-left"
+                >
+                  <Image src="/milo-avatar.webp" alt="" width={32} height={32} className="h-8 w-8 flex-shrink-0 object-contain" />
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">{c.withYou}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed">{companionMessage}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {currentStep && (
+              <div className="mt-2 flex justify-center gap-2">
+                <Button size="sm" variant="ghost" disabled={companionBusy} onClick={() => void askCompanion("stuck")}>
+                  {c.stuck}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Timer */}
         <div className="mt-8 flex flex-col items-center">
           <div className="relative flex h-44 w-44 items-center justify-center">
@@ -155,7 +237,15 @@ export function FocusMode({ task, isBreaking, onClose, onBreakDown, onToggleStep
 
           <Button
             className="mt-4 gap-1.5"
-            onClick={() => { if (remaining === 0) pickDuration(minutes); setFinished(false); setRunning((r) => !r); }}
+            onClick={() => {
+              if (remaining === 0) pickDuration(minutes);
+              setFinished(false);
+              setRunning((r) => {
+                const next = !r;
+                if (next && remaining === minutes * 60) void askCompanion("start");
+                return next;
+              });
+            }}
           >
             {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             {running ? t.pause : remaining < minutes * 60 && remaining > 0 ? t.resume : t.start}

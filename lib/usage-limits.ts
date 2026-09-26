@@ -3,14 +3,16 @@ import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import type { UserPlan } from "@/lib/server-auth";
 
-export type UsageKind = "milo_chat" | "ai_priority" | "ai_task_help" | "ai_task_steps";
+export type UsageKind = "milo_chat" | "ai_priority" | "ai_task_help" | "ai_task_steps" | "milo_companion";
 
 // Max AI calls per user per day (UTC), by plan. Tune these as costs become clear.
 export const DAILY_LIMITS: Record<UsageKind, Record<UserPlan, number>> = {
   milo_chat: { free: 15, plus: 60, pro: 200 },
   ai_priority: { free: 0, plus: 40, pro: 100 },
   ai_task_help: { free: 0, plus: 0, pro: 60 },
-  ai_task_steps: { free: 5, plus: 30, pro: 100 }
+  ai_task_steps: { free: 5, plus: 30, pro: 100 },
+  // Body doubling: ~3 check-ins per focus session, Pro only.
+  milo_companion: { free: 0, plus: 0, pro: 60 }
 };
 
 // Hard cap on stored tasks for any plan (free is further limited in the tasks route).
