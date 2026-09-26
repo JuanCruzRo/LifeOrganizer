@@ -18,7 +18,10 @@ import { cn } from "@/lib/utils";
 import { Task, TaskInput } from "@/types/task";
 import { useUser } from "@clerk/nextjs";
 
-const LAST_BRIEFING_KEY = "milo_last_briefing";
+function briefingKey(userId: string) {
+  // Scoped per account so a shared computer never mixes one user's briefing with another's.
+  return `milo_last_briefing_${userId}`;
+}
 const LEGACY_SESSION_PREFIX = "milo_session_";
 
 function renderMarkdown(text: string): React.ReactNode[] {
@@ -172,14 +175,14 @@ export function MiloChat({
     if (tasks.length === 0 && !tasksLoadedRef.current) return;
     tasksLoadedRef.current = true;
 
-    const lastBriefing = localStorage.getItem(LAST_BRIEFING_KEY);
+    const lastBriefing = localStorage.getItem(briefingKey(userId));
     const today = new Date().toISOString().split("T")[0];
     if (lastBriefing === today) return;
 
     briefingSentRef.current = true;
-    localStorage.setItem(LAST_BRIEFING_KEY, today);
+    localStorage.setItem(briefingKey(userId), today);
     setMessages((prev) => [...prev, { role: "milo", content: buildDailyBriefing(tasks, copy.milo) }]);
-  }, [sessionLoaded, tasks]);
+  }, [sessionLoaded, tasks, userId]);
 
   // Auto-scroll
   useEffect(() => {

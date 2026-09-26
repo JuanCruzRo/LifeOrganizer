@@ -18,7 +18,11 @@ export const STREAK_BADGES: StreakBadge[] = [
   { level: 5, days: 30 },
   { level: 6, days: 50 },
   { level: 7, days: 100 },
-  { level: 8, days: 365 }
+  { level: 8, days: 150 },
+  { level: 9, days: 250 },
+  { level: 10, days: 365 },
+  { level: 11, days: 500 },
+  { level: 12, days: 1000 }
 ];
 
 /** Every badge unlocked by this many consecutive days. */

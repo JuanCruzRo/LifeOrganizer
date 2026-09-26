@@ -137,7 +137,7 @@ export function LifeOrganizerApp() {
     return () => ctrl.abort();
   }, [aiRequestKey, aiRequestTasks, isLoaded, language, pendingTasks.length]);
 
-  const reminders = useReminders(tasks, language, isLoaded);
+  const reminders = useReminders(tasks, language, isLoaded, user.id);
   const focusTask = focusTaskId ? tasks.find((t) => t.id === focusTaskId) ?? null : null;
   const editingTask = editingTaskId ? tasks.find((t) => t.id === editingTaskId) ?? null : null;
 

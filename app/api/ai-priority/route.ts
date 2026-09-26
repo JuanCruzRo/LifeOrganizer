@@ -94,6 +94,7 @@ export async function POST(request: Request) {
 
   try {
     const recommendation = await requestMiloRecommendation(
+      userId,
       taskInputs,
       pendingTasks,
       uiLanguage
@@ -123,11 +124,12 @@ export async function POST(request: Request) {
 }
 
 async function requestMiloRecommendation(
+  userId: string,
   taskInputs: AiPriorityTaskInput[],
   tasks: AiPriorityRequestTask[],
   language: AppLanguage
 ) {
-  const cacheKey = buildRecommendationCacheKey(language, taskInputs);
+  const cacheKey = buildRecommendationCacheKey(userId, language, taskInputs);
   const cachedRecommendation = getCachedRecommendation(cacheKey);
 
   if (cachedRecommendation) {
@@ -247,11 +249,15 @@ function validateRecommendation(
 }
 
 function buildRecommendationCacheKey(
+  userId: string,
   language: AppLanguage,
   taskInputs: AiPriorityTaskInput[]
 ) {
+  // The cache lives in the server process and is shared by everyone, so the
+  // user is part of the key: no entry can ever be served to another account.
   return JSON.stringify({
     version: AI_PRIORITY_CACHE_VERSION,
+    userId,
     language,
     taskInputs
   });

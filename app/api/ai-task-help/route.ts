@@ -128,6 +128,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await requestTaskHelp({
+      userId,
       task: taskInput,
       question,
       clarificationTrail,
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
 }
 
 async function requestTaskHelp(input: {
+  userId: string;
   task: AiTaskHelpTaskInput;
   question: string;
   clarificationTrail: AiTaskHelpClarification[];
@@ -330,6 +332,7 @@ function validateTaskHelpResult(
 }
 
 function buildTaskHelpCacheKey(input: {
+  userId: string;
   task: AiTaskHelpTaskInput;
   question: string;
   clarificationTrail: AiTaskHelpClarification[];
@@ -337,6 +340,7 @@ function buildTaskHelpCacheKey(input: {
   responseLanguage: AppLanguage;
   questionIntent: QuestionIntent;
 }) {
+  // Same reason as the priority cache: the entry is keyed to its owner.
   return JSON.stringify({
     version: AI_TASK_HELP_CACHE_VERSION,
     input

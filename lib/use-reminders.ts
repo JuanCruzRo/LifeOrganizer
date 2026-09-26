@@ -5,8 +5,10 @@ import { reminderCopy } from "@/lib/focus-copy";
 import type { AppLanguage } from "@/lib/i18n";
 import type { Task } from "@/types/task";
 
-const OPT_IN_KEY = "spark-reminders-on";
-const LAST_SENT_KEY = "spark-reminders-last";
+// Scoped per account: on a shared computer one user's reminder state must not
+// decide whether another user gets their nudge.
+const optInKey = (userId: string) => `spark-reminders-on_${userId}`;
+const lastSentKey = (userId: string) => `spark-reminders-last_${userId}`;
 const CHECK_EVERY_MS = 60_000;
 
 export type ReminderPermission = "unsupported" | "default" | "granted" | "denied";
@@ -29,7 +31,7 @@ export function showNotification(title: string, body: string) {
  * Note: browsers only run this while a Spark tab (or the installed app) is open.
  * It fires at most once per day per device.
  */
-export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boolean) {
+export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boolean, userId: string) {
   const [permission, setPermission] = useState<ReminderPermission>("default");
   const [optedIn, setOptedIn] = useState(false);
   const tasksRef = useRef(tasks);
@@ -42,11 +44,11 @@ export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boo
     }
     setPermission(Notification.permission as ReminderPermission);
     try {
-      setOptedIn(localStorage.getItem(OPT_IN_KEY) === "1");
+      setOptedIn(localStorage.getItem(optInKey(userId)) === "1");
     } catch {
       /* storage can be blocked */
     }
-  }, []);
+  }, [userId]);
 
   const enable = useCallback(async () => {
     if (typeof Notification === "undefined") return;
@@ -55,22 +57,22 @@ export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boo
     if (result !== "granted") return;
     setOptedIn(true);
     try {
-      localStorage.setItem(OPT_IN_KEY, "1");
+      localStorage.setItem(optInKey(userId), "1");
     } catch {
       /* storage can be blocked */
     }
     const t = reminderCopy[language];
     showNotification(t.enabled, t.title);
-  }, [language]);
+  }, [language, userId]);
 
   const disable = useCallback(() => {
     setOptedIn(false);
     try {
-      localStorage.removeItem(OPT_IN_KEY);
+      localStorage.removeItem(optInKey(userId));
     } catch {
       /* storage can be blocked */
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (!isLoaded || !optedIn || permission !== "granted") return;
@@ -78,7 +80,7 @@ export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boo
     function check() {
       const today = todayKey();
       try {
-        if (localStorage.getItem(LAST_SENT_KEY) === today) return;
+        if (localStorage.getItem(lastSentKey(userId)) === today) return;
       } catch {
         return;
       }
@@ -99,7 +101,7 @@ export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boo
 
       showNotification(parts.join(" · "), first.title);
       try {
-        localStorage.setItem(LAST_SENT_KEY, today);
+        localStorage.setItem(lastSentKey(userId), today);
       } catch {
         /* storage can be blocked */
       }
@@ -108,7 +110,7 @@ export function useReminders(tasks: Task[], language: AppLanguage, isLoaded: boo
     check();
     const id = window.setInterval(check, CHECK_EVERY_MS);
     return () => window.clearInterval(id);
-  }, [isLoaded, optedIn, permission, language]);
+  }, [isLoaded, optedIn, permission, language, userId]);
 
   return { permission, optedIn, enable, disable };
 }

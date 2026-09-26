@@ -3,7 +3,9 @@
  * own hue, so a collection reads as distinct pieces rather than eight copies.
  * Shape carries identity; colour carries progression.
  */
-export type GemCut = "round" | "pear" | "oval" | "emerald" | "marquise" | "trillion" | "hexagon" | "brilliant";
+export type GemCut =
+  | "round" | "pear" | "oval" | "emerald" | "marquise" | "trillion" | "hexagon"
+  | "cushion" | "princess" | "brilliant" | "radiant" | "star";
 
 export type Gem = {
   level: number;
@@ -21,8 +23,13 @@ export const GEMS: Gem[] = [
   { level: 4, days: 14,  cut: "emerald",  hue: "#12b886", face: "#8fe8c8" },
   { level: 5, days: 30,  cut: "marquise", hue: "#3b9ae1", face: "#a9d7f7" },
   { level: 6, days: 50,  cut: "trillion", hue: "#8b6ff0", face: "#cdbdff" },
-  { level: 7, days: 100, cut: "hexagon",  hue: "#e8643c", face: "#ffc0a6" },
-  { level: 8, days: 365, cut: "brilliant", hue: "#f2c14e", face: "#fff0c2" }
+  { level: 7,  days: 100, cut: "hexagon",  hue: "#e8643c", face: "#ffc0a6" },
+  { level: 8,  days: 150,  cut: "cushion",   hue: "#f2c14e", face: "#fff0c2" },
+  { level: 9,  days: 250,  cut: "princess",  hue: "#e0455e", face: "#ffb3c0" },
+  // One year: the diamond everyone recognises as the milestone.
+  { level: 10, days: 365,  cut: "brilliant", hue: "#dbe7f2", face: "#ffffff" },
+  { level: 11, days: 500,  cut: "radiant",   hue: "#14c4b8", face: "#9ff3ee" },
+  { level: 12, days: 1000, cut: "star",      hue: "#c471ed", face: "#f0d5ff" }
 ];
 
 /** Outline plus the facets that catch the light, drawn in a 0 0 40 40 box. */
@@ -55,9 +62,25 @@ export const GEM_SHAPES: Record<GemCut, { body: string; facets: string[] }> = {
     body: "M20 4 L33 12 L33 28 L20 36 L7 28 L7 12 Z",
     facets: ["M20 4 L33 12 L20 20 Z", "M20 4 L7 12 L20 20 Z", "M20 20 L33 28 L20 36 Z"]
   },
+  cushion: {
+    body: "M13 5 C8 5 5 8 5 13 L5 27 C5 32 8 35 13 35 L27 35 C32 35 35 32 35 27 L35 13 C35 8 32 5 27 5 Z",
+    facets: ["M13 5 L27 5 C32 5 35 8 35 13 L20 20 Z", "M20 20 L35 27 C35 32 32 35 27 35 L13 35 Z"]
+  },
+  princess: {
+    body: "M6 6 L34 6 L34 34 L6 34 Z",
+    facets: ["M6 6 L34 6 L20 20 Z", "M34 6 L34 34 L20 20 Z", "M6 34 L34 34 L20 20 Z"]
+  },
   brilliant: {
     body: "M20 3 L30 10 L36 20 L20 37 L4 20 L10 10 Z",
     facets: ["M20 3 L30 10 L20 16 Z", "M20 3 L10 10 L20 16 Z", "M20 16 L36 20 L20 37 Z", "M20 16 L4 20 L20 37 Z"]
+  },
+  radiant: {
+    body: "M12 4 L28 4 L36 14 L36 26 L28 36 L12 36 L4 26 L4 14 Z",
+    facets: ["M12 4 L28 4 L32 12 L8 12 Z", "M8 12 L32 12 L20 24 Z", "M20 24 L32 12 L36 26 L28 36 Z"]
+  },
+  star: {
+    body: "M20 2 L24.5 14 L37 15 L27.5 23 L31 36 L20 29 L9 36 L12.5 23 L3 15 L15.5 14 Z",
+    facets: ["M20 2 L24.5 14 L20 18 Z", "M20 2 L15.5 14 L20 18 Z", "M20 18 L31 36 L20 29 Z"]
   }
 };
 
