@@ -42,7 +42,7 @@ export function LifeOrganizerApp() {
   // On small screens the tasks and the Milo chat are separate tabs; on desktop both are visible.
   const [mobileTab, setMobileTab] = useState<"tasks" | "chat">("tasks");
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
-  const [isBreakingDown, setIsBreakingDown] = useState(false);
+  const [breakingDownTaskId, setBreakingDownTaskId] = useState<string | null>(null);
   const aiRecommendationCacheRef = useRef(new Map<string, AiPriorityRecommendation>());
   const todayLabel = formatTodayLongDate(language);
 
@@ -231,8 +231,8 @@ export function LifeOrganizerApp() {
 
   async function handleBreakDown(taskId: string) {
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || isBreakingDown) return;
-    setIsBreakingDown(true);
+    if (!task || breakingDownTaskId) return;
+    setBreakingDownTaskId(taskId);
     try {
       const res = await fetch("/api/ai-task-steps", {
         method: "POST",
@@ -250,7 +250,7 @@ export function LifeOrganizerApp() {
     } catch {
       setStorageError(focusCopy[language].aiError);
     } finally {
-      setIsBreakingDown(false);
+      setBreakingDownTaskId(null);
     }
   }
 
@@ -419,7 +419,7 @@ export function LifeOrganizerApp() {
             onToggleTask={handleToggleTask}
             onFocusTask={setFocusTaskId}
             onBreakDown={handleBreakDown}
-            breakingDownTaskId={isBreakingDown ? focusTaskId : null}
+            breakingDownTaskId={breakingDownTaskId}
             onQuickAdd={handleQuickAdd}
           />
         </main>
@@ -428,7 +428,7 @@ export function LifeOrganizerApp() {
       {focusTask && (
         <FocusMode
           task={focusTask}
-          isBreaking={isBreakingDown}
+          isBreaking={breakingDownTaskId === focusTask.id}
           onClose={() => setFocusTaskId(null)}
           onBreakDown={() => void handleBreakDown(focusTask.id)}
           onToggleStep={(stepId) => handleToggleStep(focusTask.id, stepId)}
