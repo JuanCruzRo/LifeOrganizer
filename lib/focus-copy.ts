@@ -76,3 +76,21 @@ export const quickAddCopy: Record<AppLanguage, { placeholder: string; add: strin
   nl: { placeholder: "Typ een taak en druk op Enter…", add: "Taak toevoegen" },
   pl: { placeholder: "Wpisz zadanie i naciśnij Enter…", add: "Dodaj zadanie" }
 };
+
+
+// First-run empty state: points at the one thing the user is avoiding.
+export const emptyStateCopy: Record<AppLanguage, { title: string; text: string; examples: string[] }> = {
+  en: { title: "What have you been putting off?", text: "Write it above, even if it's vague. Milo turns it into steps small enough to start.", examples: ["Tidy the desk", "Reply to that email", "Book the appointment"] },
+  es: { title: "¿Qué es eso que vienes postergando?", text: "Escríbelo arriba, aunque sea vago. Milo lo convierte en pasos tan pequeños que dan ganas de empezar.", examples: ["Ordenar el escritorio", "Responder ese correo", "Pedir el turno médico"] },
+  pt: { title: "O que você vem adiando?", text: "Escreva aí em cima, mesmo que vago. O Milo transforma em passos pequenos o bastante para começar.", examples: ["Organizar a mesa", "Responder aquele e-mail", "Marcar a consulta"] },
+  fr: { title: "Qu'est-ce que tu remets à plus tard ?", text: "Écris-le en haut, même vaguement. Milo le transforme en étapes assez petites pour démarrer.", examples: ["Ranger le bureau", "Répondre à cet e-mail", "Prendre le rendez-vous"] },
+  de: { title: "Was schiebst du gerade vor dir her?", text: "Schreib es oben hin, auch ungenau. Milo macht daraus Schritte, die klein genug zum Anfangen sind.", examples: ["Schreibtisch aufräumen", "Diese E-Mail beantworten", "Termin vereinbaren"] },
+  it: { title: "Che cosa stai rimandando?", text: "Scrivilo qui sopra, anche in modo vago. Milo lo trasforma in passaggi abbastanza piccoli da iniziare.", examples: ["Sistemare la scrivania", "Rispondere a quella email", "Prendere l'appuntamento"] },
+  zh: { title: "有什么事你一直在拖？", text: "写在上面就行，模糊也没关系。Milo 会把它拆成小到能立刻开始的步骤。", examples: ["整理桌面", "回复那封邮件", "预约看诊"] },
+  ja: { title: "ずっと後回しにしていることは？", text: "あいまいでも上に書いてください。Miloが始められるくらい小さな手順に変えます。", examples: ["机を片づける", "あのメールに返信する", "予約を取る"] },
+  ko: { title: "계속 미루고 있는 일이 뭔가요?", text: "위에 적어 보세요, 막연해도 괜찮아요. Milo가 시작할 수 있을 만큼 작은 단계로 바꿔 줘요.", examples: ["책상 정리하기", "그 메일에 답장하기", "진료 예약하기"] },
+  ru: { title: "Что вы всё откладываете?", text: "Напишите это сверху, пусть даже расплывчато. Milo превратит это в шаги, с которых легко начать.", examples: ["Разобрать стол", "Ответить на то письмо", "Записаться к врачу"] },
+  tr: { title: "Sürekli ertelediğin şey ne?", text: "Yukarıya yaz, muğlak olsa bile. Milo onu başlayabileceğin kadar küçük adımlara çevirir.", examples: ["Masayı topla", "Şu e-postayı yanıtla", "Randevu al"] },
+  nl: { title: "Wat stel je steeds uit?", text: "Schrijf het hierboven, ook al is het vaag. Milo maakt er stappen van die klein genoeg zijn om te beginnen.", examples: ["Bureau opruimen", "Die mail beantwoorden", "Afspraak maken"] },
+  pl: { title: "Co ciągle odkładasz?", text: "Napisz to u góry, nawet ogólnie. Milo zamieni to w kroki na tyle małe, żeby zacząć.", examples: ["Uporządkuj biurko", "Odpisz na tego maila", "Umów wizytę"] }
+};

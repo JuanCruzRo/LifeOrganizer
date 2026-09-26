@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Play, Trash2, Sparkles } from "lucide-react";
@@ -9,7 +10,7 @@ import { MiloLoader } from "@/components/milo-loader";
 import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
-import { focusCopy, quickAddCopy } from "@/lib/focus-copy";
+import { emptyStateCopy, focusCopy, quickAddCopy } from "@/lib/focus-copy";
 import { Input } from "@/components/ui/input";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task } from "@/types/task";
@@ -91,6 +92,7 @@ export function CalendarView({
   const focusT = focusCopy[language];
   const quickT = quickAddCopy[language];
   const [quickTitle, setQuickTitle] = useState("");
+  const emptyT = emptyStateCopy[language];
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -391,7 +393,7 @@ export function CalendarView({
 
         {/* Task list */}
         <div className="border-t border-border px-5 pb-6 pt-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className={cn("mb-3 flex items-center justify-between", allTasks.length === 0 && "hidden")}>
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {selectedKey
                 ? `${copy.calendar.tasksFor} ${new Date(selectedKey + "T12:00:00").toLocaleDateString(language, { day: "numeric", month: "long" })}`
@@ -409,10 +411,27 @@ export function CalendarView({
 
           {displayedTasks.length === 0 ? (
             // Nothing to list: either there are no tasks at all / on that day, or the only pending one is the recommended card above.
-            selectedKey || allTasks.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                {selectedKey ? copy.calendar.noTasksDay : copy.calendar.noTasksSaved}
-              </p>
+            selectedKey ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">{copy.calendar.noTasksDay}</p>
+            ) : allTasks.length === 0 ? (
+              // First run: aim the user straight at the thing they are avoiding.
+              <div className="flex flex-col items-center px-4 py-10 text-center">
+                <Image src="/milo-green.webp" alt="" width={120} height={120} className="h-28 w-28 object-contain" />
+                <h3 className="mt-3 text-lg font-semibold tracking-tight">{emptyT.title}</h3>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">{emptyT.text}</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {emptyT.examples.map((example) => (
+                    <button
+                      key={example}
+                      onClick={() => void onQuickAdd(example)}
+                      disabled={isMutating}
+                      className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50"
+                    >
+                      + {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : null
           ) : (
             <ul className="flex flex-col gap-2">
