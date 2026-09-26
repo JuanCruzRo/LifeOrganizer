@@ -9,24 +9,11 @@ import {
   deleteTaskById,
   countUserTasks
 } from "@/lib/storage";
+import { isValidSteps } from "@/lib/task-steps";
 import { MAX_TASKS_PER_USER } from "@/lib/usage-limits";
 import { Task, TaskInput } from "@/types/task";
 
 const FREE_TASK_LIMIT = 15;
-
-function isValidSteps(v: unknown): boolean {
-  return (
-    Array.isArray(v) &&
-    v.length <= 20 &&
-    v.every(
-      (s) =>
-        !!s && typeof s === "object" &&
-        typeof (s as { id?: unknown }).id === "string" && (s as { id: string }).id.length <= 100 &&
-        typeof (s as { text?: unknown }).text === "string" && (s as { text: string }).text.length <= 300 &&
-        typeof (s as { done?: unknown }).done === "boolean"
-    )
-  );
-}
 
 function isValidTask(v: unknown): v is Task {
   if (!v || typeof v !== "object") return false;

@@ -293,3 +293,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: unset !important;
   fill: unset !important;
 }
+
+/* Keyboard users need to see where they are. Mouse clicks stay ring-free. */
+@layer base {
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+}
+
+/* Some people get distracted or unwell from motion; honour the system setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

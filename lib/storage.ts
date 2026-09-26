@@ -1,6 +1,7 @@
 import "server-only";
 import sql from "@/lib/db";
-import { Task, TaskStep } from "@/types/task";
+import { normalizeSteps } from "@/lib/task-steps";
+import { Task } from "@/types/task";
 
 type TaskRow = {
   id: string;
@@ -100,17 +101,4 @@ function normalizeTask(row: unknown): Task | null {
     };
   }
   return null;
-}
-
-function normalizeSteps(value: unknown): TaskStep[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter(
-      (s): s is TaskStep =>
-        !!s && typeof s === "object" &&
-        typeof (s as TaskStep).id === "string" &&
-        typeof (s as TaskStep).text === "string" &&
-        typeof (s as TaskStep).done === "boolean"
-    )
-    .slice(0, 20);
 }

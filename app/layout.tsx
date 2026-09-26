@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
 import { LocalizedClerkProvider } from "@/components/localized-clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { MotionPreferences } from "@/components/motion-preferences";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,9 +44,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
         <PwaRegister />
-        <LanguageProvider>
-          <LocalizedClerkProvider>{children}</LocalizedClerkProvider>
-        </LanguageProvider>
+        <MotionPreferences>
+          <LanguageProvider>
+            <LocalizedClerkProvider>{children}</LocalizedClerkProvider>
+          </LanguageProvider>
+        </MotionPreferences>
       </body>
     </html>
   );
