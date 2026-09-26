@@ -313,4 +313,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* "Milo is thinking" must still read as activity, so keep a calm fade
+     instead of freezing it: opacity only, nothing moves. */
+  .milo-loader-bar {
+    animation: milo-fade 1.6s ease-in-out infinite !important;
+    animation-iteration-count: infinite !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+@keyframes milo-fade {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
