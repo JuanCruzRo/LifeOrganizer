@@ -88,7 +88,9 @@ async function createChatCompletionWithFallback(
   messages: Groq.Chat.ChatCompletionMessageParam[],
   timeoutMs: number,
   primaryModel: string = GROQ_MODEL,
-  maxTokens = 1024
+  // Groq's free tier caps output tokens per minute at 1000 and rejects any
+  // request that asks for more, so the default stays safely under it.
+  maxTokens = 800
 ) {
   try {
     return await groq.chat.completions.create(

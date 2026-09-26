@@ -193,7 +193,7 @@ export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDow
                 </motion.div>
               )}
             </AnimatePresence>
-            {currentStep && (
+            {!finished && (
               <div className="mt-2 flex justify-center gap-2">
                 <Button size="sm" variant="ghost" disabled={companionBusy} onClick={() => void askCompanion("stuck")}>
                   {c.stuck}

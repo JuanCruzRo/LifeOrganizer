@@ -10,6 +10,8 @@ import { MiloLoader } from "@/components/milo-loader";
 import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
 import { languageSpeechCodes } from "@/lib/i18n";
+import { formatDueDate } from "@/lib/task-date";
+import { getTaskPriorityLabel } from "@/lib/task-labels";
 import { useSpeechRecognition } from "@/lib/use-speech-recognition";
 import { cn } from "@/lib/utils";
 import { Task, TaskInput } from "@/types/task";
@@ -314,7 +316,7 @@ export function MiloChat({
                     <div key={idx} className="rounded-lg bg-background/60 px-2.5 py-1.5">
                       <p className="text-sm font-medium text-foreground">{action.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {action.category} · {action.priority} · {action.dueDate}
+                        {action.category} · {getTaskPriorityLabel(action.priority, language)} · {formatDueDate(action.dueDate, language)}
                       </p>
                     </div>
                   ))}
