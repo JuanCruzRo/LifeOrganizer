@@ -1,11 +1,19 @@
 import "server-only";
 import { NextResponse } from "next/server";
+import { AppLanguage, supportedLanguages } from "@/lib/i18n";
 import { chatWithMilo } from "@/lib/milo";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
 import { loadTasks } from "@/lib/storage";
 import { Task } from "@/types/task";
 
 const WEEKS_OF_HISTORY = 8;
+const DAYS_OF_ACTIVITY = 14;
+
+const LANGUAGE_NAMES: Record<AppLanguage, string> = {
+  en: "English", es: "neutral Spanish (use tú, never voseo)", pt: "Brazilian Portuguese",
+  fr: "French", de: "German", it: "Italian", zh: "Simplified Chinese", ja: "Japanese",
+  ko: "Korean", ru: "Russian", tr: "Turkish", nl: "Dutch", pl: "Polish"
+};
 
 export async function GET(request: Request) {
   let userId: string;
@@ -20,7 +28,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
   }
 
-  const uiLanguage = new URL(request.url).searchParams.get("lang") === "es" ? "es" : "en";
+  const langParam = new URL(request.url).searchParams.get("lang");
+  const uiLanguage: AppLanguage = supportedLanguages.includes(langParam as AppLanguage)
+    ? (langParam as AppLanguage)
+    : "en";
   const tasks = await loadTasks(userId);
 
   const completionRate = getCompletionRate(tasks);
@@ -41,6 +52,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     completionRate,
     completedByWeek: getCompletedByWeek(tasks),
+    lastDays: getLastDays(tasks),
     byCategory,
     activeStreak,
     totalCompleted,
@@ -55,39 +67,46 @@ async function getEncouragementMessage(params: {
   totalCompleted: number;
   totalPending: number;
   topCategory: string | null;
-  uiLanguage: "en" | "es";
+  uiLanguage: AppLanguage;
 }): Promise<string> {
-  const isSpanish = params.uiLanguage === "es";
-  const prompt = isSpanish
-    ? `Sos Milo, un asistente de organización personal cercano y motivador. Estos son los datos de productividad del usuario:
-- Tareas completadas: ${params.totalCompleted}
-- Tareas pendientes: ${params.totalPending}
-- Tasa de cumplimiento: ${params.completionRate}%
-- Racha de días activos seguidos: ${params.activeStreak}
-- Categoría con más tareas: ${params.topCategory ?? "ninguna"}
-
-Escribe UN mensaje corto (máximo 2 frases, sin emojis excesivos, tono cálido y motivador pero honesto, no genérico ni cursi) que reaccione a estos datos específicos. Si la racha o tasa son bajas, animá sin culpar. Si son altas, celebrá concretamente. Respondé SOLO con el mensaje, sin comillas ni explicaciones.`
-    : `You are Milo, a warm and motivating personal organization assistant. Here is the user's productivity data:
+  const prompt = `You are Milo, a warm personal organization assistant. Here is the user's data:
 - Completed tasks: ${params.totalCompleted}
 - Pending tasks: ${params.totalPending}
 - Completion rate: ${params.completionRate}%
 - Active day streak: ${params.activeStreak}
 - Top category: ${params.topCategory ?? "none"}
 
-Write ONE short message (max 2 sentences, no excessive emojis, warm and motivating but honest tone, not generic or cheesy) reacting to this specific data. If streak or rate are low, encourage without blaming. If high, celebrate concretely. Respond ONLY with the message, no quotes or explanations.`;
+Write ONE short message, max 2 sentences, reacting to these specific numbers.
+Warm and honest, never generic, never cheesy, at most one emoji and usually none.
+If the streak or the rate are low, encourage without blaming. If they are high, say what specifically went well.
+Write it in ${LANGUAGE_NAMES[params.uiLanguage]}.
+Reply with the message only, no quotes.`;
 
   try {
-    const { content } = await chatWithMilo({ message: prompt, timeoutMs: 12000 });
-    return content.trim() || fallbackMessage(isSpanish);
+    const { content } = await chatWithMilo({ message: prompt, timeoutMs: 12000, maxTokens: 150 });
+    return content.trim() || "";
   } catch {
-    return fallbackMessage(isSpanish);
+    return "";
   }
 }
 
-function fallbackMessage(isSpanish: boolean): string {
-  return isSpanish
-    ? "Cada tarea completada suma. ¡Seguí así!"
-    : "Every completed task adds up. Keep going!";
+/** Completed-task count per day, oldest first, for the activity strip. */
+function getLastDays(tasks: Task[]): { date: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const task of tasks) {
+    if (!task.done || !task.completedAt) continue;
+    const key = new Date(task.completedAt).toISOString().split("T")[0];
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const days: { date: string; count: number }[] = [];
+  for (let i = DAYS_OF_ACTIVITY - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split("T")[0];
+    days.push({ date: key, count: counts.get(key) ?? 0 });
+  }
+  return days;
 }
 
 function getCompletionRate(tasks: Task[]): number {
@@ -116,7 +135,7 @@ function getCompletedByWeek(tasks: Task[]): { weekStart: string; count: number }
   return weeks;
 }
 
-function getByCategory(tasks: Task[]): { category: string; count: number }[] {
+function getByCategory(tasks: Task[]): { category: string; count: number; isOther?: boolean }[] {
   const counts = new Map<string, number>();
   for (const task of tasks) {
     counts.set(task.category, (counts.get(task.category) ?? 0) + 1);
@@ -130,7 +149,7 @@ function getByCategory(tasks: Task[]): { category: string; count: number }[] {
   const rest = sorted.slice(4);
   const restTotal = rest.reduce((sum, c) => sum + c.count, 0);
 
-  return restTotal > 0 ? [...top, { category: "Otras", count: restTotal }] : top;
+  return restTotal > 0 ? [...top, { category: "", count: restTotal, isOther: true }] : top;
 }
 
 function getActiveStreak(tasks: Task[]): number {

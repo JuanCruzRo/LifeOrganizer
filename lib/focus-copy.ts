@@ -114,3 +114,23 @@ export const companionCopy: Record<AppLanguage, {
   nl: { withYou: "Milo is bij je", keepGoing: "Ik ga door", stuck: "Ik loop vast", modeName: "Gezelschapsmodus", proOnly: "Alleen bij Pro" },
   pl: { withYou: "Milo jest z Tobą", keepGoing: "Idę dalej", stuck: "Utknąłem", modeName: "Tryb towarzyszenia", proOnly: "Tylko w Pro" }
 };
+
+
+// Extra wording for the stats page.
+export const statsExtraCopy: Record<AppLanguage, {
+  other: string; lastDays: string; noActivity: string; tasksUnit: string; emptyChart: string;
+}> = {
+ en: { other: "Other", lastDays: "Last 14 days", noActivity: "No activity yet", tasksUnit: "tasks", emptyChart: "Nothing completed yet. Your first one starts the chart." },
+ es: { other: "Otras", lastDays: "Últimos 14 días", noActivity: "Todavía sin actividad", tasksUnit: "tareas", emptyChart: "Aún no completaste nada. La primera empieza el gráfico." },
+ pt: { other: "Outras", lastDays: "Últimos 14 dias", noActivity: "Ainda sem atividade", tasksUnit: "tarefas", emptyChart: "Você ainda não concluiu nada. A primeira começa o gráfico." },
+ fr: { other: "Autres", lastDays: "14 derniers jours", noActivity: "Pas encore d'activité", tasksUnit: "tâches", emptyChart: "Rien de terminé pour l'instant. La première lance le graphique." },
+ de: { other: "Andere", lastDays: "Letzte 14 Tage", noActivity: "Noch keine Aktivität", tasksUnit: "Aufgaben", emptyChart: "Noch nichts erledigt. Die erste startet das Diagramm." },
+ it: { other: "Altre", lastDays: "Ultimi 14 giorni", noActivity: "Ancora nessuna attività", tasksUnit: "attività", emptyChart: "Ancora niente completato. La prima avvia il grafico." },
+ zh: { other: "其他", lastDays: "最近 14 天", noActivity: "还没有记录", tasksUnit: "项任务", emptyChart: "还没有完成任何任务。第一项会让图表动起来。" },
+ ja: { other: "その他", lastDays: "直近14日間", noActivity: "まだ記録がありません", tasksUnit: "件", emptyChart: "まだ何も完了していません。最初の1件からグラフが始まります。" },
+ ko: { other: "기타", lastDays: "최근 14일", noActivity: "아직 기록이 없어요", tasksUnit: "개", emptyChart: "아직 완료한 일이 없어요. 첫 번째부터 그래프가 시작돼요." },
+ ru: { other: "Другие", lastDays: "Последние 14 дней", noActivity: "Пока нет активности", tasksUnit: "задач", emptyChart: "Пока ничего не завершено. Первая задача запустит график." },
+ tr: { other: "Diğer", lastDays: "Son 14 gün", noActivity: "Henüz hareket yok", tasksUnit: "görev", emptyChart: "Henüz hiçbir şey tamamlanmadı. İlki grafiği başlatır." },
+ nl: { other: "Overig", lastDays: "Laatste 14 dagen", noActivity: "Nog geen activiteit", tasksUnit: "taken", emptyChart: "Nog niets afgerond. De eerste start de grafiek." },
+ pl: { other: "Inne", lastDays: "Ostatnie 14 dni", noActivity: "Brak aktywności", tasksUnit: "zadań", emptyChart: "Nic jeszcze nie ukończono. Pierwsze zadanie uruchomi wykres." }
+};
