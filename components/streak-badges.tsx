@@ -1,15 +1,16 @@
 "use client";
 
-import { Zap } from "lucide-react";
+
 import { motion } from "motion/react";
+import { Gem } from "@/components/gem";
 import { useAppLanguage } from "@/components/language-provider";
 import { streakCopy } from "@/lib/focus-copy";
+import { GEMS, getGem } from "@/lib/gems";
 import {
   getBadgeProgress,
   getCurrentBadge,
   getDaysToNextBadge,
-  getNextBadge,
-  STREAK_BADGES
+  getNextBadge
 } from "@/lib/streak";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export function StreakBadges({
   const remaining = getDaysToNextBadge(currentStreak);
   const progress = getBadgeProgress(currentStreak);
   const unit = currentStreak === 1 ? t.day : t.days;
+  // Before the first badge, show the first gem locked: it says what is coming.
+  const currentGem = getGem(current?.level ?? 1) ?? GEMS[0];
 
   return (
     <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-5">
@@ -50,17 +53,12 @@ export function StreakBadges({
 
         <motion.div
           key={current?.level ?? 0}
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 320, damping: 18 }}
-          className={cn(
-            "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl",
-            current ? "bg-primary/15 ring-1 ring-primary/40" : "bg-secondary"
-          )}
+          initial={{ scale: 0.6, opacity: 0, rotate: -12 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 16 }}
+          className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-secondary/40"
         >
-          <Zap
-            className={cn("h-7 w-7", current ? "fill-primary text-primary" : "text-muted-foreground")}
-          />
+          <Gem gem={currentGem} size={44} earned={current !== null} />
         </motion.div>
       </div>
 
@@ -88,22 +86,24 @@ export function StreakBadges({
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           {t.badges}
         </p>
-        <ul className="mt-2 flex flex-wrap gap-1.5">
-          {STREAK_BADGES.map((badge) => {
-            const earned = reference >= badge.days;
+        <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-2.5">
+          {GEMS.map((gem) => {
+            const earned = reference >= gem.days;
             return (
               <li
-                key={badge.level}
-                title={`${t.names[badge.level - 1]} · ${badge.days} ${t.days}`}
-                className={cn(
-                  "flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums transition-colors",
-                  earned
-                    ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-                    : "bg-secondary/60 text-muted-foreground/70"
-                )}
+                key={gem.level}
+                title={`${t.names[gem.level - 1]} · ${gem.days} ${t.days}`}
+                className="flex w-9 flex-col items-center gap-0.5"
               >
-                <Zap className={cn("h-3 w-3", earned && "fill-primary")} />
-                {badge.days}
+                <Gem gem={gem} size={28} earned={earned} />
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold tabular-nums",
+                    earned ? "text-foreground" : "text-muted-foreground/60"
+                  )}
+                >
+                  {gem.days}
+                </span>
               </li>
             );
           })}
