@@ -155,3 +155,24 @@ export const micCopy: Record<AppLanguage, {
   nl: { blocked: "Microfoon geblokkeerd. Sta hem toe in je browser om te dicteren.", noSpeech: "Niets gehoord. Probeer het opnieuw.", recording: "Opnemen… tik om te stoppen", transcribing: "Transcriberen…", tooLong: "De opname is te lang.", failed: "Transcriberen mislukt. Probeer opnieuw.", limit: "Je hebt de dicteerlimiet van vandaag bereikt." },
   pl: { blocked: "Mikrofon zablokowany. Zezwól na niego w przeglądarce, aby dyktować.", noSpeech: "Nic nie usłyszałem. Spróbuj ponownie.", recording: "Nagrywanie… dotknij, aby zakończyć", transcribing: "Transkrypcja…", tooLong: "Nagranie jest za długie.", failed: "Nie udało się przepisać. Spróbuj ponownie.", limit: "Osiągnięto dzienny limit dyktowania." }
 };
+
+
+// Streak badges: milestones that stay unlocked once earned.
+export const streakCopy: Record<AppLanguage, {
+  streak: string; best: string; badges: string; days: string; day: string;
+  toNext: string; allUnlocked: string; startToday: string; names: string[];
+}> = {
+  en: { streak: "Streak", best: "Best", badges: "Badges", days: "days", day: "day", toNext: "%d days to the next badge", allUnlocked: "All badges unlocked", startToday: "Start today", names: ["First spark", "Warming up", "One week", "Two weeks", "One month", "Fifty", "One hundred", "One year"] },
+  es: { streak: "Racha", best: "Mejor", badges: "Insignias", days: "días", day: "día", toNext: "%d días para la próxima insignia", allUnlocked: "Todas las insignias desbloqueadas", startToday: "Empieza hoy", names: ["Primera chispa", "Tomando calor", "Una semana", "Dos semanas", "Un mes", "Cincuenta", "Cien", "Un año"] },
+  pt: { streak: "Sequência", best: "Melhor", badges: "Emblemas", days: "dias", day: "dia", toNext: "%d dias para o próximo emblema", allUnlocked: "Todos os emblemas desbloqueados", startToday: "Comece hoje", names: ["Primeira faísca", "Esquentando", "Uma semana", "Duas semanas", "Um mês", "Cinquenta", "Cem", "Um ano"] },
+  fr: { streak: "Série", best: "Record", badges: "Badges", days: "jours", day: "jour", toNext: "%d jours avant le prochain badge", allUnlocked: "Tous les badges débloqués", startToday: "Commencez aujourd'hui", names: ["Première étincelle", "Ça chauffe", "Une semaine", "Deux semaines", "Un mois", "Cinquante", "Cent", "Un an"] },
+  de: { streak: "Serie", best: "Bestwert", badges: "Abzeichen", days: "Tage", day: "Tag", toNext: "Noch %d Tage bis zum nächsten Abzeichen", allUnlocked: "Alle Abzeichen freigeschaltet", startToday: "Heute starten", names: ["Erster Funke", "Es wird warm", "Eine Woche", "Zwei Wochen", "Ein Monat", "Fünfzig", "Hundert", "Ein Jahr"] },
+  it: { streak: "Serie", best: "Record", badges: "Distintivi", days: "giorni", day: "giorno", toNext: "%d giorni al prossimo distintivo", allUnlocked: "Tutti i distintivi sbloccati", startToday: "Inizia oggi", names: ["Prima scintilla", "Si scalda", "Una settimana", "Due settimane", "Un mese", "Cinquanta", "Cento", "Un anno"] },
+  zh: { streak: "连续天数", best: "最佳", badges: "徽章", days: "天", day: "天", toNext: "距离下一个徽章还有 %d 天", allUnlocked: "已解锁全部徽章", startToday: "今天开始", names: ["第一束火花", "渐入佳境", "一周", "两周", "一个月", "五十天", "一百天", "一年"] },
+  ja: { streak: "連続日数", best: "最高", badges: "バッジ", days: "日", day: "日", toNext: "次のバッジまであと%d日", allUnlocked: "すべてのバッジを獲得", startToday: "今日から始める", names: ["最初のひらめき", "温まってきた", "1週間", "2週間", "1か月", "50日", "100日", "1年"] },
+  ko: { streak: "연속", best: "최고", badges: "배지", days: "일", day: "일", toNext: "다음 배지까지 %d일", allUnlocked: "모든 배지 획득", startToday: "오늘 시작하기", names: ["첫 불꽃", "달아오르는 중", "일주일", "2주", "한 달", "50일", "100일", "1년"] },
+  ru: { streak: "Серия", best: "Рекорд", badges: "Значки", days: "дн.", day: "день", toNext: "До следующего значка %d дн.", allUnlocked: "Все значки открыты", startToday: "Начните сегодня", names: ["Первая искра", "Набираем ход", "Неделя", "Две недели", "Месяц", "Пятьдесят", "Сто", "Год"] },
+  tr: { streak: "Seri", best: "Rekor", badges: "Rozetler", days: "gün", day: "gün", toNext: "Sonraki rozete %d gün", allUnlocked: "Tüm rozetler açıldı", startToday: "Bugün başla", names: ["İlk kıvılcım", "Isınıyor", "Bir hafta", "İki hafta", "Bir ay", "Elli", "Yüz", "Bir yıl"] },
+  nl: { streak: "Reeks", best: "Record", badges: "Badges", days: "dagen", day: "dag", toNext: "Nog %d dagen tot de volgende badge", allUnlocked: "Alle badges vrijgespeeld", startToday: "Begin vandaag", names: ["Eerste vonk", "Op gang", "Eén week", "Twee weken", "Eén maand", "Vijftig", "Honderd", "Eén jaar"] },
+  pl: { streak: "Seria", best: "Rekord", badges: "Odznaki", days: "dni", day: "dzień", toNext: "%d dni do kolejnej odznaki", allUnlocked: "Wszystkie odznaki zdobyte", startToday: "Zacznij dziś", names: ["Pierwsza iskra", "Rozgrzewka", "Tydzień", "Dwa tygodnie", "Miesiąc", "Pięćdziesiąt", "Sto", "Rok"] }
+};

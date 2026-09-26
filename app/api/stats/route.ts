@@ -36,6 +36,7 @@ export async function GET(request: Request) {
 
   const completionRate = getCompletionRate(tasks);
   const activeStreak = getActiveStreak(tasks);
+  const bestStreak = getBestStreak(tasks);
   const byCategory = getByCategory(tasks);
   const totalCompleted = tasks.filter((t) => t.done).length;
   const totalPending = tasks.filter((t) => !t.done).length;
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
     lastDays: getLastDays(tasks),
     byCategory,
     activeStreak,
+    bestStreak,
     totalCompleted,
     totalPending,
     encouragement
@@ -170,6 +172,39 @@ function getActiveStreak(tasks: Task[]): number {
   }
 
   return streak;
+}
+
+/** Longest run of consecutive days with at least one completed task, ever. */
+function getBestStreak(tasks: Task[]): number {
+  const days = [
+    ...new Set(
+      tasks
+        .filter((t) => t.done && t.completedAt)
+        .map((t) => new Date(t.completedAt!).toISOString().split("T")[0])
+    )
+  ].sort();
+
+  let best = 0;
+  let run = 0;
+  let previous: string | null = null;
+
+  for (const day of days) {
+    if (previous !== null && isNextDay(previous, day)) {
+      run++;
+    } else {
+      run = 1;
+    }
+    if (run > best) best = run;
+    previous = day;
+  }
+
+  return best;
+}
+
+function isNextDay(previous: string, current: string): boolean {
+  const p = new Date(`${previous}T00:00:00Z`);
+  p.setUTCDate(p.getUTCDate() + 1);
+  return p.toISOString().split("T")[0] === current;
 }
 
 function startOfWeek(date: Date): Date {

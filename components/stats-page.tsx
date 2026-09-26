@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Lock, TrendingUp, Zap } from "lucide-react";
+import { Lock, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
 import { statsExtraCopy } from "@/lib/focus-copy";
 import { miloFace } from "@/lib/milo-face";
+import { StreakBadges } from "@/components/streak-badges";
 import { useUserPlan } from "@/lib/use-user-plan";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ type StatsData = {
   byCategory: { category: string; count: number; isOther?: boolean }[];
   lastDays: { date: string; count: number }[];
   activeStreak: number;
+  bestStreak: number;
   totalCompleted: number;
   totalPending: number;
   encouragement: string;
@@ -59,9 +61,9 @@ export function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 sm:px-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-dvh bg-background px-4 py-6 sm:px-8 lg:h-dvh lg:overflow-hidden lg:py-8">
+      <div className="mx-auto flex h-full max-w-5xl flex-col">
+        <div className="mb-5 flex flex-shrink-0 items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{copy.stats.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{copy.stats.subtitle}</p>
@@ -87,11 +89,11 @@ export function StatsPage() {
         )}
 
         {data && (
-          <div className="flex flex-col gap-5">
-            {/* Milo's encouragement message */}
+          <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-3 lg:grid-rows-[auto_minmax(0,1fr)]">
+            {/* Milo's read of the numbers, across the top */}
             {data.encouragement && (
               <motion.div
-                className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4"
+                className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 lg:col-span-3"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
@@ -103,50 +105,50 @@ export function StatsPage() {
                   height={32}
                   className="h-8 w-8 flex-shrink-0 object-contain"
                 />
-                <p className="mt-1 text-sm leading-relaxed text-foreground">{data.encouragement}</p>
+                <p className="text-sm leading-relaxed text-foreground">{data.encouragement}</p>
               </motion.div>
             )}
 
-            {/* KPI row */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <StatTile label={copy.stats.completed} value={data.totalCompleted} />
-              <StatTile label={copy.stats.pending} value={data.totalPending} />
-              <StatTile
-                label={copy.stats.streak}
-                value={data.activeStreak}
-                suffix={copy.stats.days}
-                icon={<Zap className="h-3.5 w-3.5 fill-primary text-primary" />}
-              />
-              <StatTile
-                label={copy.stats.completionRate}
-                value={data.completionRate}
-                suffix="%"
-                meter={data.completionRate}
-              />
+            {/* Left: the streak, given the room it deserves */}
+            <div className="lg:row-span-1">
+              <StreakBadges currentStreak={data.activeStreak} bestStreak={data.bestStreak} />
             </div>
 
-            {/* Day-by-day activity: the streak made visible */}
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                {extra.lastDays}
-              </p>
-              <ActivityStrip data={data.lastDays} language={language} unit={extra.tasksUnit} empty={extra.noActivity} />
-            </div>
+            {/* Right: the numbers and the two charts, stacked */}
+            <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
+              <div className="grid flex-shrink-0 grid-cols-3 gap-3">
+                <StatTile label={copy.stats.completed} value={data.totalCompleted} />
+                <StatTile label={copy.stats.pending} value={data.totalPending} />
+                <StatTile
+                  label={copy.stats.completionRate}
+                  value={data.completionRate}
+                  suffix="%"
+                  meter={data.completionRate}
+                />
+              </div>
 
-            {/* Weekly trend */}
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                {copy.stats.weeklyTrend}
-              </p>
-              <WeeklyTrendChart data={data.completedByWeek} language={language} unit={extra.tasksUnit} empty={extra.emptyChart} />
-            </div>
+              <div className="flex-shrink-0 rounded-2xl border border-border bg-card p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  {extra.lastDays}
+                </p>
+                <ActivityStrip data={data.lastDays} language={language} unit={extra.tasksUnit} empty={extra.noActivity} />
+              </div>
 
-            {/* Category breakdown */}
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                {copy.stats.byCategory}
-              </p>
-              <CategoryBars data={data.byCategory} otherLabel={extra.other} unit={extra.tasksUnit} />
+              <div className="grid min-h-0 gap-4 sm:grid-cols-2">
+                <div className="min-h-0 rounded-2xl border border-border bg-card p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {copy.stats.weeklyTrend}
+                  </p>
+                  <WeeklyTrendChart data={data.completedByWeek} language={language} unit={extra.tasksUnit} empty={extra.emptyChart} />
+                </div>
+
+                <div className="min-h-0 overflow-y-auto rounded-2xl border border-border bg-card p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {copy.stats.byCategory}
+                  </p>
+                  <CategoryBars data={data.byCategory} otherLabel={extra.other} unit={extra.tasksUnit} />
+                </div>
+              </div>
             </div>
           </div>
         )}
