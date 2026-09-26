@@ -149,6 +149,7 @@ export function MiloChat({
 
   const isOverloaded = overloadedTasks.length >= 3;
 
+  const isEmpty = messages.length === 0 && !isLoading;
   const headerFace: MiloFace = voice.state === "recording"
     ? "escuchando"
     : isLoading
@@ -282,10 +283,16 @@ export function MiloChat({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {messages.length === 0 && !isLoading && sessionLoaded && (
+      <div
+        className={cn(
+          "min-h-0 flex-1 px-4 py-4",
+          // Empty: centre the greeting and take scrolling away entirely, so
+          // there is neither a track nor a wheel that moves nothing.
+          isEmpty ? "flex items-center justify-center overflow-hidden" : "space-y-3 overflow-y-auto"
+        )}
+      >
+        {isEmpty && sessionLoaded && (
           <motion.div
-            className="flex h-full items-center justify-center"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}

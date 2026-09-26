@@ -396,13 +396,14 @@ export function CalendarView({
             </div>
           </div>
 
-          {/* Weekday headers */}
-          <div className="grid grid-cols-7">
+          {/* Weekday headers: same grid geometry as the days below, so each
+              label sits exactly over its column. */}
+          <div className="grid grid-cols-7 gap-x-0.5">
             {weekdays.map((d, i) => (
               <div
                 key={d}
                 className={cn(
-                  "pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wider",
+                  "px-0.5 pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wider",
                   i === 0 || i === 6 ? "text-muted-foreground/60" : "text-muted-foreground"
                 )}
               >
@@ -478,8 +479,10 @@ export function CalendarView({
                 aria-expanded={showDone}
                 className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
               >
-                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", showDone && "rotate-180")} />
+                {/* Chevron trails the label so this heading starts on the same
+                    left edge as the others instead of being pushed in by an icon. */}
                 {monthT.thisMonth} ({doneThisMonth.length})
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", showDone && "rotate-180")} />
               </button>
               <Collapsible open={showDone}>
                 <ul className="flex flex-col gap-2 pt-3">

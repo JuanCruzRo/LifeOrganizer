@@ -363,7 +363,7 @@ export const copy = {
       subtitle: "Asistente personal",
       clearChat: "Limpiar conversación",
       greeting: "Hola, soy Milo",
-      greetingSubtitle: "Preguntame sobre tus tareas, pedime ayuda para organizarte, o charlemos.",
+      greetingSubtitle: "Pregúntame sobre tus tareas, pídeme ayuda para organizarte, o charlemos.",
       taskCreated: "Tarea creada",
       createTask: "Crear tarea",
       confirm: "Confirmar",
