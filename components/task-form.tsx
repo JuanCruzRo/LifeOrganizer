@@ -74,17 +74,17 @@ export function TaskForm({
     const trimmedTitle = title.trim();
     const trimmedCategory = category.trim();
 
-    if (!trimmedTitle || !trimmedCategory || !dueDate) {
+    if (!trimmedTitle) {
       return;
     }
 
     const didSave = await onSubmitTask({
       title: trimmedTitle,
-      category: trimmedCategory,
+      category: trimmedCategory || "general",
       description: description.trim(),
       priority,
       duration,
-      dueDate
+      dueDate: dueDate || todayDateValue
     });
 
     if (didSave && mode === "create") {

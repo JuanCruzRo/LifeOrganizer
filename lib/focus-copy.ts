@@ -60,3 +60,19 @@ export const reminderCopy: Record<AppLanguage, ReminderCopy> = {
   nl: { title: "Herinneringen", enable: "Herinneringen aanzetten", enabled: "Herinneringen aan", blocked: "Meldingen zijn geblokkeerd in je browser.", dueToday: (n) => `Je hebt ${n} ta${n === 1 ? "ak" : "ken"} voor vandaag`, overdue: (n) => `${n} te late ta${n === 1 ? "ak" : "ken"}`, focusDone: "Focussessie klaar", focusDoneBody: "Tijd is om. Neem een pauze!" },
   pl: { title: "Przypomnienia", enable: "Włącz przypomnienia", enabled: "Przypomnienia włączone", blocked: "Powiadomienia są zablokowane w przeglądarce.", dueToday: (n) => `Masz ${n} zada${n === 1 ? "nie" : "nia"} na dziś`, overdue: (n) => `${n} zaległ${n === 1 ? "e zadanie" : "e zadania"}`, focusDone: "Sesja skupienia zakończona", focusDoneBody: "Czas minął. Zrób przerwę!" }
 };
+
+export const quickAddCopy: Record<AppLanguage, { placeholder: string; add: string }> = {
+  en: { placeholder: "Write a task and press Enter…", add: "Add task" },
+  es: { placeholder: "Escribe una tarea y pulsa Enter…", add: "Agregar tarea" },
+  pt: { placeholder: "Escreva uma tarefa e aperte Enter…", add: "Adicionar tarefa" },
+  fr: { placeholder: "Écris une tâche et appuie sur Entrée…", add: "Ajouter une tâche" },
+  de: { placeholder: "Aufgabe schreiben und Enter drücken…", add: "Aufgabe hinzufügen" },
+  it: { placeholder: "Scrivi un'attività e premi Invio…", add: "Aggiungi attività" },
+  zh: { placeholder: "输入任务后按回车…", add: "添加任务" },
+  ja: { placeholder: "タスクを入力してEnter…", add: "タスクを追加" },
+  ko: { placeholder: "할 일을 쓰고 Enter를 누르세요…", add: "할 일 추가" },
+  ru: { placeholder: "Напишите задачу и нажмите Enter…", add: "Добавить задачу" },
+  tr: { placeholder: "Bir görev yaz ve Enter'a bas…", add: "Görev ekle" },
+  nl: { placeholder: "Typ een taak en druk op Enter…", add: "Taak toevoegen" },
+  pl: { placeholder: "Wpisz zadanie i naciśnij Enter…", add: "Dodaj zadanie" }
+};

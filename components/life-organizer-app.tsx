@@ -14,6 +14,7 @@ import { TaskForm } from "@/components/task-form";
 import { Button } from "@/components/ui/button";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { formatTodayLongDate } from "@/lib/task-date";
+import { celebrate } from "@/lib/celebrate";
 import { focusCopy, reminderCopy } from "@/lib/focus-copy";
 import { useReminders } from "@/lib/use-reminders";
 import { useUserPlan } from "@/lib/use-user-plan";
@@ -177,6 +178,7 @@ export function LifeOrganizerApp() {
   async function handleToggleTask(taskId: string) {
     const current = tasks.find((t) => t.id === taskId);
     if (!current) return;
+    if (!current.done) void celebrate("task");
     setIsSyncing(true);
     try {
       const res = await fetch("/api/tasks", {
@@ -256,7 +258,21 @@ export function LifeOrganizerApp() {
     const task = tasks.find((t) => t.id === taskId);
     if (!task?.steps) return;
     const steps = task.steps.map((s) => (s.id === stepId ? { ...s, done: !s.done } : s));
+    const justCompleted = task.steps.find((s) => s.id === stepId)?.done === false;
+    if (justCompleted) void celebrate(steps.every((s) => s.done) ? "task" : "step");
     void persistTask({ ...task, steps });
+  }
+
+  // Capture with just a title: everything else gets a sensible default.
+  async function handleQuickAdd(title: string) {
+    await handleCreateTask({
+      title,
+      category: "general",
+      description: "",
+      priority: "medium",
+      duration: "medium",
+      dueDate: new Date().toISOString().slice(0, 10)
+    });
   }
 
   function handleAddTask() {
@@ -404,6 +420,7 @@ export function LifeOrganizerApp() {
             onFocusTask={setFocusTaskId}
             onBreakDown={handleBreakDown}
             breakingDownTaskId={isBreakingDown ? focusTaskId : null}
+            onQuickAdd={handleQuickAdd}
           />
         </main>
       </div>

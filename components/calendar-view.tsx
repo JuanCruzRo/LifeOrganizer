@@ -9,7 +9,8 @@ import { MiloLoader } from "@/components/milo-loader";
 import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
-import { focusCopy } from "@/lib/focus-copy";
+import { focusCopy, quickAddCopy } from "@/lib/focus-copy";
+import { Input } from "@/components/ui/input";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
 import { Task } from "@/types/task";
 
@@ -69,6 +70,7 @@ type CalendarViewProps = {
   onFocusTask: (id: string) => void;
   onBreakDown: (id: string) => void;
   breakingDownTaskId: string | null;
+  onQuickAdd: (title: string) => Promise<void>;
 };
 
 export function CalendarView({
@@ -82,10 +84,13 @@ export function CalendarView({
   onToggleTask,
   onFocusTask,
   onBreakDown,
-  breakingDownTaskId
+  breakingDownTaskId,
+  onQuickAdd
 }: CalendarViewProps) {
   const { language, copy } = useAppLanguage();
   const focusT = focusCopy[language];
+  const quickT = quickAddCopy[language];
+  const [quickTitle, setQuickTitle] = useState("");
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -209,18 +214,45 @@ export function CalendarView({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Top bar */}
-      <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {copy.calendar.myTasks}
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {pendingCount} {copy.taskList.pending.toLowerCase()}
-          </p>
+      {/* Top bar: heading, quick capture and the full form button share one row on wide screens. */}
+      <div className="flex flex-shrink-0 flex-col gap-3 border-b border-border px-5 py-3 lg:flex-row lg:items-center">
+        <div className="flex items-center justify-between gap-3 lg:justify-start">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">{copy.calendar.myTasks}</h2>
+            <p className="text-xs text-muted-foreground">
+              {pendingCount} {copy.taskList.pending.toLowerCase()}
+            </p>
+          </div>
+          <Button size="sm" onClick={onAddTask} className="gap-1.5 lg:hidden">
+            <Plus className="h-3.5 w-3.5" />
+            {copy.calendar.newTask}
+          </Button>
         </div>
-        <Button size="sm" onClick={onAddTask} className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" />
+
+        {/* Quick capture: title only, so a thought can be saved before it is lost. */}
+        <form
+          className="flex flex-1 gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const value = quickTitle.trim();
+            if (!value || isMutating) return;
+            setQuickTitle("");
+            void onQuickAdd(value);
+          }}
+        >
+          <Input
+            value={quickTitle}
+            onChange={(e) => setQuickTitle(e.target.value)}
+            placeholder={quickT.placeholder}
+            aria-label={quickT.add}
+            className="h-10 flex-1 text-base sm:text-sm"
+          />
+          <Button type="submit" size="icon" className="h-10 w-10 flex-shrink-0" disabled={!quickTitle.trim() || isMutating} aria-label={quickT.add}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </form>
+
+        <Button size="sm" onClick={onAddTask} variant="outline" className="hidden gap-1.5 lg:flex">
           {copy.calendar.newTask}
         </Button>
       </div>
