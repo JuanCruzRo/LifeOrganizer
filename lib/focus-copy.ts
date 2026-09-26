@@ -137,18 +137,21 @@ export const statsExtraCopy: Record<AppLanguage, {
 
 
 // Voice dictation feedback: errors used to fail silently.
-export const micCopy: Record<AppLanguage, { blocked: string; noSpeech: string }> = {
-  en: { blocked: "Microphone blocked. Allow it in your browser to dictate.", noSpeech: "Couldn't hear anything. Try again." },
-  es: { blocked: "Micrófono bloqueado. Permítelo en tu navegador para dictar.", noSpeech: "No se escuchó nada. Inténtalo de nuevo." },
-  pt: { blocked: "Microfone bloqueado. Permita no seu navegador para ditar.", noSpeech: "Não ouvi nada. Tente de novo." },
-  fr: { blocked: "Micro bloqué. Autorisez-le dans votre navigateur pour dicter.", noSpeech: "Je n'ai rien entendu. Réessayez." },
-  de: { blocked: "Mikrofon blockiert. Erlaube es im Browser, um zu diktieren.", noSpeech: "Nichts gehört. Versuch es noch mal." },
-  it: { blocked: "Microfono bloccato. Consentilo nel browser per dettare.", noSpeech: "Non ho sentito nulla. Riprova." },
-  zh: { blocked: "麦克风被阻止。请在浏览器中允许后再口述。", noSpeech: "没有听到声音，请再试一次。" },
-  ja: { blocked: "マイクがブロックされています。ブラウザで許可してください。", noSpeech: "聞き取れませんでした。もう一度お試しください。" },
-  ko: { blocked: "마이크가 차단되었어요. 브라우저에서 허용해 주세요.", noSpeech: "아무 소리도 들리지 않았어요. 다시 시도해 주세요." },
-  ru: { blocked: "Микрофон заблокирован. Разрешите его в браузере, чтобы диктовать.", noSpeech: "Ничего не услышал. Попробуйте ещё раз." },
-  tr: { blocked: "Mikrofon engellendi. Dikte için tarayıcıdan izin ver.", noSpeech: "Hiçbir şey duyulmadı. Tekrar dene." },
-  nl: { blocked: "Microfoon geblokkeerd. Sta hem toe in je browser om te dicteren.", noSpeech: "Niets gehoord. Probeer het opnieuw." },
-  pl: { blocked: "Mikrofon zablokowany. Zezwól na niego w przeglądarce, aby dyktować.", noSpeech: "Nic nie usłyszałem. Spróbuj ponownie." }
+export const micCopy: Record<AppLanguage, {
+  blocked: string; noSpeech: string; recording: string; transcribing: string;
+  tooLong: string; failed: string; limit: string;
+}> = {
+  en: { blocked: "Microphone blocked. Allow it in your browser to dictate.", noSpeech: "Couldn't hear anything. Try again.", recording: "Recording… tap to finish", transcribing: "Transcribing…", tooLong: "Recording is too long.", failed: "Couldn't transcribe. Try again.", limit: "You reached today's dictation limit." },
+  es: { blocked: "Micrófono bloqueado. Permítelo en tu navegador para dictar.", noSpeech: "No se escuchó nada. Inténtalo de nuevo.", recording: "Grabando… toca para terminar", transcribing: "Transcribiendo…", tooLong: "La grabación es demasiado larga.", failed: "No se pudo transcribir. Inténtalo de nuevo.", limit: "Llegaste al límite de dictado de hoy." },
+  pt: { blocked: "Microfone bloqueado. Permita no seu navegador para ditar.", noSpeech: "Não ouvi nada. Tente de novo.", recording: "Gravando… toque para terminar", transcribing: "Transcrevendo…", tooLong: "A gravação é longa demais.", failed: "Não foi possível transcrever. Tente de novo.", limit: "Você atingiu o limite de ditado de hoje." },
+  fr: { blocked: "Micro bloqué. Autorisez-le dans votre navigateur pour dicter.", noSpeech: "Je n'ai rien entendu. Réessayez.", recording: "Enregistrement… touchez pour terminer", transcribing: "Transcription…", tooLong: "L'enregistrement est trop long.", failed: "Transcription impossible. Réessayez.", limit: "Vous avez atteint la limite de dictée du jour." },
+  de: { blocked: "Mikrofon blockiert. Erlaube es im Browser, um zu diktieren.", noSpeech: "Nichts gehört. Versuch es noch mal.", recording: "Aufnahme… zum Beenden tippen", transcribing: "Wird transkribiert…", tooLong: "Die Aufnahme ist zu lang.", failed: "Transkription fehlgeschlagen. Versuch es noch mal.", limit: "Du hast das heutige Diktat-Limit erreicht." },
+  it: { blocked: "Microfono bloccato. Consentilo nel browser per dettare.", noSpeech: "Non ho sentito nulla. Riprova.", recording: "Registrazione… tocca per terminare", transcribing: "Trascrizione…", tooLong: "La registrazione è troppo lunga.", failed: "Impossibile trascrivere. Riprova.", limit: "Hai raggiunto il limite di dettatura di oggi." },
+  zh: { blocked: "麦克风被阻止。请在浏览器中允许后再口述。", noSpeech: "没有听到声音，请再试一次。", recording: "录音中…点击结束", transcribing: "转写中…", tooLong: "录音时间过长。", failed: "无法转写，请重试。", limit: "你今天的语音输入次数已用完。" },
+  ja: { blocked: "マイクがブロックされています。ブラウザで許可してください。", noSpeech: "聞き取れませんでした。もう一度お試しください。", recording: "録音中…タップで終了", transcribing: "文字起こし中…", tooLong: "録音が長すぎます。", failed: "文字起こしできませんでした。もう一度お試しください。", limit: "本日の音声入力の上限に達しました。" },
+  ko: { blocked: "마이크가 차단되었어요. 브라우저에서 허용해 주세요.", noSpeech: "아무 소리도 들리지 않았어요. 다시 시도해 주세요.", recording: "녹음 중… 눌러서 종료", transcribing: "받아쓰는 중…", tooLong: "녹음이 너무 길어요.", failed: "받아쓰지 못했어요. 다시 시도해 주세요.", limit: "오늘의 음성 입력 한도에 도달했어요." },
+  ru: { blocked: "Микрофон заблокирован. Разрешите его в браузере, чтобы диктовать.", noSpeech: "Ничего не услышал. Попробуйте ещё раз.", recording: "Запись… нажмите, чтобы закончить", transcribing: "Расшифровка…", tooLong: "Запись слишком длинная.", failed: "Не удалось расшифровать. Попробуйте ещё раз.", limit: "Вы исчерпали дневной лимит диктовки." },
+  tr: { blocked: "Mikrofon engellendi. Dikte için tarayıcıdan izin ver.", noSpeech: "Hiçbir şey duyulmadı. Tekrar dene.", recording: "Kaydediliyor… bitirmek için dokun", transcribing: "Yazıya dökülüyor…", tooLong: "Kayıt çok uzun.", failed: "Yazıya dökülemedi. Tekrar dene.", limit: "Bugünkü dikte sınırına ulaştın." },
+  nl: { blocked: "Microfoon geblokkeerd. Sta hem toe in je browser om te dicteren.", noSpeech: "Niets gehoord. Probeer het opnieuw.", recording: "Opnemen… tik om te stoppen", transcribing: "Transcriberen…", tooLong: "De opname is te lang.", failed: "Transcriberen mislukt. Probeer opnieuw.", limit: "Je hebt de dicteerlimiet van vandaag bereikt." },
+  pl: { blocked: "Mikrofon zablokowany. Zezwól na niego w przeglądarce, aby dyktować.", noSpeech: "Nic nie usłyszałem. Spróbuj ponownie.", recording: "Nagrywanie… dotknij, aby zakończyć", transcribing: "Transkrypcja…", tooLong: "Nagranie jest za długie.", failed: "Nie udało się przepisać. Spróbuj ponownie.", limit: "Osiągnięto dzienny limit dyktowania." }
 };

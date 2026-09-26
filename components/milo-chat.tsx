@@ -2,19 +2,18 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
+import { CheckCircle, Loader2, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
 import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
-import { languageSpeechCodes } from "@/lib/i18n";
 import { MiloAvatar } from "@/components/milo-avatar";
 import { micCopy } from "@/lib/focus-copy";
 import { type MiloFace } from "@/lib/milo-face";
 import { formatDueDate } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
-import { useSpeechRecognition } from "@/lib/use-speech-recognition";
+import { useVoiceInput } from "@/lib/use-voice-input";
 import { cn } from "@/lib/utils";
 import { Task, TaskInput } from "@/types/task";
 import { useUser } from "@clerk/nextjs";
@@ -117,7 +116,7 @@ export function MiloChat({
   const { copy, language } = useAppLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const speech = useSpeechRecognition(languageSpeechCodes[language]);
+  const voice = useVoiceInput(language);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const { user } = useUser();
@@ -147,7 +146,7 @@ export function MiloChat({
 
   const isOverloaded = overloadedTasks.length >= 3;
 
-  const headerFace: MiloFace = speech.isListening
+  const headerFace: MiloFace = voice.state === "recording"
     ? "escuchando"
     : isLoading
       ? "pensando"
@@ -383,10 +382,20 @@ export function MiloChat({
 
       {/* Input */}
       <div className="border-t border-border p-3">
-        {speech.error && (
+        {voice.error && (
           <p className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
-            {speech.error === "blocked" ? micCopy[language].blocked : micCopy[language].noSpeech}
-            <button onClick={speech.clearError} aria-label={copy.common.close} className="opacity-70 hover:opacity-100">
+            {micCopy[language][
+              voice.error === "blocked"
+                ? "blocked"
+                : voice.error === "too-long"
+                  ? "tooLong"
+                  : voice.error === "limit"
+                    ? "limit"
+                    : voice.error === "failed"
+                      ? "failed"
+                      : "noSpeech"
+            ]}
+            <button onClick={voice.clearError} aria-label={copy.common.close} className="opacity-70 hover:opacity-100">
               <XCircle className="h-3.5 w-3.5" />
             </button>
           </p>
@@ -402,25 +411,37 @@ export function MiloChat({
                 void sendMessage();
               }
             }}
-            placeholder={speech.isListening ? copy.milo.listening : copy.milo.inputPlaceholder}
-            disabled={isLoading || speech.isListening}
+            placeholder={
+              voice.state === "recording"
+                ? micCopy[language].recording
+                : voice.state === "transcribing"
+                  ? micCopy[language].transcribing
+                  : copy.milo.inputPlaceholder
+            }
+            disabled={isLoading || voice.state !== "idle"}
             className="h-11 flex-1 text-base sm:text-sm"
           />
-          {speech.isSupported && (
+          {voice.isSupported && (
             <Button
               type="button"
               onClick={() =>
-                speech.isListening
-                  ? speech.stop()
-                  : speech.start((text) => setInput((prev) => (prev ? `${prev} ${text}` : text)))
+                voice.state === "recording"
+                  ? voice.stop()
+                  : void voice.start((text) => setInput((prev) => (prev ? `${prev} ${text}` : text)))
               }
-              disabled={isLoading}
-              variant={speech.isListening ? "default" : "outline"}
+              disabled={isLoading || voice.state === "transcribing"}
+              variant={voice.state === "recording" ? "default" : "outline"}
               size="icon"
-              aria-label={speech.isListening ? copy.milo.stopListening : copy.milo.startListening}
-              className={cn(speech.isListening && "animate-pulse")}
+              aria-label={voice.state === "recording" ? copy.milo.stopListening : copy.milo.startListening}
+              className={cn(voice.state === "recording" && "animate-pulse")}
             >
-              {speech.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              {voice.state === "transcribing" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : voice.state === "recording" ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
             </Button>
           )}
           <Button

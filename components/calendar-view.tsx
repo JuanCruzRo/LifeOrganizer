@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Play, Trash2, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, CheckCircle2, Circle, Pencil, Play, SlidersHorizontal, Trash2, Sparkles } from "lucide-react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { MiloLoader } from "@/components/milo-loader";
@@ -226,9 +226,15 @@ export function CalendarView({
               {pendingCount} {copy.taskList.pending.toLowerCase()}
             </p>
           </div>
-          <Button size="sm" onClick={onAddTask} className="gap-1.5 lg:hidden">
-            <Plus className="h-3.5 w-3.5" />
-            {copy.calendar.newTask}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onAddTask}
+            aria-label={copy.calendar.newTask}
+            title={copy.calendar.newTask}
+            className="h-9 w-9 flex-shrink-0 text-muted-foreground lg:hidden"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
           </Button>
         </div>
 
@@ -255,8 +261,15 @@ export function CalendarView({
           </Button>
         </form>
 
-        <Button size="sm" onClick={onAddTask} variant="outline" className="hidden gap-1.5 lg:flex">
-          {copy.calendar.newTask}
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onAddTask}
+          aria-label={copy.calendar.newTask}
+          title={copy.calendar.newTask}
+          className="hidden h-10 w-10 flex-shrink-0 text-muted-foreground lg:flex"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </div>
 
