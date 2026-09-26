@@ -255,14 +255,14 @@ export function MiloChat({
   return (
     <aside className="flex h-full w-full flex-col border-r border-border">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="flex h-[68px] flex-shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
             <MiloAvatar face={headerFace} size={36} alt="Milo" />
           </div>
           <div>
-            <p className="text-sm font-semibold">{copy.milo.name}</p>
-            <p className="text-xs text-muted-foreground">{copy.milo.subtitle}</p>
+            <p className="text-lg font-semibold leading-7 tracking-tight">{copy.milo.name}</p>
+            <p className="text-xs leading-4 text-muted-foreground">{copy.milo.subtitle}</p>
           </div>
         </div>
         <button

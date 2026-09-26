@@ -230,11 +230,11 @@ export function CalendarView({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Top bar: heading, quick capture and the full form button share one row on wide screens. */}
-      <div className="flex flex-shrink-0 flex-col gap-3 border-b border-border px-5 py-3 lg:flex-row lg:items-center">
+      <div className="flex flex-shrink-0 flex-col gap-3 border-b border-border px-5 py-3 lg:h-[68px] lg:flex-row lg:items-center lg:py-0">
         <div className="flex items-center justify-between gap-3 lg:justify-start">
           <div>
-            <h2 className="text-xl font-bold tracking-tight">{copy.calendar.myTasks}</h2>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-lg font-semibold leading-7 tracking-tight">{copy.calendar.myTasks}</h2>
+            <p className="text-xs leading-4 text-muted-foreground">
               {pendingCount} {copy.taskList.pending.toLowerCase()}
             </p>
           </div>
