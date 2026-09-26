@@ -10,7 +10,7 @@ import { MiloLoader } from "@/components/milo-loader";
 import { cn } from "@/lib/utils";
 import { formatDueDate, getDueDateLabel } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
-import { emptyStateCopy, focusCopy, quickAddCopy } from "@/lib/focus-copy";
+import { emptyStateCopy, focusCopy, monthCopy, quickAddCopy } from "@/lib/focus-copy";
 import { miloFace } from "@/lib/milo-face";
 import { Input } from "@/components/ui/input";
 import { AiPriorityRecommendation } from "@/types/ai-priority";
@@ -94,6 +94,7 @@ export function CalendarView({
   const quickT = quickAddCopy[language];
   const [quickTitle, setQuickTitle] = useState("");
   const emptyT = emptyStateCopy[language];
+  const monthT = monthCopy[language];
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -102,6 +103,7 @@ export function CalendarView({
   // Collapsed = only the current week; expanded = the whole month.
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [showOlder, setShowOlder] = useState(false);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -138,9 +140,19 @@ export function CalendarView({
   const byDoneDesc = (a: Task, b: Task) =>
     (b.completedAt ?? b.dueDate).localeCompare(a.completedAt ?? a.dueDate);
 
+  // First day of the current month, in local time.
+  const monthStart = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  }, []);
+  const isThisMonth = (task: Task) => (task.completedAt ?? task.dueDate).slice(0, 10) >= monthStart;
+
   const dayTasksSelected = selectedKey ? (tasksByDate[selectedKey] ?? []) : null;
   const pendingList = (dayTasksSelected ?? allTasks).filter((t) => !t.done).sort(byDueAsc);
-  const doneList = (dayTasksSelected ?? allTasks).filter((t) => t.done).sort(byDoneDesc);
+  const allDone = (dayTasksSelected ?? allTasks).filter((t) => t.done).sort(byDoneDesc);
+  const doneThisMonth = allDone.filter(isThisMonth);
+  const doneOlder = allDone.filter((t) => !isThisMonth(t));
+  const doneList = showOlder ? allDone : doneThisMonth;
   // The recommended task already has its own card above, so it is not repeated in the list.
   const listPending = selectedKey ? pendingList : pendingList.filter((t) => t.id !== recommendedTask?.id);
   const displayedTasks = [...listPending, ...(selectedKey ? doneList : [])];
@@ -459,7 +471,7 @@ export function CalendarView({
             </ul>
           )}
 
-          {!selectedKey && doneList.length > 0 && (
+          {!selectedKey && allDone.length > 0 && (
             <>
               <button
                 onClick={() => setShowDone((v) => !v)}
@@ -467,12 +479,20 @@ export function CalendarView({
                 className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
               >
                 <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", showDone && "rotate-180")} />
-                {copy.taskList.completed} ({doneList.length})
+                {monthT.thisMonth} ({doneThisMonth.length})
               </button>
               <Collapsible open={showDone}>
                 <ul className="flex flex-col gap-2 pt-3">
                   <AnimatePresence initial={false}>{doneList.map(renderRow)}</AnimatePresence>
                 </ul>
+                {doneOlder.length > 0 && !showOlder && (
+                  <button
+                    onClick={() => setShowOlder(true)}
+                    className="mt-3 text-xs font-medium text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+                  >
+                    {monthT.showOlder} ({doneOlder.length})
+                  </button>
+                )}
               </Collapsible>
             </>
           )}

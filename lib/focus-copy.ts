@@ -196,3 +196,21 @@ export const gemUnlockCopy: Record<AppLanguage, {
   nl: { unlocked: "Nieuwe edelsteen vrijgespeeld", dayStreak: "dagen op rij", keepGoing: "Ga zo door" },
   pl: { unlocked: "Nowy klejnot zdobyty", dayStreak: "dni z rzędu", keepGoing: "Tak trzymaj" }
 };
+
+
+// The completed list starts fresh each month so old work stops piling up.
+export const monthCopy: Record<AppLanguage, { thisMonth: string; showOlder: string }> = {
+  en: { thisMonth: "Completed this month", showOlder: "Show older" },
+  es: { thisMonth: "Completadas este mes", showOlder: "Ver anteriores" },
+  pt: { thisMonth: "Concluídas este mês", showOlder: "Ver anteriores" },
+  fr: { thisMonth: "Terminées ce mois-ci", showOlder: "Voir les précédentes" },
+  de: { thisMonth: "Diesen Monat erledigt", showOlder: "Ältere anzeigen" },
+  it: { thisMonth: "Completate questo mese", showOlder: "Mostra precedenti" },
+  zh: { thisMonth: "本月已完成", showOlder: "查看更早" },
+  ja: { thisMonth: "今月の完了分", showOlder: "以前の分を表示" },
+  ko: { thisMonth: "이번 달 완료", showOlder: "이전 항목 보기" },
+  ru: { thisMonth: "Завершено в этом месяце", showOlder: "Показать более ранние" },
+  tr: { thisMonth: "Bu ay tamamlanan", showOlder: "Öncekileri göster" },
+  nl: { thisMonth: "Deze maand afgerond", showOlder: "Oudere tonen" },
+  pl: { thisMonth: "Ukończone w tym miesiącu", showOlder: "Pokaż starsze" }
+};
