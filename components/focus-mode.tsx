@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { motion } from "motion/react";
 import { CheckCircle2, Circle, Pause, Play, Sparkles, X } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useAppLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { companionCopy, focusCopy, reminderCopy } from "@/lib/focus-copy";
-import { miloFace, type MiloFace } from "@/lib/milo-face";
+import { MiloAvatar } from "@/components/milo-avatar";
+import { type MiloFace } from "@/lib/milo-face";
 import { showNotification } from "@/lib/use-reminders";
 import { cn } from "@/lib/utils";
 import type { Task, TaskStep } from "@/types/task";
@@ -190,7 +190,7 @@ export function FocusMode({ task, isPro = false, isBreaking, onClose, onBreakDow
                   transition={{ duration: 0.25 }}
                   className="flex items-start gap-2.5 rounded-2xl border border-border bg-card px-4 py-3 text-left"
                 >
-                  <Image src={miloFace(companionFace)} alt="" width={32} height={32} className="h-8 w-8 flex-shrink-0 object-contain" />
+                  <MiloAvatar face={companionFace} size={32} />
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">{c.withYou}</p>
                     <p className="mt-0.5 text-sm leading-relaxed">{companionMessage}</p>

@@ -134,3 +134,21 @@ export const statsExtraCopy: Record<AppLanguage, {
  nl: { other: "Overig", lastDays: "Laatste 14 dagen", noActivity: "Nog geen activiteit", tasksUnit: "taken", emptyChart: "Nog niets afgerond. De eerste start de grafiek." },
  pl: { other: "Inne", lastDays: "Ostatnie 14 dni", noActivity: "Brak aktywności", tasksUnit: "zadań", emptyChart: "Nic jeszcze nie ukończono. Pierwsze zadanie uruchomi wykres." }
 };
+
+
+// Voice dictation feedback: errors used to fail silently.
+export const micCopy: Record<AppLanguage, { blocked: string; noSpeech: string }> = {
+  en: { blocked: "Microphone blocked. Allow it in your browser to dictate.", noSpeech: "Couldn't hear anything. Try again." },
+  es: { blocked: "Micrófono bloqueado. Permítelo en tu navegador para dictar.", noSpeech: "No se escuchó nada. Inténtalo de nuevo." },
+  pt: { blocked: "Microfone bloqueado. Permita no seu navegador para ditar.", noSpeech: "Não ouvi nada. Tente de novo." },
+  fr: { blocked: "Micro bloqué. Autorisez-le dans votre navigateur pour dicter.", noSpeech: "Je n'ai rien entendu. Réessayez." },
+  de: { blocked: "Mikrofon blockiert. Erlaube es im Browser, um zu diktieren.", noSpeech: "Nichts gehört. Versuch es noch mal." },
+  it: { blocked: "Microfono bloccato. Consentilo nel browser per dettare.", noSpeech: "Non ho sentito nulla. Riprova." },
+  zh: { blocked: "麦克风被阻止。请在浏览器中允许后再口述。", noSpeech: "没有听到声音，请再试一次。" },
+  ja: { blocked: "マイクがブロックされています。ブラウザで許可してください。", noSpeech: "聞き取れませんでした。もう一度お試しください。" },
+  ko: { blocked: "마이크가 차단되었어요. 브라우저에서 허용해 주세요.", noSpeech: "아무 소리도 들리지 않았어요. 다시 시도해 주세요." },
+  ru: { blocked: "Микрофон заблокирован. Разрешите его в браузере, чтобы диктовать.", noSpeech: "Ничего не услышал. Попробуйте ещё раз." },
+  tr: { blocked: "Mikrofon engellendi. Dikte için tarayıcıdan izin ver.", noSpeech: "Hiçbir şey duyulmadı. Tekrar dene." },
+  nl: { blocked: "Microfoon geblokkeerd. Sta hem toe in je browser om te dicteren.", noSpeech: "Niets gehoord. Probeer het opnieuw." },
+  pl: { blocked: "Mikrofon zablokowany. Zezwól na niego w przeglądarce, aby dyktować.", noSpeech: "Nic nie usłyszałem. Spróbuj ponownie." }
+};

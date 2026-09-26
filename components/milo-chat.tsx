@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,9 @@ import { MiloLoader } from "@/components/milo-loader";
 import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
 import { languageSpeechCodes } from "@/lib/i18n";
-import { miloFace, type MiloFace } from "@/lib/milo-face";
+import { MiloAvatar } from "@/components/milo-avatar";
+import { micCopy } from "@/lib/focus-copy";
+import { type MiloFace } from "@/lib/milo-face";
 import { formatDueDate } from "@/lib/task-date";
 import { getTaskPriorityLabel } from "@/lib/task-labels";
 import { useSpeechRecognition } from "@/lib/use-speech-recognition";
@@ -254,7 +255,7 @@ export function MiloChat({
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
-            <Image src={miloFace(headerFace)} alt="Milo" width={36} height={36} className="h-9 w-9 object-contain" />
+            <MiloAvatar face={headerFace} size={36} alt="Milo" />
           </div>
           <div>
             <p className="text-sm font-semibold">{copy.milo.name}</p>
@@ -288,7 +289,7 @@ export function MiloChat({
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
             <div className="max-w-[220px] text-center">
-              <Image src={miloFace("saludando")} alt="Milo" width={80} height={80} className="mx-auto mb-3 h-20 w-20 object-contain" />
+              <MiloAvatar face="saludando" size={80} alt="Milo" className="mx-auto mb-3" />
               <p className="text-sm font-medium">{copy.milo.greeting}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 {copy.milo.greetingSubtitle}
@@ -382,6 +383,14 @@ export function MiloChat({
 
       {/* Input */}
       <div className="border-t border-border p-3">
+        {speech.error && (
+          <p className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+            {speech.error === "blocked" ? micCopy[language].blocked : micCopy[language].noSpeech}
+            <button onClick={speech.clearError} aria-label={copy.common.close} className="opacity-70 hover:opacity-100">
+              <XCircle className="h-3.5 w-3.5" />
+            </button>
+          </p>
+        )}
         <div className="flex gap-2">
           <Input
             type="text"

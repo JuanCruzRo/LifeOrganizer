@@ -184,7 +184,8 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Inteligencia artificial",
         body: [
-          "Lo que escribes en el chat de Milo, las tareas relevantes y el título de la tarea que pides dividir en pasos se envían al proveedor de IA para generar respuestas. No introduzcas información sensible (contraseñas, datos bancarios, datos de salud) en el chat ni en los títulos de tus tareas."
+          "Lo que escribes en el chat de Milo, las tareas relevantes y el título de la tarea que pides dividir en pasos se envían al proveedor de IA para generar respuestas. No introduzcas información sensible (contraseñas, datos bancarios, datos de salud) en el chat ni en los títulos de tus tareas.",
+          "Dictado por voz: si usas el micrófono, el reconocimiento de voz lo realiza tu propio navegador. Según el navegador que uses (por ejemplo, Chrome), el audio puede enviarse a los servidores de ese navegador para convertirlo en texto. Ese tratamiento se rige por la política de privacidad de tu navegador, no por la nuestra. Nosotros solo recibimos el texto resultante y no guardamos audio."
         ]
       },
       {
@@ -250,7 +251,8 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Artificial intelligence",
         body: [
-          "What you type in Milo's chat, relevant tasks and the title of any task you ask to break down are sent to the AI provider to generate answers. Do not enter sensitive information (passwords, banking or health data) in the chat or in your task titles."
+          "What you type in Milo's chat, relevant tasks and the title of any task you ask to break down are sent to the AI provider to generate answers. Do not enter sensitive information (passwords, banking or health data) in the chat or in your task titles.",
+          "Voice dictation: when you use the microphone, speech recognition is performed by your own browser. Depending on the browser (Chrome, for example), the audio may be sent to that browser vendor's servers to be turned into text. That processing is governed by your browser's privacy policy, not ours. We only receive the resulting text and never store audio."
         ]
       },
       {

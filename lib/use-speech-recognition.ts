@@ -31,9 +31,13 @@ function getSpeechRecognitionCtor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+export type SpeechError = "blocked" | "no-speech" | null;
+
 export function useSpeechRecognition(lang: string) {
   const [isSupported, setIsSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  // Failures used to be silent, which looked like the button simply not working.
+  const [error, setError] = useState<SpeechError>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const onTranscriptRef = useRef<(text: string) => void>(() => {});
 
@@ -58,10 +62,18 @@ export function useSpeechRecognition(lang: string) {
         const transcript = last?.[0]?.transcript?.trim();
         if (transcript) onTranscriptRef.current(transcript);
       };
-      recognition.onerror = () => setIsListening(false);
+      recognition.onerror = (event) => {
+        setIsListening(false);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          setError("blocked");
+        } else if (event.error === "no-speech" || event.error === "audio-capture") {
+          setError("no-speech");
+        }
+      };
       recognition.onend = () => setIsListening(false);
 
       recognitionRef.current = recognition;
+      setError(null);
       setIsListening(true);
       recognition.start();
     },
@@ -75,5 +87,5 @@ export function useSpeechRecognition(lang: string) {
 
   useEffect(() => () => recognitionRef.current?.stop(), []);
 
-  return { isSupported, isListening, start, stop };
+  return { isSupported, isListening, error, clearError: () => setError(null), start, stop };
 }
