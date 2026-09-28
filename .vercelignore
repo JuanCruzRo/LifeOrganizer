@@ -1,0 +1,11 @@
+# Nunca subir archivos con secretos a Vercel.
+# En deploys desde Git esto es redundante (.gitignore ya los frena),
+# pero si alguien hace `vercel --prod` desde local, esto es lo que salva.
+.env
+.env.*
+!.env.example
+
+# Backups y parches
+*.bak
+*.patch
+*.orig
