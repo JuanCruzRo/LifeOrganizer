@@ -1,5 +1,6 @@
 import "server-only";
 import { MercadoPagoConfig, PreApproval, PreApprovalPlan } from "mercadopago";
+import { PLAN_PRICES_ARS, type PaidPlanName } from "@/lib/pricing";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -8,11 +9,8 @@ const client = new MercadoPagoConfig({
 export const preApproval = new PreApproval(client);
 export const preApprovalPlan = new PreApprovalPlan(client);
 
-// Precios en ARS, referenciados a USD 6 / USD 20 mensuales.
-// Ajustar manualmente si la cotización se mueve significativamente.
-export const PLAN_PRICES = {
-  plus: 9000,
-  pro: 30000,
-} as const;
+// Checkout happens on Mercado Pago's hosted page via init_point, so the app
+// never needs the browser-side public key.
+export const PLAN_PRICES = PLAN_PRICES_ARS;
 
-export type PaidPlan = keyof typeof PLAN_PRICES;
+export type PaidPlan = PaidPlanName;

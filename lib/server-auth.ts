@@ -1,6 +1,11 @@
 import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
+import {
+  resolvePlanForStatus,
+  type SubscriptionStatus,
+  type UserPlan
+} from "@/lib/subscription-plans";
 
 export async function requireAuth(): Promise<string> {
   const { userId } = await auth();
@@ -17,22 +22,32 @@ export async function requireAuthWithEmail(): Promise<{ userId: string; email: s
   return { userId: user.id, email };
 }
 
-export type UserPlan = "free" | "plus" | "pro";
+export type { SubscriptionStatus, UserPlan } from "@/lib/subscription-plans";
 
 export async function getUserPlan(userId: string): Promise<UserPlan> {
   try {
     const rows = await sql`
-      SELECT plan, trial_ends_at FROM user_plans WHERE user_id = ${userId} LIMIT 1
+      SELECT plan, trial_ends_at, subscription_status
+      FROM user_plans WHERE user_id = ${userId} LIMIT 1
     `;
     const row = rows[0];
     if (!row) return "free";
+
+    // A live Mercado Pago subscription is authoritative: the trial countdown
+    // must not demote someone who is actually paying.
+    if (row.subscription_status === "authorized" || row.subscription_status === "paused") {
+      return row.plan === "pro" ? "pro" : "plus";
+    }
 
     if (row.plan === "plus" && row.trial_ends_at && new Date(row.trial_ends_at) < new Date()) {
       return "free";
     }
 
     return row.plan === "pro" ? "pro" : row.plan === "plus" ? "plus" : "free";
-  } catch {
+  } catch (error) {
+    // Degrade to free rather than break every AI route, but never silently:
+    // this is how a paying customer quietly loses their plan during a DB blip.
+    console.error(`getUserPlan failed for ${userId}; falling back to free`, error);
     return "free";
   }
 }
@@ -63,37 +78,58 @@ export async function startPlusTrial(userId: string, trialDays: number): Promise
   return rows.length > 0 ? trialEndsAt : null;
 }
 
-export async function saveSubscription(params: {
+/**
+ * Links a user to the Mercado Pago preapproval id as soon as checkout starts,
+ * without touching their current plan or trial. The webhook then only needs to
+ * match on mp_preapproval_id.
+ */
+export async function recordPendingSubscription(params: {
+  userId: string;
+  mpPreapprovalId: string;
+  payerEmail: string;
+}): Promise<void> {
+  await sql`
+    INSERT INTO user_plans (user_id, plan, mp_preapproval_id, mp_payer_email, updated_at)
+    VALUES (${params.userId}, 'free', ${params.mpPreapprovalId}, ${params.payerEmail}, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      mp_preapproval_id = ${params.mpPreapprovalId},
+      mp_payer_email = ${params.payerEmail},
+      updated_at = NOW()
+  `;
+}
+
+export async function findUserIdByPreapprovalId(mpPreapprovalId: string): Promise<string | null> {
+  const rows = await sql`
+    SELECT user_id FROM user_plans WHERE mp_preapproval_id = ${mpPreapprovalId} LIMIT 1
+  `;
+  return (rows[0]?.user_id as string | undefined) ?? null;
+}
+
+/**
+ * Authoritative subscription sync, driven by the webhook. Idempotent and keyed
+ * on user_id so retries and out-of-order events converge on the same state.
+ */
+export async function syncSubscription(params: {
   userId: string;
   plan: "plus" | "pro";
   mpPreapprovalId: string;
   payerEmail: string;
-  status: "authorized" | "paused" | "cancelled";
+  status: SubscriptionStatus;
 }): Promise<void> {
+  const plan = resolvePlanForStatus(params.plan, params.status);
   await sql`
-    INSERT INTO user_plans (user_id, plan, mp_preapproval_id, mp_payer_email, subscription_status, trial_ends_at, updated_at)
-    VALUES (${params.userId}, ${params.plan}, ${params.mpPreapprovalId}, ${params.payerEmail}, ${params.status}, NULL, NOW())
+    INSERT INTO user_plans (
+      user_id, plan, mp_preapproval_id, mp_payer_email, subscription_status, trial_ends_at, updated_at
+    )
+    VALUES (
+      ${params.userId}, ${plan}, ${params.mpPreapprovalId}, ${params.payerEmail}, ${params.status}, NULL, NOW()
+    )
     ON CONFLICT (user_id) DO UPDATE SET
-      plan = ${params.status === "authorized" ? params.plan : "free"},
+      plan = ${plan},
       mp_preapproval_id = ${params.mpPreapprovalId},
       mp_payer_email = ${params.payerEmail},
       subscription_status = ${params.status},
       trial_ends_at = NULL,
       updated_at = NOW()
-  `;
-}
-
-export async function updateSubscriptionStatusByPreapprovalId(params: {
-  mpPreapprovalId: string;
-  status: "authorized" | "paused" | "cancelled";
-  plan: "plus" | "pro";
-}): Promise<void> {
-  await sql`
-    UPDATE user_plans
-    SET
-      plan = ${params.status === "authorized" ? params.plan : "free"},
-      subscription_status = ${params.status},
-      updated_at = NOW()
-    WHERE mp_preapproval_id = ${params.mpPreapprovalId}
   `;
 }

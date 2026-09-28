@@ -1,14 +1,15 @@
-// Datos del responsable del servicio. COMPLETAR antes de publicar.
+// Datos del responsable del servicio. Se renderizan en /terms y /privacy:
+// un placeholder acá es un bloqueo para publicar, y `npm run check:release`
+// falla si queda alguno.
 export const LEGAL = {
   serviceName: "Spark",
-  // Nombre completo o razón social de quien opera el servicio
+  // Debe coincidir con el nombre que figura en la inscripción del CUIT.
   operatorName: "Fausto Zaccanti",
-  // CUIT/CUIL del responsable (obligatorio para facturar en Argentina)
-  operatorTaxId: "[CUIT]",
-  operatorAddress: "[DOMICILIO], Argentina",
-  contactEmail: "[EMAIL DE SOPORTE]",
-  website: "[https://TU-DOMINIO]",
-  lastUpdated: "2026-09-25",
+  // CUIT/CUIL del responsable (obligatorio para facturar en Argentina).
+  operatorTaxId: "20-46690907-7",
+  operatorAddress: "San Lorenzo 2523, B7600 Mar del Plata, Buenos Aires, Argentina",
+  contactEmail: "faustozaccanti@gmail.com",
+  lastUpdated: "2026-09-28",
   // Precios de referencia (USD). Los cobros en pesos se calculan aparte.
   prices: { plus: 6, pro: 20 },
   trialDays: 14

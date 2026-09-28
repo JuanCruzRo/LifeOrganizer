@@ -2,7 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { WebhookSignatureValidator, InvalidWebhookSignatureError } from "mercadopago";
 import { preApproval, PaidPlan } from "@/lib/mercadopago";
-import { updateSubscriptionStatusByPreapprovalId } from "@/lib/server-auth";
+import { findUserIdByPreapprovalId, syncSubscription } from "@/lib/server-auth";
 
 const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET ?? "";
 
@@ -54,16 +54,29 @@ export async function POST(request: Request) {
 
   try {
     const subscription = await preApproval.get({ id: dataId });
-    const [, plan] = (subscription.external_reference ?? "").split(":");
+    // checkout stores `${userId}:${plan}` so the webhook can attribute the event
+    // without depending on the preapproval id being recorded ahead of time.
+    const [externalUserId, plan] = (subscription.external_reference ?? "").split(":");
 
     if (!isPaidPlan(plan) || !isSubscriptionStatus(subscription.status) || !subscription.id) {
       return NextResponse.json({ received: true });
     }
 
-    await updateSubscriptionStatusByPreapprovalId({
-      mpPreapprovalId: subscription.id,
-      status: subscription.status,
+    const userId =
+      externalUserId || (await findUserIdByPreapprovalId(subscription.id));
+    if (!userId) {
+      console.error(
+        `Cannot attribute subscription ${subscription.id}: no userId in external_reference and no stored preapproval id`
+      );
+      return NextResponse.json({ error: "Unknown subscription owner" }, { status: 500 });
+    }
+
+    await syncSubscription({
+      userId,
       plan,
+      mpPreapprovalId: subscription.id,
+      payerEmail: subscription.payer_email ?? "",
+      status: subscription.status,
     });
 
     return NextResponse.json({ received: true });

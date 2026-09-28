@@ -1,6 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { requireAuthWithEmail } from "@/lib/server-auth";
+import { recordPendingSubscription, requireAuthWithEmail } from "@/lib/server-auth";
 import { preApproval, PLAN_PRICES, PaidPlan } from "@/lib/mercadopago";
 
 function isPaidPlan(value: unknown): value is PaidPlan {
@@ -21,7 +21,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  const origin = request.headers.get("origin") ?? new URL(request.url).origin;
+  // Prefer the configured site URL: the Origin header is client-supplied and
+  // would let a caller redirect users to an arbitrary host after paying.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
 
   try {
     const subscription = await preApproval.create({
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
         reason: `Spark ${body.plan === "pro" ? "Pro" : "Plus"} — suscripción mensual`,
         external_reference: `${userId}:${body.plan}`,
         payer_email: email,
-        back_url: `${origin}/?subscribed=${body.plan}`,
+        back_url: `${siteUrl}/?subscribed=${body.plan}`,
         auto_recurring: {
           frequency: 1,
           frequency_type: "months",
@@ -40,9 +42,17 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!subscription.init_point) {
+    if (!subscription.init_point || !subscription.id) {
       return NextResponse.json({ error: "No checkout URL returned" }, { status: 502 });
     }
+
+    // Store the mapping before the user pays, so the webhook can attribute the
+    // subscription even if Mercado Pago drops the external_reference.
+    await recordPendingSubscription({
+      userId,
+      mpPreapprovalId: subscription.id,
+      payerEmail: email,
+    });
 
     return NextResponse.json({ checkoutUrl: subscription.init_point });
   } catch (err) {

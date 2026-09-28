@@ -1,31 +1,7 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sitemap.xml",
-  "/robots.txt",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/terms",
-  "/privacy",
-]);
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    const { userId } = await auth();
-    if (!userId) {
-      const signInUrl = new URL("/sign-in", request.url);
-      signInUrl.searchParams.set("redirect_url", request.url);
-      return NextResponse.redirect(signInUrl);
-    }
-  }
-});
-
-export const config = {
-  matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
-    "/__clerk/:path*",
-  ],
-};
+// Auth is enforced with auth.protect() in each protected page and requireAuth()
+// in each API route, not by matching paths here. createRouteMatcher() is
+// deprecated, and path matching can diverge from how Next.js actually routes a
+// request, which is exactly how protected pages end up reachable.
+export default clerkMiddleware();

@@ -21,8 +21,31 @@ export const DAILY_LIMITS: Record<UsageKind, Record<UserPlan, number>> = {
 export const MAX_TASKS_PER_USER = 1000;
 
 /**
+ * Backstop used only when the database counter is unreachable. Without it, a
+ * Neon outage would not merely disable the limit — it would remove it, and the
+ * Groq/Tavily bill would be unbounded. Counts stay in process memory and expire
+ * with the UTC day, so a user can overspend at most their own plan limit per
+ * instance while the counter is down.
+ */
+const offlineCounts = new Map<string, number>();
+const OFFLINE_MAP_CAP = 10_000;
+
+function offlineKey(userId: string, kind: UsageKind): string {
+  return `${userId}:${kind}:${new Date().toISOString().slice(0, 10)}`;
+}
+
+function consumeOffline(userId: string, kind: UsageKind, limit: number): boolean {
+  if (offlineCounts.size > OFFLINE_MAP_CAP) offlineCounts.clear();
+  const key = offlineKey(userId, kind);
+  const count = (offlineCounts.get(key) ?? 0) + 1;
+  offlineCounts.set(key, count);
+  return count <= limit;
+}
+
+/**
  * Atomically counts one use for today and reports whether the user is still within the limit.
- * Fails open on DB errors so an outage in the counter does not take the whole feature down.
+ * Fails open on DB errors so an outage in the counter does not take the whole feature down,
+ * but the in-memory backstop above still caps how far "open" goes.
  */
 export async function consumeDailyUsage(
   userId: string,
@@ -41,8 +64,13 @@ export async function consumeDailyUsage(
     `;
     return { allowed: (rows[0].count as number) <= limit, limit };
   } catch (error) {
-    console.error("consumeDailyUsage failed", error);
-    return { allowed: true, limit };
+    const allowed = consumeOffline(userId, kind, limit);
+    console.error(
+      `consumeDailyUsage counter unavailable for ${kind} (${userId}); offline backstop ` +
+        `${offlineCounts.get(offlineKey(userId, kind))}/${limit} -> ${allowed ? "allowed" : "blocked"}`,
+      error
+    );
+    return { allowed, limit };
   }
 }
 

@@ -23,5 +23,7 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  // scripts/ runs directly under Node's type stripping, which needs explicit
+  // .ts import extensions that the bundler-style resolution here rejects.
+  "exclude": ["node_modules", "scripts"]
 }
