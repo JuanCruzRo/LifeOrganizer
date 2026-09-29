@@ -32,8 +32,8 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Planes, precios y pagos",
         body: [
-          `El Servicio ofrece un plan gratuito y planes pagos por suscripción mensual (Plus y Pro). Los precios de referencia son USD ${LEGAL.prices.plus} (Plus) y USD ${LEGAL.prices.pro} (Pro) por mes. En Argentina los cobros pueden realizarse en peeres argentinos a través de Mercado Pago, según el valor informado al momento de suscribirte.`,
-          "Los pagos son procesados por terceros (Mercado Pago y, cuando esté disponible, otro procesador para pagos internacionales). El Responsable no almacena los datos de tu tarjeta.",
+          `El Servicio ofrece un plan gratuito y planes pagos por suscripción mensual (Plus y Pro). Los precios de referencia son USD ${LEGAL.prices.plus} (Plus) y USD ${LEGAL.prices.pro} (Pro) por mes. En Argentina los cobros pueden realizarse en pesos argentinos a través de Lemon Squeezy, según el valor informado al momento de suscribirte.`,
+          "Los pagos son procesados por Lemon Squeezy, que actúa como merchant of record: cobra, liquida y presenta el impuesto correspondiente, por lo que el Responsable no almacena los datos de tu tarjeta.",
           `El plan Plus puede incluir un período de prueba gratuito de ${LEGAL.trialDays} días, por única vez por persona. Los planes y precios pueden modificarse; los cambios se comunican con anticipación y no afectan el período ya abonado.`,
           "Los límites de uso diario de las funciones de IA dependen del plan y pueden ajustarse."
         ]
@@ -106,8 +106,8 @@ export const termsContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Plans, prices and payments",
         body: [
-          `The Service offers a free plan and paid monthly subscriptions (Plus and Pro). Reference prices are USD ${LEGAL.prices.plus} (Plus) and USD ${LEGAL.prices.pro} (Pro) per month. In Argentina, charges may be made in Argentine peeres through Mercado Pago at the amount shown when you subscribe.`,
-          "Payments are processed by third parties (Mercado Pago and, when available, another processor for international payments). The Operator does not store your card details.",
+          `The Service offers a free plan and paid monthly subscriptions (Plus and Pro). Reference prices are USD ${LEGAL.prices.plus} (Plus) and USD ${LEGAL.prices.pro} (Pro) per month. In Argentina, charges may be made in Argentine pesos through Lemon Squeezy at the amount shown when you subscribe.`,
+          "Payments are processed by Lemon Squeezy, which acts as merchant of record: it collects the payment, settles and files the applicable tax, so the Operator does not store your card details.",
           `The Plus plan may include a free ${LEGAL.trialDays}-day trial, once per person. Plans and prices may change; changes are announced in advance and do not affect an already-paid period.`,
           "Daily usage limits for AI features depend on your plan and may be adjusted."
         ]
@@ -177,7 +177,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Con quién los compartimos",
         body: [
-          "Usamos proveedores que tratan datos por nuestra cuenta: Clerk (autenticación), Neon (base de datos), Vercel (alojamiento), Groq (modelos de IA que procesan tus mensajes y tareas), Tavily (búsqueda web cuando Milo la usa; se envían los términos de la consulta), Mercado Pago y, cuando esté disponible, Lemon Squeezy u otro procesador (pagos).",
+          "Usamos proveedores que tratan datos por nuestra cuenta: Clerk (autenticación), Neon (base de datos), Vercel (alojamiento), Groq (modelos de IA que procesan tus mensajes y tareas), Tavily (búsqueda web cuando Milo la usa; se envían los términos de la consulta), Lemon Squeezy (procesamiento de pagos).",
           "Estos proveedores pueden estar ubicados fuera de Argentina, incluidos Estados Unidos, por lo que tus datos pueden transferirse internacionalmente. Solo los compartimos en la medida necesaria para prestar el Servicio."
         ]
       },
@@ -244,7 +244,7 @@ export const privacyContent: { es: LegalContent; en: LegalContent } = {
       {
         title: "Who we share it with",
         body: [
-          "We use providers that process data on our behalf: Clerk (authentication), Neon (database), Vercel (hosting), Groq (AI models that process your messages and tasks), Tavily (web search when Milo uses it; the query terms are sent), Mercado Pago and, when available, Lemon Squeezy or another processor (payments).",
+          "We use providers that process data on our behalf: Clerk (authentication), Neon (database), Vercel (hosting), Groq (AI models that process your messages and tasks), Tavily (web search when Milo uses it; the query terms are sent), Lemon Squeezy (payment processing).",
           "These providers may be located outside Argentina, including the United States, so your data may be transferred internationally. We share it only as needed to provide the Service."
         ]
       },

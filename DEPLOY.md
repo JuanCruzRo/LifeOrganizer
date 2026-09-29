@@ -19,17 +19,20 @@ variables de `.env.example` (`.env.local` es gitignored, no se sube solo).
 
 Al deploying tenés una URL pública HTTPS. **Ese es el objetivo de este paso.**
 
-## Paso 2 — Mercado Pago: webhook
+## Paso 2 — Lemon Squeezy: webhook
 
 Recién ahora, porque necesita la URL del paso 1.
 
-1. developers.mercadopago.com → tu app → **Webhooks**
-2. Endpoint: `https://<tu-dominio>/api/subscriptions/webhook`
-3. Eventos: `subscription_preapproval` (o `preapproval`)
-4. Te devuelve un **signing secret** → `MP_WEBHOOK_SECRET`
+1. app.lemonsqueezy.com → **Settings → Webhooks → New endpoint**
+2. Callback URL: `https://<tu-dominio>/api/subscriptions/webhook`
+3. Eventos: `subscription_created`, `subscription_updated`,
+   `subscription_cancelled`, `subscription_payment_failed`
+4. Te devuelve un **signing secret** → `LEMONSQUEEZY_WEBHOOK_SECRET`
 
-Actualizá la variable en Vercel y rebuildea. Sin esto, la ruta devuelve 503 en
-producción: se cobra la plata y el plan nunca se activa.
+El checkout se arma con una URL alojada que ya incluye el `variant_id`, así que
+no hay preapproval ni llamada de creación de por medio. Actualizá la variable en
+Vercel y rebuildea. Sin el signing secret, la ruta devuelve 503 en producción:
+se cobra la plata y el plan nunca se activa.
 
 ## Paso 3 — Probá un pago real
 
