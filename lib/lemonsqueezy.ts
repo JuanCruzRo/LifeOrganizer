@@ -10,10 +10,19 @@ import type { PaidPlanName } from "@/lib/subscription-plans";
 
 export type PaidPlan = PaidPlanName;
 
-export const PLAN_PRICES_ARS: Record<PaidPlan, number> = {
-  plus: 9000,
-  pro: 30000
-};
+/**
+ * Prices are deliberately absent from this file.
+ *
+ * Lemon Squeezy's API cannot create or edit products (POST/PATCH on
+ * /v1/products and /v1/variants are 405), so the plan prices live in the
+ * dashboard and the app only ever reads the resulting variant ids. A copy of
+ * the price list here could only drift from the store, and the store is what
+ * actually charges the card. The figures the app does display come from
+ * lib/pricing.ts.
+ *
+ * If you need to change a price: edit the variant on the dashboard. There is
+ * no deploy involved, and none should be.
+ */
 
 /**
  * Variant ids come from the store, not from the code. They are read from the
