@@ -18,10 +18,13 @@ export const config = {
   // rejected as invalid signatures.
   //
   // The route authenticates with the provider's HMAC instead of a session, so
-  // there is nothing for the middleware to do there. Both negative lookaheads
-  // are needed: one guards the page pattern and the other the /api pattern.
+  // there is nothing for the middleware to do there.
+  //
+  // A single pattern, not two: this is Clerk's own page pattern with the
+  // webhook added to the exclusion list, and it already covers /api and /trpc
+  // because those paths do not look like static files. Next.js refuses to parse
+  // a second pattern that opens with a lookahead over a literal group.
   matcher: [
-    "/((?!api/subscriptions/webhook|_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/((?!api/subscriptions/webhook)(?:api|trpc)(.*))"
+    "/((?!api/subscriptions/webhook|_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)"
   ]
 };
