@@ -1,87 +1,124 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { WebhookSignatureValidator, InvalidWebhookSignatureError } from "mercadopago";
-import { preApproval, PaidPlan } from "@/lib/mercadopago";
+import {
+  verifyWebhookSignature,
+  type PaidPlan,
+  type WebhookPayload,
+  type LsSubscriptionStatus
+} from "@/lib/lemonsqueezy";
 import { findUserIdByPreapprovalId, syncSubscription } from "@/lib/server-auth";
+import type { SubscriptionStatus } from "@/lib/subscription-plans";
 
-const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET ?? "";
-
-function isPaidPlan(value: string | undefined): value is PaidPlan {
-  return value === "plus" || value === "pro";
-}
-
-function isSubscriptionStatus(
-  value: string | undefined
-): value is "authorized" | "paused" | "cancelled" {
-  return value === "authorized" || value === "paused" || value === "cancelled";
-}
-
+/**
+ * Lemon Squeezy signs the raw body; Mercado Pago signed query parameters and a
+ * timestamp instead. Reading the body first and parsing second is the whole
+ * difference: `request.json()` then re-stringify gives different bytes than
+ * what was signed, so a valid delivery would fail the check forever.
+ */
 export async function POST(request: Request) {
-  const url = new URL(request.url);
-  const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id");
-  const topic = url.searchParams.get("type") ?? url.searchParams.get("topic");
-
-  if (!MP_WEBHOOK_SECRET && process.env.NODE_ENV === "production") {
-    console.error("MP_WEBHOOK_SECRET is not set; rejecting webhook");
+  if (!process.env.LEMONSQUEEZY_WEBHOOK_SECRET && process.env.NODE_ENV === "production") {
+    // Fail closed. Payments would be taken and never granted otherwise, and
+    // there is no way for a user to notice before their plan is missing.
+    console.error("LEMONSQUEEZY_WEBHOOK_SECRET is not set; rejecting webhook");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
   }
 
-  if (MP_WEBHOOK_SECRET) {
-    try {
-      WebhookSignatureValidator.validate({
-        xSignature: request.headers.get("x-signature"),
-        xRequestId: request.headers.get("x-request-id"),
-        dataId,
-        secret: MP_WEBHOOK_SECRET,
-        toleranceSeconds: 300,
-      });
-    } catch (err) {
-      if (err instanceof InvalidWebhookSignatureError) {
-        console.warn("Invalid Mercado Pago webhook signature", err.reason);
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
-      throw err;
-    }
+  const rawBody = await request.text();
+
+  if (!verifyWebhookSignature(rawBody, request.headers.get("x-signature"))) {
+    // Log the shape of what arrived, never the value: enough to tell "wrong
+    // secret" from "the header is sha256=<hex> and we did not account for it"
+    // the first time a test event comes back 401.
+    const sig = request.headers.get("x-signature");
+    console.warn(
+      `Invalid Lemon Squeezy webhook signature (received: ${
+        sig ? `${sig.slice(0, 12)}... len=${sig.length}` : "none"
+      })`
+    );
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  if (topic !== "subscription_preapproval" && topic !== "preapproval") {
-    return NextResponse.json({ received: true });
-  }
-
-  if (!dataId) {
-    return NextResponse.json({ error: "Missing data.id" }, { status: 400 });
-  }
-
+  let payload: WebhookPayload;
   try {
-    const subscription = await preApproval.get({ id: dataId });
-    // checkout stores `${userId}:${plan}` so the webhook can attribute the event
-    // without depending on the preapproval id being recorded ahead of time.
-    const [externalUserId, plan] = (subscription.external_reference ?? "").split(":");
+    payload = JSON.parse(rawBody) as WebhookPayload;
+  } catch {
+    return NextResponse.json({ error: "Malformed payload" }, { status: 400 });
+  }
 
-    if (!isPaidPlan(plan) || !isSubscriptionStatus(subscription.status) || !subscription.id) {
-      return NextResponse.json({ received: true });
-    }
-
-    const userId =
-      externalUserId || (await findUserIdByPreapprovalId(subscription.id));
-    if (!userId) {
-      console.error(
-        `Cannot attribute subscription ${subscription.id}: no userId in external_reference and no stored preapproval id`
-      );
-      return NextResponse.json({ error: "Unknown subscription owner" }, { status: 500 });
-    }
-
-    await syncSubscription({
-      userId,
-      plan,
-      mpPreapprovalId: subscription.id,
-      payerEmail: subscription.payer_email ?? "",
-      status: subscription.status,
-    });
-
+  const event = payload.meta?.event_name ?? "";
+  // Everything else (order_created, license_activated, ...) is acknowledged so
+  // Lemon Squeezy stops retrying, but nothing in the app depends on it.
+  if (!event.startsWith("subscription_")) {
     return NextResponse.json({ received: true });
-  } catch (err) {
-    console.error("Mercado Pago webhook processing failed", err);
-    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+  }
+
+  const attributes = payload.data?.attributes;
+  if (!attributes) return NextResponse.json({ received: true });
+
+  const plan = planFromAttributes(payload);
+  const status = toSubscriptionStatus(attributes.status);
+  if (!plan || !status) {
+    return NextResponse.json({ received: true });
+  }
+
+  // Two ways to know whose subscription this is. The custom field is written
+  // on the checkout URL and echoed back here; the stored id is the fallback
+  // for events that arrive without it, which is how renewals behave.
+  const userId =
+    payload.meta?.custom_data?.user_id || (await findUserIdByPreapprovalId(payload.data.id));
+  if (!userId) {
+    console.error(`Cannot attribute subscription ${payload.data.id}: no user_id and no stored id`);
+    return NextResponse.json({ error: "Unknown subscription owner" }, { status: 500 });
+  }
+
+  await syncSubscription({
+    userId,
+    plan,
+    mpPreapprovalId: payload.data.id,
+    // Lemon Squeezy does not put the email on the subscription payload, only a
+    // customer id. Passing empty lets syncSubscription keep whatever the
+    // checkout already recorded instead of blanking it on every renewal.
+    payerEmail: "",
+    status
+  });
+
+  return NextResponse.json({ received: true });
+}
+
+/**
+ * The variant is the durable answer: it is on every event for the life of the
+ * subscription. `custom_data.plan` only rides along when the checkout set it,
+ * so it is the fallback rather than the source of truth.
+ */
+function planFromAttributes(payload: WebhookPayload): PaidPlan | null {
+  const variantId = payload.data?.attributes?.variant_id;
+  const pro = process.env.LEMONSQUEEZY_VARIANT_PRO;
+  const plus = process.env.LEMONSQUEEZY_VARIANT_PLUS;
+  if (pro && variantId === Number(pro)) return "pro";
+  if (plus && variantId === Number(plus)) return "plus";
+
+  const declared = payload.meta?.custom_data?.plan;
+  return declared === "plus" || declared === "pro" ? declared : null;
+}
+
+/**
+ * `past_due` and `unpaid` map to "paused", which resolvePlanForStatus treats as
+ * a grace period: a retrying card must not take the plan away mid-dunning.
+ * Lemon Squeezy eventually sends `cancelled`, which is what actually ends it.
+ */
+function toSubscriptionStatus(status: LsSubscriptionStatus): SubscriptionStatus | null {
+  switch (status) {
+    case "on_trial":
+    case "active":
+      return "authorized";
+    case "paused":
+    case "past_due":
+    case "unpaid":
+      return "paused";
+    case "cancelled":
+    case "expired":
+      return "cancelled";
+    default:
+      return null;
   }
 }

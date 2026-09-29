@@ -44,9 +44,13 @@ describe("API routes", () => {
   it("require an authenticated user, except the signed payment webhook", () => {
     for (const route of apiRoutes()) {
       const source = read(route);
+      // The webhook has no session to check — its identity guarantee is the
+      // provider's HMAC over the raw body. Mercado Pago used its own SDK
+      // validator; Lemon Squeezy uses the one in lib/lemonsqueezy.ts. Either
+      // way the route must contain a signature check, never neither.
       const guarded =
         /requireAuth(WithEmail)?\s*\(/.test(source) ||
-        /WebhookSignatureValidator/.test(source);
+        /WebhookSignatureValidator|verifyWebhookSignature/.test(source);
       expect(guarded, `${route} has no identity check`).toBe(true);
     }
   });

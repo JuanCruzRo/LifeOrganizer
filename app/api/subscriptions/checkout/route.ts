@@ -1,12 +1,26 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { recordPendingSubscription, requireAuthWithEmail } from "@/lib/server-auth";
-import { preApproval, PLAN_PRICES, PaidPlan } from "@/lib/mercadopago";
+import { requireAuthWithEmail } from "@/lib/server-auth";
+import { buildCheckoutUrl, type PaidPlan } from "@/lib/lemonsqueezy";
 
 function isPaidPlan(value: unknown): value is PaidPlan {
   return value === "plus" || value === "pro";
 }
 
+/**
+ * Builds a Lemon Squeezy checkout URL.
+ *
+ * Unlike Mercado Pago — where a preapproval had to be created through the API
+ * before the user could pay, and its id recorded so the webhook could find them
+ * again — Lemon Squeezy takes a plain URL. There is no server-side object to
+ * create, so nothing is written before the purchase: attribution rides on
+ * `checkout[custom][user_id]`, which Lemon Squeezy echoes back in
+ * `meta.custom_data` on every webhook it sends for that subscription.
+ *
+ * The email is prefilled because we already know it from Clerk. Making someone
+ * retype the address they are already signed in with is the kind of small
+ * friction that costs conversions for no reason.
+ */
 export async function POST(request: Request) {
   let userId: string;
   let email: string;
@@ -22,41 +36,19 @@ export async function POST(request: Request) {
   }
 
   // Prefer the configured site URL: the Origin header is client-supplied and
-  // would let a caller redirect users to an arbitrary host after paying.
+  // would let a caller send the buyer to an arbitrary host after paying.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
 
   try {
-    const subscription = await preApproval.create({
-      body: {
-        reason: `Spark ${body.plan === "pro" ? "Pro" : "Plus"} — suscripción mensual`,
-        external_reference: `${userId}:${body.plan}`,
-        payer_email: email,
-        back_url: `${siteUrl}/?subscribed=${body.plan}`,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: PLAN_PRICES[body.plan],
-          currency_id: "ARS",
-        },
-        status: "pending",
-      },
-    });
-
-    if (!subscription.init_point || !subscription.id) {
-      return NextResponse.json({ error: "No checkout URL returned" }, { status: 502 });
-    }
-
-    // Store the mapping before the user pays, so the webhook can attribute the
-    // subscription even if Mercado Pago drops the external_reference.
-    await recordPendingSubscription({
+    const checkoutUrl = buildCheckoutUrl({
+      plan: body.plan,
       userId,
-      mpPreapprovalId: subscription.id,
-      payerEmail: email,
+      siteUrl,
+      email
     });
-
-    return NextResponse.json({ checkoutUrl: subscription.init_point });
+    return NextResponse.json({ checkoutUrl });
   } catch (err) {
-    console.error("Mercado Pago checkout failed", err);
+    console.error("Lemon Squeezy checkout failed", err);
     return NextResponse.json({ error: "Failed to create subscription" }, { status: 502 });
   }
 }

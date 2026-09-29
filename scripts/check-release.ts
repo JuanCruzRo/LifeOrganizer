@@ -29,15 +29,21 @@ for (const field of ["operatorTaxId", "operatorAddress", "contactEmail"]) {
 }
 
 // --- Required environment variables ---------------------------------------
-const required = ["CLERK_SECRET_KEY", "DATABASE_URL", "GROQ_API_KEY", "MP_ACCESS_TOKEN"];
+const required = ["CLERK_SECRET_KEY", "DATABASE_URL", "GROQ_API_KEY"];
 for (const key of required) {
   if (!env.includes(key)) blockers.push(`${key} is not set in ${envPath}`);
 }
 
 // A missing webhook secret makes the route return 503, so payments would be
-// taken but never activate a plan.
-if (!env.includes("MP_WEBHOOK_SECRET")) {
-  blockers.push("MP_WEBHOOK_SECRET is not set — Mercado Pago payments would be taken but never granted");
+// taken but never activate a plan — the single most expensive thing that can
+// be half-configured, because the customer has already been charged.
+if (!env.includes("LEMONSQUEEZY_WEBHOOK_SECRET")) {
+  blockers.push("LEMONSQUEEZY_WEBHOOK_SECRET is not set — Lemon Squeezy payments would be taken but never granted");
+}
+// Without these, buildCheckoutUrl throws and checkout answers 502: the plans
+// page looks fine until someone presses the button.
+for (const key of ["LEMONSQUEEZY_STORE_DOMAIN", "LEMONSQUEEZY_VARIANT_PLUS", "LEMONSQUEEZY_VARIANT_PRO"]) {
+  if (!env.includes(key)) blockers.push(`${key} is not set — Plus/Pro checkout cannot be built`);
 }
 // sitemap.ts, robots.ts and metadataBase all fall back to http://localhost:3000,
 // which publishes localhost URLs to search engines and sends checkout back_url

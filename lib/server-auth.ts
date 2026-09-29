@@ -79,25 +79,12 @@ export async function startPlusTrial(userId: string, trialDays: number): Promise
 }
 
 /**
- * Links a user to the Mercado Pago preapproval id as soon as checkout starts,
- * without touching their current plan or trial. The webhook then only needs to
- * match on mp_preapproval_id.
+ * Finds the account behind a subscription id the webhook did not carry a
+ * user_id for. Lemon Squeezy normally echoes `checkout[custom][user_id]`, so
+ * this is the fallback for renewals and for any event that arrives without the
+ * custom field — Mercado Pago, where the id was the only handle, worked this
+ * way and the column it used is still what stores it.
  */
-export async function recordPendingSubscription(params: {
-  userId: string;
-  mpPreapprovalId: string;
-  payerEmail: string;
-}): Promise<void> {
-  await sql`
-    INSERT INTO user_plans (user_id, plan, mp_preapproval_id, mp_payer_email, updated_at)
-    VALUES (${params.userId}, 'free', ${params.mpPreapprovalId}, ${params.payerEmail}, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET
-      mp_preapproval_id = ${params.mpPreapprovalId},
-      mp_payer_email = ${params.payerEmail},
-      updated_at = NOW()
-  `;
-}
-
 export async function findUserIdByPreapprovalId(mpPreapprovalId: string): Promise<string | null> {
   const rows = await sql`
     SELECT user_id FROM user_plans WHERE mp_preapproval_id = ${mpPreapprovalId} LIMIT 1
@@ -108,6 +95,13 @@ export async function findUserIdByPreapprovalId(mpPreapprovalId: string): Promis
 /**
  * Authoritative subscription sync, driven by the webhook. Idempotent and keyed
  * on user_id so retries and out-of-order events converge on the same state.
+ *
+ * `mpPreapprovalId` / `mp_preapproval_id` hold whichever provider issued the
+ * subscription — Mercado Pago's preapproval id or Lemon Squeezy's subscription
+ * id. The column keeps its original name so no migration stands between an
+ * already-written row and a working lookup; `resolveTrialView` and
+ * `findUserIdByPreapprovalId` only ever treat it as "there is a real
+ * subscription behind this account".
  */
 export async function syncSubscription(params: {
   userId: string;
@@ -127,7 +121,13 @@ export async function syncSubscription(params: {
     ON CONFLICT (user_id) DO UPDATE SET
       plan = ${plan},
       mp_preapproval_id = ${params.mpPreapprovalId},
-      mp_payer_email = ${params.payerEmail},
+      -- Lemon Squeezy's payload carries a customer id, not an email, so the
+      -- webhook passes an empty string. Without this guard every renewal would
+      -- erase the address a Mercado Pago subscriber still has on file.
+      mp_payer_email = CASE
+        WHEN ${params.payerEmail} = '' THEN user_plans.mp_payer_email
+        ELSE ${params.payerEmail}
+      END,
       subscription_status = ${params.status},
       trial_ends_at = NULL,
       updated_at = NOW()
