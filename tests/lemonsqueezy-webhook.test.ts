@@ -1,6 +1,11 @@
 import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { verifyWebhookSignature, buildCheckoutUrl, planForVariant } from "@/lib/lemonsqueezy";
+import {
+  verifyWebhookSignature,
+  buildCheckoutUrl,
+  planForVariant,
+  readSignatureHeader
+} from "@/lib/lemonsqueezy";
 
 // Lemon Squeezy signs the raw body. These pin the two things that are easy to
 // get wrong and impossible to notice in development: hashing the wrong bytes,
@@ -167,5 +172,20 @@ describe("Stripe-style signatures", () => {
   it("rejects a Stripe-style header whose timestamp does not match the digest", () => {
     const v1 = createHmac("sha256", SECRET).update(`${1759178746}.${body}`, "utf8").digest("hex");
     expect(verifyWebhookSignature(body, `t=1759999999,v1=${v1}`)).toBe(false);
+  });
+});
+
+describe("readSignatureHeader", () => {
+  it("reads the signature no matter which name the provider used", () => {
+    // The store runs on Stripe's processor. A digest under a name nobody reads
+    // is indistinguishable from no digest at all, and both are a 401.
+    for (const name of ["x-signature", "stripe-signature", "ls-signature", "x-ls-signature"]) {
+      const headers = new Headers({ [name]: "t=1,v1=abc" });
+      expect(readSignatureHeader(headers), name).toBe("t=1,v1=abc");
+    }
+  });
+
+  it("returns null when there is no signature header at all", () => {
+    expect(readSignatureHeader(new Headers({ "content-type": "application/json" }))).toBeNull();
   });
 });

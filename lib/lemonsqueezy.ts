@@ -179,21 +179,40 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
 }
 
 /**
- * What to send back when verification fails, so the next delivery can be
- * diagnosed from Lemon Squeezy's own delivery log instead of guessed at again.
+ * Where to find the signature header, and what to say back when it is wrong.
  *
- * Nothing secret goes out: an HMAC digest reveals nothing about the key, and
- * these are facts about the request the sender already has. `lsSignature` is
- * the full header precisely because without it there is no way to tell an
- * unknown encoding from a body that arrived altered.
+ * Lemon Squeezy documents `X-Signature`, but the store now runs on Stripe's
+ * payment processor, and the digest the body carries has been rejected in every
+ * shape tried so far. A request whose signature header is simply absent is
+ * indistinguishable, from inside the handler, from one whose header arrived
+ * under a name nobody looked at — so the failure response reports every header
+ * the delivery actually contained, and the value of any of them that look like
+ * a signature.
+ *
+ * Nothing secret goes out. An HMAC digest reveals nothing about the key, and
+ * these are facts about a request the sender already has.
  */
-export function signatureDiagnostics(rawBody: string, signature: string | null): Record<string, unknown> {
+export function readSignatureHeader(headers: Headers): string | null {
+  for (const name of ["x-signature", "stripe-signature", "ls-signature", "x-ls-signature"]) {
+    const value = headers.get(name);
+    if (value) return value;
+  }
+  return null;
+}
+
+export function signatureDiagnostics(
+  rawBody: string,
+  signature: string | null,
+  headers?: Headers
+): Record<string, unknown> {
+  const seen = headers ? [...headers.keys()].sort() : [];
   return {
     lsSignature: signature,
     lsSignatureLength: signature?.length ?? 0,
+    signatureHeadersSeen: seen.filter((h) => /signature/i.test(h)),
+    allHeaders: seen,
     bodyLength: rawBody.length,
-    bodySha256: createHash("sha256").update(rawBody, "utf8").digest("hex"),
-    contentEncoding: null
+    bodySha256: createHash("sha256").update(rawBody, "utf8").digest("hex")
   };
 }
 
