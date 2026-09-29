@@ -161,6 +161,20 @@ function digestCandidates(signature: string): Buffer[] {
  * fails on every legitimate delivery, which is indistinguishable from an
  * attacker to whoever is reading the logs.
  */
+/**
+ * The keys the signature may have been built from.
+ *
+ * Lemon Squeezy documents the secret as the whole `whsec_…` string, but a
+ * provider that moved its signing behind Stripe is also free to sign with only
+ * the random part. Both are tried. Neither weakens anything: each one is still
+ * a secret only this deployment holds, and a delivery only passes if it
+ * reproduces the digest under one of them.
+ */
+function secretCandidates(secret: string): string[] {
+  const withoutPrefix = secret.replace(/^whsec_/, "");
+  return withoutPrefix && withoutPrefix !== secret ? [secret, withoutPrefix] : [secret];
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   // Without a secret there is nothing to compare against. Rejecting is the
@@ -169,10 +183,12 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
   if (!secret || !signature) return false;
 
   const candidates = digestCandidates(signature);
-  for (const payload of signedPayloads(rawBody, signature)) {
-    const expected = createHmac("sha256", secret).update(payload, "utf8").digest();
-    for (const candidate of candidates) {
-      if (candidate.length === expected.length && timingSafeEqual(candidate, expected)) return true;
+  for (const key of secretCandidates(secret)) {
+    for (const payload of signedPayloads(rawBody, signature)) {
+      const expected = createHmac("sha256", key).update(payload, "utf8").digest();
+      for (const candidate of candidates) {
+        if (candidate.length === expected.length && timingSafeEqual(candidate, expected)) return true;
+      }
     }
   }
   return false;

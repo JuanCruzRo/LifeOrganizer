@@ -189,3 +189,20 @@ describe("readSignatureHeader", () => {
     expect(readSignatureHeader(new Headers({ "content-type": "application/json" }))).toBeNull();
   });
 });
+
+describe("the whsec_ prefix", () => {
+  it("also accepts a digest built from the random part alone", () => {
+    // The store's real deliveries never matched the full secret, and the value
+    // on file was read off a screenshot, so both readings of "the secret" are
+    // live possibilities.
+    process.env.LEMONSQUEEZY_WEBHOOK_SECRET = "whsec_abc123";
+    const v1 = createHmac("sha256", "abc123").update(body, "utf8").digest("hex");
+    expect(verifyWebhookSignature(body, v1)).toBe(true);
+  });
+
+  it("still rejects when neither reading matches", () => {
+    process.env.LEMONSQUEEZY_WEBHOOK_SECRET = "whsec_abc123";
+    const v1 = createHmac("sha256", "otro").update(body, "utf8").digest("hex");
+    expect(verifyWebhookSignature(body, v1)).toBe(false);
+  });
+});
