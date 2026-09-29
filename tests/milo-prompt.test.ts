@@ -135,6 +135,72 @@ describe("buildTaskPromptParts: the dynamic half", () => {
   });
 });
 
+describe("buildTaskPromptParts: the pending list is bounded", () => {
+  const many = (n: number, over: Partial<Task> = {}) =>
+    Array.from({ length: n }, (_, i) =>
+      task({ id: `t${i}`, title: `Tarea ${i}`, dueDate: "2026-03-20", ...over })
+    );
+
+  it("shows every pending task when the list is short", () => {
+    const { dynamic } = buildTaskPromptParts({
+      canCreateTasks: true,
+      tasks: many(25),
+      now: NOW
+    });
+
+    for (let i = 0; i < 25; i++) expect(dynamic).toContain(`Tarea ${i}`);
+    expect(dynamic).not.toContain("por brevedad");
+  });
+
+  it("caps a long list instead of sending all of it", () => {
+    // The completed list was capped at 15 and the pending one was not, so a
+    // user with a lot of open tasks sent 5632 tokens of prompt — and got a
+    // model that answers the pile instead of answering them.
+    const { dynamic } = buildTaskPromptParts({
+      canCreateTasks: true,
+      tasks: many(200),
+      now: NOW
+    });
+
+    expect(dynamic).toContain("Tarea 0");
+    expect(dynamic).not.toContain("Tarea 199");
+    expect(dynamic).toContain("175 pendiente(s) más");
+  });
+
+  it("keeps the most urgent and drops the least", () => {
+    // Truncating by array order would quietly hide the one task that is late,
+    // which is the only one the user actually needs to hear about.
+    const { dynamic } = buildTaskPromptParts({
+      canCreateTasks: true,
+      tasks: [
+        ...many(30, { priority: "low", dueDate: "2026-04-30" }),
+        task({ id: "urgent", title: "Vencida importante", priority: "high", dueDate: "2026-03-01" })
+      ],
+      now: NOW
+    });
+
+    // 1 slot goes to the high-priority task, 24 to the 30 low-priority ones.
+    expect(dynamic).toContain("Vencida importante");
+    expect(dynamic).toContain("Tarea 23");
+    expect(dynamic).not.toContain("Tarea 29");
+    expect(dynamic).toContain("6 pendiente(s) más");
+  });
+
+  it("tells the model the list is incomplete so it cannot claim otherwise", () => {
+    // Without this line the model reads 25 lines, believes that is all the user
+    // has, and confidently says "tenés 12 tareas" when they have 200.
+    const { dynamic } = buildTaskPromptParts({
+      canCreateTasks: true,
+      tasks: many(40),
+      now: NOW
+    });
+
+    expect(dynamic).toContain("15 pendiente(s) más");
+    expect(dynamic).toMatch(/no están en esta lista/);
+    expect(dynamic).toMatch(/no existe/);
+  });
+});
+
 describe("buildTaskContext: the joined form", () => {
   it("preserves the order that makes the cache work", () => {
     // Static first, dynamic second. A per-turn segment in front of the rules

@@ -21,6 +21,16 @@ export type BuildContextOptions = {
 
 const isoDate = (d: Date) => d.toISOString().split("T")[0];
 
+/**
+ * How many open tasks the model is shown, most urgent first.
+ *
+ * Not a budget decision — the dynamic half is cached, so 25 open tasks cost
+ * almost nothing. It is a comprehension decision: past roughly this many
+ * same-shaped lines the model stops reading the list as tasks the user has
+ * and starts answering it as a batch.
+ */
+const MAX_PENDING_TASKS_IN_PROMPT = 25;
+
 function spanishShortDate(date: Date): string {
   return date.toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -171,11 +181,32 @@ Usa esto para personalizar tus respuestas cuando sea relevante, sin mencionar ex
   const completed = tasks.filter((t) => t.done);
 
   if (pending.length > 0) {
+    // The pending list had no ceiling while the completed one was capped at 15.
+    // A user with 200 open tasks sent 5632 tokens of prompt and, worse, a model
+    // staring at 200 near-identical lines starts answering in bulk instead of
+    // answering. Most-urgent-first is what Milo would pick anyway, so the cap
+    // costs nothing below it — and above it, the omission is stated out loud
+    // so the model never claims the user has "12 tasks" when they have 200.
+    const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    const ranked = [...pending].sort((a, b) => {
+      const byPriority =
+        (PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1);
+      if (byPriority !== 0) return byPriority;
+      return (a.dueDate ?? "").localeCompare(b.dueDate ?? "");
+    });
+    const shown = ranked.slice(0, MAX_PENDING_TASKS_IN_PROMPT);
+    const omitted = ranked.length - shown.length;
+
     lines.push("\nTareas pendientes del usuario:");
-    for (const task of pending) {
+    for (const task of shown) {
       const desc = task.description ? ` — ${task.description}` : "";
       lines.push(
         `- [${task.priority.toUpperCase()}] ${task.title} (${task.category}) — vence: ${task.dueDate}, duración: ${task.duration}${desc}`
+      );
+    }
+    if (omitted > 0) {
+      lines.push(
+        `(Hay ${omitted} pendiente(s) más de baja prioridad que no están en esta lista por brevedad. Si el usuario pregunta por su lista completa o por una tarea que no aparece, decíselo con franqueza en vez de suponer que no existe.)`
       );
     }
   }
