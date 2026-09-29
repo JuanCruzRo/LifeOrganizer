@@ -62,13 +62,6 @@ export async function POST(request: Request) {
     tasks?: AiPriorityRequestTask[];
     uiLanguage?: AppLanguage;
   };
-  const usage = await consumeDailyUsage(userId, "ai_priority", plan);
-  if (!usage.allowed) {
-    return NextResponse.json<AiPriorityApiResponse>(
-      { enabled: true, recommendation: null, error: "Llegaste al límite diario de recomendaciones de IA. Se reinicia mañana." },
-      { status: 429 }
-    );
-  }
   const pendingTasks = Array.isArray(body.tasks) ? body.tasks.slice(0, MAX_TASKS) : [];
   const uiLanguage = body.uiLanguage === "es" ? "es" : "en";
 
@@ -91,6 +84,32 @@ export async function POST(request: Request) {
     dueInDays: getDaysUntilDueDate(task.dueDate),
     systemScore: getTaskScore(task)
   }));
+
+  // The quota is charged here, not at the top of the handler.
+  //
+  // This endpoint fires on page mount and again on every task edit, while the
+  // 5-minute cache answers almost all of those without touching a model. When
+  // the counter ran first, a Plus user with 40 recommendations a day could
+  // spend the whole allowance on cache hits — zero provider cost to us, a 429
+  // to them — and the empty-task early return above was charged the same way
+  // for doing no work at all. Now a quota only moves when a model is asked.
+  const cacheKey = buildRecommendationCacheKey(userId, uiLanguage, taskInputs);
+  const cachedRecommendation = getCachedRecommendation(cacheKey);
+  if (cachedRecommendation) {
+    return NextResponse.json<AiPriorityApiResponse>({
+      enabled: true,
+      recommendation: cachedRecommendation,
+      error: null
+    });
+  }
+
+  const usage = await consumeDailyUsage(userId, "ai_priority", plan);
+  if (!usage.allowed) {
+    return NextResponse.json<AiPriorityApiResponse>(
+      { enabled: true, recommendation: null, error: "Llegaste al límite diario de recomendaciones de IA. Se reinicia mañana." },
+      { status: 429 }
+    );
+  }
 
   try {
     const recommendation = await requestMiloRecommendation(

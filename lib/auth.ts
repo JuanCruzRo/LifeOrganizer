@@ -1,5 +1,3 @@
-import { useAuth } from "@clerk/nextjs";
-
 export function getUserDisplayName(user: { firstName?: string | null; lastName?: string | null; emailAddresses?: { emailAddress: string }[] } | null) {
   if (!user) return "";
   const full = [user.firstName, user.lastName].filter(Boolean).join(" ");

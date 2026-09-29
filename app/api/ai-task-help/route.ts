@@ -98,6 +98,43 @@ export async function POST(request: Request) {
     );
   }
 
+  const taskInput: AiTaskHelpTaskInput = {
+    id: task.id,
+    title: task.title,
+    category: task.category,
+    description: task.description,
+    priority: task.priority,
+    duration: task.duration,
+    dueDate: task.dueDate,
+    dueInDays: getDaysUntilDueDate(task.dueDate),
+    systemScore: getTaskScore(task)
+  };
+  const questionIntent = detectQuestionIntent(question, taskInput);
+
+  const helpInput: Parameters<typeof requestTaskHelp>[0] = {
+    userId,
+    task: taskInput,
+    question,
+    clarificationTrail,
+    recommendationReason,
+    responseLanguage: uiLanguage,
+    questionIntent
+  };
+
+  // Quota charged after the cache, same reason as ai-priority: the answer
+  // repeats within its TTL and charging for it spends a Plus user's allowance
+  // on a response no model produced. The empty-input guard above already
+  // returned before any counter moved.
+  const cacheKey = buildTaskHelpCacheKey(helpInput);
+  const cachedResult = getCachedTaskHelp(cacheKey);
+  if (cachedResult) {
+    return NextResponse.json<AiTaskHelpApiResponse>({
+      enabled: true,
+      result: cachedResult,
+      error: null
+    });
+  }
+
   const usage = await consumeDailyUsage(userId, "ai_task_help", plan);
   if (!usage.allowed) {
     return NextResponse.json<AiTaskHelpApiResponse>(
@@ -113,29 +150,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const taskInput: AiTaskHelpTaskInput = {
-    id: task.id,
-    title: task.title,
-    category: task.category,
-    description: task.description,
-    priority: task.priority,
-    duration: task.duration,
-    dueDate: task.dueDate,
-    dueInDays: getDaysUntilDueDate(task.dueDate),
-    systemScore: getTaskScore(task)
-  };
-  const questionIntent = detectQuestionIntent(question, taskInput);
-
   try {
-    const result = await requestTaskHelp({
-      userId,
-      task: taskInput,
-      question,
-      clarificationTrail,
-      recommendationReason,
-      responseLanguage: uiLanguage,
-      questionIntent
-    });
+    const result = await requestTaskHelp(helpInput);
 
     return NextResponse.json<AiTaskHelpApiResponse>({
       enabled: true,

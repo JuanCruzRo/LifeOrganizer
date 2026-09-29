@@ -5,6 +5,7 @@ import { buildTaskPromptParts } from "@/lib/milo-chat-prompt";
 import { parseTaskActions } from "@/lib/task-actions";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
 import { consumeDailyUsage, dailyLimitResponse } from "@/lib/usage-limits";
+import { clampTasksForPrompt, HISTORY_CONTENT_LIMIT, HISTORY_MESSAGES_LIMIT } from "@/lib/prompt-input";
 import { bumpMessageCount, getUserMemory, saveUserMemory, shouldRefreshMemory } from "@/lib/user-memory";
 import { Task, TaskInput } from "@/types/task";
 
@@ -45,17 +46,22 @@ export async function POST(request: Request) {
   const canCreateTasks = plan !== "free";
 
   const userMemory = await getUserMemory(userId);
+  // Clamped, not merely counted: the count guard above stops a flood of tasks
+  // but never measured a field, so 100 tasks with 50KB titles was one counted
+  // call carrying megabytes of prompt the daily counter never saw.
+  const tasks = clampTasksForPrompt(body.tasks, MAX_TASKS);
+  const rawHistory = Array.isArray(body.history) ? body.history : [];
+  const history = rawHistory.slice(-HISTORY_MESSAGES_LIMIT).map((m) => ({
+    role: (m.role === "milo" ? "assistant" : "user") as "assistant" | "user",
+    content: typeof m.content === "string" ? m.content.slice(0, HISTORY_CONTENT_LIMIT) : ""
+  }));
+
   const { static: staticContext, dynamic: dynamicContext } = buildTaskPromptParts({
-    tasks: body.tasks ?? [],
+    tasks,
     pendingTaskAction: body.pendingTaskAction ?? null,
     canCreateTasks,
     userMemory
   });
-  const rawHistory = Array.isArray(body.history) ? body.history : [];
-  const history = rawHistory.slice(-20).map((m) => ({
-    role: (m.role === "milo" ? "assistant" : "user") as "assistant" | "user",
-    content: m.content
-  }));
 
   try {
     const { content } = await chatWithMilo({

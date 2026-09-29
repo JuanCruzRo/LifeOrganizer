@@ -157,8 +157,17 @@ export function LifeOrganizerApp() {
         body: JSON.stringify(newTask)
       });
       if (res.status === 403) {
-        setTaskLimitReached(true);
-        setStorageError("");
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        // Two different 403s arrive at the same status: the Free plan's
+        // 15-task cap, and the 1000-task cap that applies to every plan. Only
+        // the first one may show the Free/upgrade banner — a paying subscriber
+        // who hit 1000 tasks was told they were on the Free plan, which is
+        // simply not true. Anything else falls through to the generic message
+        // rather than a false one.
+        const isFreePlanLimit =
+          typeof body?.error === "string" && body.error.startsWith(FREE_PLAN_LIMIT_PREFIX);
+        setTaskLimitReached(isFreePlanLimit);
+        setStorageError(isFreePlanLimit ? "" : copy.errors.unexpected);
         return false;
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

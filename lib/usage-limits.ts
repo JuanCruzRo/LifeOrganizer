@@ -3,7 +3,14 @@ import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import type { UserPlan } from "@/lib/server-auth";
 
-export type UsageKind = "milo_chat" | "ai_priority" | "ai_task_help" | "ai_task_steps" | "milo_companion" | "transcribe";
+export type UsageKind =
+  | "milo_chat"
+  | "ai_priority"
+  | "ai_task_help"
+  | "ai_task_steps"
+  | "milo_companion"
+  | "stats_blurb"
+  | "transcribe";
 
 // Max AI calls per user per day (UTC), by plan. Tune these as costs become clear.
 export const DAILY_LIMITS: Record<UsageKind, Record<UserPlan, number>> = {
@@ -13,6 +20,10 @@ export const DAILY_LIMITS: Record<UsageKind, Record<UserPlan, number>> = {
   ai_task_steps: { free: 5, plus: 30, pro: 100 },
   // Body doubling: ~3 check-ins per focus session, Pro only.
   milo_companion: { free: 0, plus: 0, pro: 60 },
+  // The one-line blurb over the stats. Decorative and Pro-only, but it was
+  // the only AI call in the app with no counter at all — a session could
+  // refresh the page in a loop and spend tokens nobody was accounting for.
+  stats_blurb: { free: 0, plus: 0, pro: 60 },
   // Voice dictation: each use is one short audio clip.
   transcribe: { free: 20, plus: 100, pro: 300 }
 };

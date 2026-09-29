@@ -88,7 +88,6 @@ export type FailureKind =
 export type RateLimitScope = "per_minute" | "per_day" | "unknown";
 
 const MINUTE = 60_000;
-const HOUR = 60 * MINUTE;
 
 /** Read the ceiling out of the provider's own wording. */
 export function rateLimitScope(message: string | undefined): RateLimitScope {
@@ -224,17 +223,7 @@ export type ProviderAdapter = {
   supportsReasoningEffort?: boolean;
 };
 
-/** Whether it is worth sending this same request to the next provider. */
-export function shouldTryNextProvider(kind: FailureKind): boolean {
-  // Even a bad request gets one more provider: the request shape is identical
-  // across providers, so a 400 usually means a model name we got wrong, and the
-  // next one may be named correctly. If every provider rejects it the caller
-  // still sees a real error.
-  return true;
-}
-
-/**
- * Whether a failure should count against the provider's health.
+/** Whether a failure should count against the provider's health.
  *
  * A 400 from a misnamed model is our bug, not the provider being unhealthy, so
  * quarantining on it would take a working provider out of rotation over a typo.

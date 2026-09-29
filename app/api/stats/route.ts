@@ -2,7 +2,8 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { AppLanguage, supportedLanguages } from "@/lib/i18n";
 import { chatWithMilo } from "@/lib/milo";
-import { requireAuth, getUserPlan } from "@/lib/server-auth";
+import { requireAuth, getUserPlan, type UserPlan } from "@/lib/server-auth";
+import { consumeDailyUsage } from "@/lib/usage-limits";
 import { loadTasks } from "@/lib/storage";
 import { Task } from "@/types/task";
 
@@ -10,7 +11,7 @@ const WEEKS_OF_HISTORY = 8;
 const DAYS_OF_ACTIVITY = 14;
 
 const LANGUAGE_NAMES: Record<AppLanguage, string> = {
-  en: "English", es: "neutral Spanish (use tú, never voseo)", pt: "Brazilian Portuguese",
+  en: "English", es: "Spanish, informal, voseo (vos, seguila, no tú)", pt: "Brazilian Portuguese",
   fr: "French", de: "German", it: "Italian", zh: "Simplified Chinese", ja: "Japanese",
   ko: "Korean", ru: "Russian", tr: "Turkish", nl: "Dutch", pl: "Polish"
 };
@@ -42,6 +43,8 @@ export async function GET(request: Request) {
   const totalPending = tasks.filter((t) => !t.done).length;
 
   const encouragement = await getEncouragementMessage({
+    userId,
+    plan,
     completionRate,
     activeStreak,
     totalCompleted,
@@ -64,6 +67,8 @@ export async function GET(request: Request) {
 }
 
 async function getEncouragementMessage(params: {
+  userId: string;
+  plan: UserPlan;
   completionRate: number;
   activeStreak: number;
   totalCompleted: number;
@@ -85,10 +90,21 @@ Write it in ${LANGUAGE_NAMES[params.uiLanguage]}.
 Reply with the message only, no quotes.`;
 
   try {
+    // The blurb is the only decorative thing in this response — every number
+    // above it is computed in code — so over the budget means no encouraging
+    // line, not a broken page. The client skips the block when this comes back
+    // empty, so the limit is invisible to the user rather than an error.
+    //
+    // Inside the try on purpose: if the counter itself fails, that must cost
+    // the user their encouraging line and not their whole stats page.
+    const usage = await consumeDailyUsage(params.userId, "stats_blurb", params.plan);
+    if (!usage.allowed) return "";
+
     const { content } = await chatWithMilo({
       message: prompt,
-      // A one-line stat blurb: the longest prompt in the app, the
-      // shortest answer. No reasoning, no quota.
+      // A one-line stat blurb: the longest prompt in the app, the shortest
+      // answer. `fast` skips reasoning, which is also what stops the model
+      // from spending its whole token budget thinking and replying with "".
       tier: "fast",
       timeoutMs: 12000,
       maxTokens: 150

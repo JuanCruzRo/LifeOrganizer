@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useAppLanguage } from "@/components/language-provider";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
+import { useUserPlan } from "@/lib/use-user-plan";
 import { cn } from "@/lib/utils";
 
 const TRIAL_DAYS = 14;
@@ -20,6 +21,7 @@ export function PlansPage() {
   const plans = copy.plans;
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
   const [error, setError] = useState("");
+  const { trialAvailable, isLoaded } = useUserPlan();
 
   async function handleCheckout(planId: "plus" | "pro") {
     setError("");
@@ -44,8 +46,25 @@ export function PlansPage() {
     setLoadingPlan("plus");
     try {
       const res = await fetch("/api/subscriptions/trial", { method: "POST" });
-      if (!res.ok) throw new Error("trial_failed");
-      router.push("/app");
+      if (res.ok) {
+        router.push("/app");
+        return;
+      }
+      // 409: the trial was already used, so the user is on Free with an
+      // expired one. Sending them back to an error would leave Plus
+      // unpurchasable — the checkout branch existed in the API but nothing
+      // ever called it with "plus". This is the only way to pay for Plus.
+      if (res.status === 409) {
+        await handleCheckout("plus");
+        return;
+      }
+      // 400: already on a paid plan (or Pro). They are subscribed; nothing to
+      // buy, so take them to the product rather than showing a generic error.
+      if (res.status === 400) {
+        router.push("/app");
+        return;
+      }
+      throw new Error("trial_failed");
     } catch {
       setError(copy.errors.unexpected);
       setLoadingPlan(null);
@@ -209,7 +228,9 @@ export function PlansPage() {
                     plan.id === "free"
                       ? router.push("/app")
                       : plan.id === "plus"
-                        ? handleStartTrial()
+                        ? trialAvailable
+                          ? handleStartTrial()
+                          : handleCheckout("plus")
                         : handleCheckout("pro")
                   }
                 >
@@ -224,7 +245,7 @@ export function PlansPage() {
                   )}
                 </Button>
                 <p className="text-center text-[11px] text-muted-foreground">
-                  {plan.trial ? plans.trialNote : " "}
+                  {plan.trial && (!isLoaded || trialAvailable) ? plans.trialNote : " "}
                 </p>
               </div>
             </div>

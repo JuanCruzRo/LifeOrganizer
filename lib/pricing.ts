@@ -1,9 +1,6 @@
-import { LEGAL } from "@/lib/legal-config";
-
-// Prices in ARS that Mercado Pago actually charges. The site advertises
-// LEGAL.prices in USD, so these two numbers must move together: changing one
-// without the other is silently overcharging or undercharging. `tests/pricing`
-// fails if they drift apart.
+// The USD prices live in lib/legal-config.ts and are read by the landing page
+// at runtime, so this file does not import them — tests/pricing.test.ts is
+// what holds the two in sync, and it fails if they drift.
 export const PLAN_PRICES_ARS = {
   plus: 9000,
   pro: 30000,

@@ -231,11 +231,22 @@ export function MiloChat({
   async function handleConfirmTask(msgIndex: number, actions: TaskInput[]) {
     setIsCreatingTask(true);
     try {
+      // `onCreateTask` returns false when the task was rejected — the free
+      // plan's 15-task cap, or any transport error. Setting `taskCreated: true`
+      // regardless put a green "Task created" over a task that never existed,
+      // while the failure banner said the opposite underneath it. Milo must not
+      // claim a creation that did not happen.
+      const results: boolean[] = [];
       for (const action of actions) {
-        await onCreateTask(action);
+        results.push(await onCreateTask(action));
       }
+      const created = results.length > 0 && results.every(Boolean);
       setMessages((prev) =>
-        prev.map((m, i) => (i === msgIndex ? { ...m, taskActions: undefined, taskCreated: true } : m))
+        prev.map((m, i) =>
+          i === msgIndex
+            ? { ...m, taskActions: created ? undefined : m.taskActions, taskCreated: created }
+            : m
+        )
       );
     } finally {
       setIsCreatingTask(false);

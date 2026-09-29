@@ -106,6 +106,11 @@ export async function complete(request: CompletionRequest): Promise<Completion> 
         `[ai] "${provider.id}" failed with ${failure.kind}${failure.status ? ` (${failure.status})` : ""}; trying the next provider`,
         failure.message
       );
+      // Deliberately no branch here. Even a `bad_request` gets the next
+      // provider: the request shape is identical across providers, so a 400
+      // usually means a model name we got wrong and the next one may spell it
+      // correctly. If every provider rejects it, the caller still sees a real
+      // error from the throw below.
     }
   }
 
