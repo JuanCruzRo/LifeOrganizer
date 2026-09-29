@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle, Loader2, Mic, MicOff, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/input";
 import { MiloLoader } from "@/components/milo-loader";
 import { sendLabels } from "@/lib/landing-copy";
 import { useAppLanguage } from "@/components/language-provider";
@@ -119,6 +119,9 @@ export function MiloChat({
   const { copy, language } = useAppLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  // Only used so a dictated message can grab the focus; the height is the
+  // Textarea's own business.
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const voice = useVoiceInput(language);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
@@ -421,9 +424,9 @@ export function MiloChat({
             </button>
           </p>
         )}
-        <div className="flex gap-2">
-          <Input
-            type="text"
+        <div className="flex items-end gap-2">
+          <Textarea
+            ref={composerRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -440,7 +443,7 @@ export function MiloChat({
                   : copy.milo.inputPlaceholder
             }
             disabled={isLoading || voice.state !== "idle"}
-            className="h-11 flex-1 text-base sm:text-sm"
+            className="min-h-11 max-h-32 flex-1 resize-none py-3 text-base sm:text-sm"
           />
           {voice.isSupported && (
             <Button
@@ -448,7 +451,13 @@ export function MiloChat({
               onClick={() =>
                 voice.state === "recording"
                   ? voice.stop()
-                  : void voice.start((text) => setInput((prev) => (prev ? `${prev} ${text}` : text)))
+                  : void voice.start((text) => {
+                      setInput((prev) => (prev ? `${prev} ${text}` : text));
+                      // The transcript only lands once Whisper is done, by
+                      // which point the focus has wandered. Hand it back so the
+                      // dictated text can be read, corrected or sent.
+                      composerRef.current?.focus();
+                    })
               }
               disabled={isLoading || voice.state === "transcribing"}
               variant={voice.state === "recording" ? "default" : "outline"}
