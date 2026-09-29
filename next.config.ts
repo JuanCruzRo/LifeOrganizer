@@ -14,25 +14,30 @@ const isDev = process.env.NODE_ENV !== "production";
 // forms are listed: Turnstile spins up per-request subdomains (hagen., brunhild.)
 // for the verification step.
 const turnstile = "https://challenges.cloudflare.com https://*.challenges.cloudflare.com";
-// Origins the browser needs for Clerk's FAPI and WebSocket sessions.
-const clerk = "https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://*.clerk.com";
+// Origins the browser needs for Clerk's FAPI, WebSocket sessions and JS bundle.
+// A dev instance lives on *.clerk.accounts.dev; a live instance lives on
+// *.clerk.com. Both have to be allowed: with only the dev origin the app looks
+// perfect in development and then, the moment a pk_live_ goes in, the browser
+// silently blocks Clerk's script and the sign-in screen does nothing at all.
+const clerkHttp = "https://*.clerk.accounts.dev https://*.clerk.com https://clerk.com";
+const clerkWs = "wss://*.clerk.accounts.dev wss://*.clerk.com";
 
 const csp = [
   "default-src 'self'",
   // Next.js injects inline bootstrap scripts; Turbopack also needs eval in dev.
   // blob: is required because Clerk and Next both spin up workers from blob URLs.
-  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://clerk.com ${turnstile}`,
+  `script-src 'self' 'unsafe-inline' blob:${isDev ? " 'unsafe-eval'" : ""} ${clerkHttp} ${turnstile}`,
   `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   // The AI features call Groq/Tavily and Mercado Pago from the server only, so
   // the browser never needs them; Clerk does.
-  `connect-src 'self' ${clerk} ${turnstile}`,
-  `frame-src 'self' https://*.clerk.accounts.dev ${turnstile}`,
+  `connect-src 'self' ${clerkHttp} ${clerkWs} ${turnstile}`,
+  `frame-src 'self' ${clerkHttp} ${turnstile}`,
   "frame-ancestors 'self'",
   "base-uri 'self'",
-  "form-action 'self' https://*.clerk.accounts.dev https://www.mercadopago.com.ar https://www.mercadopago.com",
+  `form-action 'self' ${clerkHttp} https://www.mercadopago.com.ar https://www.mercadopago.com`,
   "object-src 'none'"
 ].join("; ");
 
