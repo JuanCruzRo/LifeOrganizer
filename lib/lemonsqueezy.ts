@@ -102,10 +102,46 @@ export function buildCheckoutUrl(params: {
 }
 
 /**
+ * The forms an HMAC-SHA256 digest can travel in.
+ *
+ * The first version of this accepted a bare lowercase hex string, which is what
+ * the obvious reading of the docs says, and rejected all three real deliveries
+ * from the store with "Invalid signature". Rather than guess again from prose,
+ * every plausible encoding is decoded and compared as bytes — the digest has
+ * to match either way, so accepting a second spelling of the same value
+ * weakens nothing. The accepted shapes are:
+ *
+ *   - hex, case-insensitive        3a…  (64 characters)
+ *   - `sha256=` + hex
+ *   - base64                       (32 bytes when decoded)
+ *   - `sha256=` + base64
+ *
+ * Anything that does not decode to exactly 32 bytes is dropped rather than
+ * compared, which is also what keeps timingSafeEqual from throwing on a length
+ * mismatch and turning a forged request into a 500.
+ */
+function digestCandidates(signature: string): Buffer[] {
+  const trimmed = signature.trim();
+  const out: Buffer[] = [];
+  for (const candidate of new Set([trimmed, trimmed.replace(/^sha256=/i, "").trim()])) {
+    if (!candidate) continue;
+    if (/^[0-9a-f]{64}$/i.test(candidate)) {
+      out.push(Buffer.from(candidate, "hex"));
+      continue;
+    }
+    // Buffer.from(_, "base64") is lenient and ignores stray characters, so the
+    // length is what decides whether this was meant to be a digest at all.
+    const decoded = Buffer.from(candidate, "base64");
+    if (decoded.length === 32) out.push(decoded);
+  }
+  return out;
+}
+
+/**
  * Verifies the `X-Signature` header Lemon Squeezy sends with every webhook.
  *
- * The signature is an HMAC-SHA256 of the **raw request body**, hex encoded. It
- * has to run over `request.text()` before anything parses the JSON: hashing a
+ * The signature is an HMAC-SHA256 of the **raw request body**, so it has to run
+ * over `request.text()` before anything parses the JSON: hashing a
  * re-serialised object produces a different byte string and the comparison
  * fails on every legitimate delivery, which is indistinguishable from an
  * attacker to whoever is reading the logs.
@@ -117,12 +153,12 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
   // needed", or a single unset variable silently disables the gate on payments.
   if (!secret || !signature) return false;
 
-  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
+  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest();
 
-  const a = Buffer.from(expected, "utf8");
-  const b = Buffer.from(signature.trim().toLowerCase(), "utf8");
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+  for (const candidate of digestCandidates(signature)) {
+    if (candidate.length === expected.length && timingSafeEqual(candidate, expected)) return true;
+  }
+  return false;
 }
 
 export type WebhookEvent =

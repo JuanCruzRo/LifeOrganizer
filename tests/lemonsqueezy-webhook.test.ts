@@ -61,6 +61,25 @@ describe("verifyWebhookSignature", () => {
   it("rejects a signature made with another secret", () => {
     expect(verifyWebhookSignature(body, sign(body, "whsec_other"))).toBe(false);
   });
+
+  // The store's real deliveries were rejected with a plain-hex comparison, so
+  // every spelling of the same digest has to be pinned here rather than
+  // discovered again by a customer who just paid.
+  it("accepts the digest as hex, as sha256=hex and as base64", () => {
+    const hex = sign(body);
+    const b64 = createHmac("sha256", SECRET).update(body, "utf8").digest("base64");
+    for (const form of [hex, `sha256=${hex}`, b64, `sha256=${b64}`]) {
+      expect(verifyWebhookSignature(body, form), `rejected: ${form.slice(0, 12)}…`).toBe(true);
+    }
+  });
+
+  it("still rejects a well-formed digest that is simply the wrong one", () => {
+    // Encoding tolerance must not become a way in: a valid-length digest over
+    // a different body has to fail exactly like a malformed header does.
+    const other = sign(JSON.stringify({ meta: { event_name: "subscription_cancelled" } }));
+    expect(verifyWebhookSignature(body, other)).toBe(false);
+    expect(verifyWebhookSignature(body, `sha256=${other}`)).toBe(false);
+  });
 });
 
 describe("buildCheckoutUrl", () => {
