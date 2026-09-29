@@ -86,14 +86,25 @@ no tiene techo diario. `lib/ai/complete.ts` es el único que llama a un provider
 |---|---|---|
 | Techo | 200k tokens/día/modelo | ninguno |
 | Costo | $0 hasta que se agota | $0.15/M entrada, **$0.014/M cacheada**, $0.60/M salida |
-| Un turno (13 tareas) | gratis | ~$0.00044, o ~$0.00022 fuera de pico |
-| Por mes | ~3.600 turnos | ~$2,60 a 200 turnos/día |
+| Un turno medido | gratis | **$0.00024** |
+| 200 turnos/día | gratis | **$1,44/mes** (~$0,72 fuera de pico) |
 
-Lacached es la mitad de la entrada a 13 tareas, y de ahí el split del prompt.
+### El prompt partido, medido
 
-### El prompt partido
+Contra la API real, tres turnos seguidos con el prefijo partido:
 
-`buildTaskPromptParts()` devuelve dos Mitades en lugar de una:
+```
+turno 1: prompt 1188, cached    48   <- todavía no hay nada cacheado
+turno 2: prompt 1188, cached 1152   <- 97% del prefijo
+turno 3: prompt 1188, cached 1152
+```
+
+Eso baja el turno de **$0.000396 a $0.00024**, un 39%. La salida domina el
+costo ($0.00022 de los $0.00024), así que cachear la entrada no compra tanto
+como parece: lo que compra es que el precio ya no escala con el tamaño del
+prompt.
+
+`buildTaskPromptParts()` devuelve dos mitades en lugar de una:
 
 - **static** (~842 tokens) — estilo, honestidad, voseo y las reglas de creación.
   Idéntica byte a byte para todos los usuarios del mismo plan.
@@ -169,14 +180,25 @@ Lo que sigue abierto, en orden de valor:
 2. **Routing por dificultad real.** Hoy el tier lo declara el caller. Cuando el
    parser del punto 1 exista, "esto es una tarea simple" pasa a ser una señal
    determinista en vez de un guess.
-3. **Medir el mismo eval contra Ollama** con `--provider ollama`, para saber si
-   el comportamiento se sostiene con `gpt-oss:120b` como único provider.
-4. **Un fine-tune propio** sobre un modelo chico, que es la vía realista a "mi
+3. **Un fine-tune propio** sobre un modelo chico, que es la vía realista a "mi
    propia IA": no hay GPU en esta máquina (Ryzen 7 7445HS, 14GB, sin CUDA), así
    que servir un modelo capaz en local no es una opción.
 
 Mientras tanto: usar `--model default` para las corridas de rutina, y reservar
 `--repeat 5` para antes de un release.
+
+### Estado: 72/72 contra Ollama
+
+`npm run eval:milo -- --provider ollama` con `gpt-oss:120b` como **único** provider:
+**72 de 72**, en 115 segundos, sin techo de por medio. Es la primera corrida
+completa que llega de punta a punta; las de Groq siempre se cortaban a mitad de
+camino por la cuota diaria.
+
+Los 36 casos × 2 tiers dan lo mismo con un solo modelo, así que el comportamiento
+de Milo no dependía de qué provider atendiera. Lo que cambia entre providers es
+la latencia: **~1,2s de mediana** en Ollama contra **~530ms** en Groq para
+`qwen/qwen3.8-27b`. Por eso Groq sigue primero en la cadena: es gratis mientras
+dure, y cuando se va la diferencia de velocidad deja de importar.
 
 ## Bugs que encontró el harness de providers
 
