@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import {
   verifyWebhookSignature,
+  signatureDiagnostics,
   planForVariant,
   type PaidPlan,
   type WebhookPayload,
@@ -36,7 +37,13 @@ export async function POST(request: Request) {
         sig ? `${sig.slice(0, 12)}... len=${sig.length}` : "none"
       })`
     );
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    // TEMPORAL: payments are broken and the delivery log in Lemon Squeezy is the
+    // only place the header is visible, so the failure echoes back what arrived.
+    // Remove once the real signature format is confirmed.
+    return NextResponse.json(
+      { error: "Invalid signature", debug: signatureDiagnostics(rawBody, sig) },
+      { status: 401 }
+    );
   }
 
   let payload: WebhookPayload;

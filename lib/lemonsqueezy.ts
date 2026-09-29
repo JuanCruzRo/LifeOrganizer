@@ -1,5 +1,5 @@
 import "server-only";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { PaidPlanName } from "@/lib/subscription-plans";
 
 // Lemon Squeezy is the merchant of record: it collects and files the sales tax
@@ -102,19 +102,33 @@ export function buildCheckoutUrl(params: {
 }
 
 /**
- * The forms an HMAC-SHA256 digest can travel in.
+ * The signed payload candidates for one delivery.
  *
- * The first version of this accepted a bare lowercase hex string, which is what
- * the obvious reading of the docs says, and rejected all three real deliveries
- * from the store with "Invalid signature". Rather than guess again from prose,
- * every plausible encoding is decoded and compared as bytes — the digest has
- * to match either way, so accepting a second spelling of the same value
- * weakens nothing. The accepted shapes are:
+ * Lemon Squeezy was acquired by Stripe and the store now reports
+ * `payment_processor: "stripe"`, so the header arrived in a shape this code did
+ * not know: Stripe signs `<timestamp>.<rawBody>` and sends it as
+ * `t=<unix>,v1=<hex>`. Two deliveries from a real store were rejected with
+ * "Invalid signature" before this was handled.
  *
- *   - hex, case-insensitive        3a…  (64 characters)
+ * Both the timestamped form and the bare digest are returned, because which one
+ * a given deployment uses is exactly the thing that was wrong twice already.
+ * Every candidate still has to equal the recomputed HMAC, so accepting both
+ * spellings does not widen what passes.
+ */
+function signedPayloads(rawBody: string, signature: string): string[] {
+  const payloads = [rawBody];
+  const timestamp = /(?:^|[,\s])t=(\d{9,})/.exec(signature)?.[1];
+  if (timestamp) payloads.unshift(`${timestamp}.${rawBody}`);
+  return payloads;
+}
+
+/**
+ * The digests that the header is claiming, in any encoding.
+ *
+ *   - hex, case-insensitive           64 characters
  *   - `sha256=` + hex
- *   - base64                       (32 bytes when decoded)
- *   - `sha256=` + base64
+ *   - `v1=` + hex                    Stripe's field name
+ *   - base64, and `sha256=`/`v1=` + base64
  *
  * Anything that does not decode to exactly 32 bytes is dropped rather than
  * compared, which is also what keeps timingSafeEqual from throwing on a length
@@ -123,7 +137,8 @@ export function buildCheckoutUrl(params: {
 function digestCandidates(signature: string): Buffer[] {
   const trimmed = signature.trim();
   const out: Buffer[] = [];
-  for (const candidate of new Set([trimmed, trimmed.replace(/^sha256=/i, "").trim()])) {
+  const withoutTimestamp = trimmed.replace(/^t=\d+,/, "").trim();
+  for (const candidate of new Set([trimmed, withoutTimestamp, withoutTimestamp.replace(/^(sha256|v1)=/i, "").trim()])) {
     if (!candidate) continue;
     if (/^[0-9a-f]{64}$/i.test(candidate)) {
       out.push(Buffer.from(candidate, "hex"));
@@ -153,12 +168,33 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
   // needed", or a single unset variable silently disables the gate on payments.
   if (!secret || !signature) return false;
 
-  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest();
-
-  for (const candidate of digestCandidates(signature)) {
-    if (candidate.length === expected.length && timingSafeEqual(candidate, expected)) return true;
+  const candidates = digestCandidates(signature);
+  for (const payload of signedPayloads(rawBody, signature)) {
+    const expected = createHmac("sha256", secret).update(payload, "utf8").digest();
+    for (const candidate of candidates) {
+      if (candidate.length === expected.length && timingSafeEqual(candidate, expected)) return true;
+    }
   }
   return false;
+}
+
+/**
+ * What to send back when verification fails, so the next delivery can be
+ * diagnosed from Lemon Squeezy's own delivery log instead of guessed at again.
+ *
+ * Nothing secret goes out: an HMAC digest reveals nothing about the key, and
+ * these are facts about the request the sender already has. `lsSignature` is
+ * the full header precisely because without it there is no way to tell an
+ * unknown encoding from a body that arrived altered.
+ */
+export function signatureDiagnostics(rawBody: string, signature: string | null): Record<string, unknown> {
+  return {
+    lsSignature: signature,
+    lsSignatureLength: signature?.length ?? 0,
+    bodyLength: rawBody.length,
+    bodySha256: createHash("sha256").update(rawBody, "utf8").digest("hex"),
+    contentEncoding: null
+  };
 }
 
 export type WebhookEvent =

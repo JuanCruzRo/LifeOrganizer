@@ -148,3 +148,24 @@ describe("planForVariant", () => {
     expect(planForVariant(111)).toBeNull();
   });
 });
+
+describe("Stripe-style signatures", () => {
+  // Lemon Squeezy is a Stripe company and the store reports
+  // payment_processor "stripe", so the header is `t=<unix>,v1=<hex>` over
+  // "<timestamp>.<body>". Two real deliveries were rejected before this.
+  it("accepts t=...,v1=... over timestamp.body", () => {
+    const t = 1759178746;
+    const v1 = createHmac("sha256", SECRET).update(`${t}.${body}`, "utf8").digest("hex");
+    expect(verifyWebhookSignature(body, `t=${t},v1=${v1}`)).toBe(true);
+  });
+
+  it("accepts v1=... on its own", () => {
+    const v1 = createHmac("sha256", SECRET).update(body, "utf8").digest("hex");
+    expect(verifyWebhookSignature(body, `v1=${v1}`)).toBe(true);
+  });
+
+  it("rejects a Stripe-style header whose timestamp does not match the digest", () => {
+    const v1 = createHmac("sha256", SECRET).update(`${1759178746}.${body}`, "utf8").digest("hex");
+    expect(verifyWebhookSignature(body, `t=1759999999,v1=${v1}`)).toBe(false);
+  });
+});
