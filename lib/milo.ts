@@ -49,10 +49,33 @@ export async function chatWithMilo({
     maxTokens
   );
 
-  return {
-    content: response.choices[0]?.message?.content ?? "",
-    model: response.model
-  };
+  const choice = response.choices[0];
+  const content = choice?.message?.content ?? "";
+
+  // gpt-oss is a reasoning model: when it spends the whole `max_tokens` budget
+  // thinking, `content` comes back empty and the user sees a blank chat bubble.
+  // The same overrun truncates a TASKS_ACTION block mid-array. Both look like a
+  // network error to the user, so retry once on the other model instead.
+  const starved = content.trim() === "" || choice?.finish_reason === "length";
+  if (starved) {
+    const retryModel =
+      isPro || response.model === GROQ_PRO_MODEL ? GROQ_FALLBACK_MODEL : GROQ_PRO_MODEL;
+    console.warn(
+      `Groq "${response.model}" returned an unusable reply (finish_reason=${choice?.finish_reason}, ${content.length} chars), retrying with "${retryModel}"`
+    );
+    const retry = await groq.chat.completions.create(
+      { model: retryModel, messages, temperature: 0.5, max_tokens: maxTokens ?? 1200 },
+      { signal: AbortSignal.timeout(timeoutMs) }
+    );
+    const retryContent = retry.choices[0]?.message?.content ?? "";
+    if (retryContent.trim() !== "") {
+      return { content: retryContent, model: retry.model };
+    }
+    // Both models starved. Return whatever we have rather than nothing.
+    return { content, model: response.model };
+  }
+
+  return { content, model: response.model };
 }
 
 export async function refreshUserMemorySummary(params: {
@@ -88,9 +111,13 @@ async function createChatCompletionWithFallback(
   messages: Groq.Chat.ChatCompletionMessageParam[],
   timeoutMs: number,
   primaryModel: string = GROQ_MODEL,
-  // Groq's free tier caps output tokens per minute at 1000 and rejects any
-  // request that asks for more, so the default stays safely under it.
-  maxTokens = 800
+  // A stale comment here claimed Groq's free tier rejected anything over 1000
+  // output tokens. Measured against the live API: 2400 is accepted, so the real
+  // constraint is throughput, not the per-request cap. The account allows 200k
+  // tokens PER DAY, which is the number that actually bites: at ~1.8k tokens per
+  // turn that is roughly 110 chat turns a day for the whole product. 1200 is
+  // enough for prose plus a 12-task block without burning budget on essays.
+  maxTokens = 1200
 ) {
   try {
     return await groq.chat.completions.create(

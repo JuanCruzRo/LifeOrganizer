@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import { formatDueDate, getDaysUntilDueDate, getDueDateLabel, getTodayDateValue } from "@/lib/task-date";
 
 function dateIn(days: number) {
+  // Local calendar days, not UTC. `toISOString()` rolls over to the next day for
+  // anyone west of Greenwich after their evening, so in Argentina this helper
+  // returned tomorrow's date and the assertions failed from 21:00 on.
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 describe("getDaysUntilDueDate", () => {

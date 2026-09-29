@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "check:release": "node scripts/check-release.ts"
+    "check:release": "node scripts/check-release.ts",
+    "eval:milo": "vitest run --config vitest.eval.mts",
+    "eval:milo:repeat": "vitest run --config vitest.eval.mts -- --repeat 5"
   },
   "dependencies": {
     "@clerk/localizations": "^4.20.0",
