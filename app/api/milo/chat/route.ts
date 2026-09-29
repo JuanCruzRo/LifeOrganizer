@@ -1,5 +1,5 @@
 import "server-only";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { chatWithMilo, classifyChatFailure, refreshUserMemorySummary } from "@/lib/milo";
 import { buildTaskPromptParts } from "@/lib/milo-chat-prompt";
 import { parseTaskActions } from "@/lib/task-actions";
@@ -77,7 +77,19 @@ export async function POST(request: Request) {
       console.warn(`[milo] user=${userId} reply was truncated, recovered ${parsed.taskActions.length} task(s)`);
     }
 
-    void updateMemoryInBackground(userId, userMemory, [...history, { role: "user", content: message }, { role: "assistant", content: parsed.text }]);
+    // This used to be a bare `void`, which runs in development and dies
+    // silently in production: once the response is sent, Vercel freezes the
+    // function and anything still pending is killed mid-flight. No error, no
+    // log line — the memory summary just quietly stops updating, and Milo
+    // forgets the context that makes it useful. `after()` is the platform's
+    // guarantee that the work runs to completion after the response is out.
+    after(() =>
+      updateMemoryInBackground(userId, userMemory, [
+        ...history,
+        { role: "user", content: message },
+        { role: "assistant", content: parsed.text }
+      ])
+    );
 
     return NextResponse.json({
       response: parsed.text,
