@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { PaidPlanName } from "@/lib/subscription-plans";
 
 // Lemon Squeezy is the merchant of record: it collects and files the sales tax
@@ -195,18 +195,12 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
 }
 
 /**
- * Where to find the signature header, and what to say back when it is wrong.
+ * Where the signature header is read from.
  *
- * Lemon Squeezy documents `X-Signature`, but the store now runs on Stripe's
- * payment processor, and the digest the body carries has been rejected in every
- * shape tried so far. A request whose signature header is simply absent is
- * indistinguishable, from inside the handler, from one whose header arrived
- * under a name nobody looked at — so the failure response reports every header
- * the delivery actually contained, and the value of any of them that look like
- * a signature.
- *
- * Nothing secret goes out. An HMAC digest reveals nothing about the key, and
- * these are facts about a request the sender already has.
+ * Lemon Squeezy documents `X-Signature`, but the store runs on Stripe's
+ * payment processor, and a digest under a name nobody reads is
+ * indistinguishable, from inside the handler, from no digest at all — both are
+ * a 401. Reading the known names costs nothing and removes that guess.
  */
 export function readSignatureHeader(headers: Headers): string | null {
   for (const name of ["x-signature", "stripe-signature", "ls-signature", "x-ls-signature"]) {
@@ -214,22 +208,6 @@ export function readSignatureHeader(headers: Headers): string | null {
     if (value) return value;
   }
   return null;
-}
-
-export function signatureDiagnostics(
-  rawBody: string,
-  signature: string | null,
-  headers?: Headers
-): Record<string, unknown> {
-  const seen = headers ? [...headers.keys()].sort() : [];
-  return {
-    lsSignature: signature,
-    lsSignatureLength: signature?.length ?? 0,
-    signatureHeadersSeen: seen.filter((h) => /signature/i.test(h)),
-    allHeaders: seen,
-    bodyLength: rawBody.length,
-    bodySha256: createHash("sha256").update(rawBody, "utf8").digest("hex")
-  };
 }
 
 export type WebhookEvent =

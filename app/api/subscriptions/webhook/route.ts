@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import {
   verifyWebhookSignature,
   readSignatureHeader,
-  signatureDiagnostics,
   planForVariant,
   type PaidPlan,
   type WebhookPayload,
@@ -30,21 +29,16 @@ export async function POST(request: Request) {
   const signature = readSignatureHeader(request.headers);
 
   if (!verifyWebhookSignature(rawBody, signature)) {
-    // Log the shape of what arrived, never the value: enough to tell "wrong
-    // secret" from "the header is sha256=<hex> and we did not account for it"
-    // the first time a test event comes back 401.
+    // Enough to tell a wrong secret from a header under a name nobody reads,
+    // and nothing more. The digest itself is never echoed back: for a while a
+    // delivery could read the whole incoming header out of the 401 body, which
+    // is a needless disclosure of material produced with a payment secret.
+    const named = [...request.headers.keys()].filter((h) => /signature/i.test(h));
     console.warn(
-      `Invalid Lemon Squeezy webhook signature (received: ${
-        signature ? `${signature.slice(0, 16)}... len=${signature.length}` : "none"
-      }, headers: ${[...request.headers.keys()].filter((h) => /signature/i.test(h)).join(",") || "none"})`
+      `Invalid Lemon Squeezy webhook signature (length: ${signature?.length ?? 0}, ` +
+        `headers: ${named.join(",") || "none"})`
     );
-    // TEMPORAL: payments are broken and the delivery log in Lemon Squeezy is the
-    // only place the header is visible, so the failure echoes back what arrived.
-    // Remove once the real signature format is confirmed.
-    return NextResponse.json(
-      { error: "Invalid signature", debug: signatureDiagnostics(rawBody, signature, request.headers) },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   let payload: WebhookPayload;
