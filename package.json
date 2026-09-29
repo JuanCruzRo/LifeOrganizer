@@ -12,7 +12,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "check:release": "node scripts/check-release.ts",
-    "eval:milo": "node scripts/eval-milo.mjs"
+    "eval:milo": "node scripts/eval-milo.mjs",
+    "deploy:env": "bash scripts/deploy-env.sh"
   },
   "dependencies": {
     "@clerk/localizations": "^4.20.0",
