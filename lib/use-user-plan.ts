@@ -8,6 +8,7 @@ type PlanResponse = {
   plan: UserPlan;
   trialEndsAt: string | null;
   trialAvailable?: boolean;
+  trialEnded?: boolean;
 };
 
 export function useUserPlan() {
@@ -19,6 +20,7 @@ export function useUserPlan() {
   // stale value here can route the user to the wrong button but never to a
   // dead end.
   const [trialAvailable, setTrialAvailable] = useState(true);
+  const [trialEnded, setTrialEnded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -31,6 +33,7 @@ export function useUserPlan() {
         setPlan(data.plan);
         setTrialEndsAt(data.trialEndsAt ? new Date(data.trialEndsAt) : null);
         setTrialAvailable(data.trialAvailable ?? true);
+        setTrialEnded(data.trialEnded ?? false);
       } catch {
         if (active) setPlan("free");
       } finally {
@@ -47,5 +50,5 @@ export function useUserPlan() {
     ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null;
 
-  return { plan, trialEndsAt, trialDaysLeft, trialAvailable, isLoaded };
+  return { plan, trialEndsAt, trialDaysLeft, trialAvailable, trialEnded, isLoaded };
 }

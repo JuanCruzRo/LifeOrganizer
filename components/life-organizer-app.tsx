@@ -30,12 +30,17 @@ const FREE_PLAN_LIMIT_PREFIX = "FREE_PLAN_LIMIT:";
 const CHAT_OPEN_KEY = "spark-chat-open";
 // Highest milestone already celebrated, per account, so it never repeats.
 const celebratedKey = (userId: string) => `spark-gem-celebrated_${userId}`;
+// Se muestra una sola vez: avisar "tu prueba terminó" en cada sesión para
+// siempre sería hostil, pero sin avisarlo nunca el usuario baja a Free sin
+// enterarse. Se recordó por usuario, así otro dispositivo del mismo equipo
+// no lo vuelve a mostrar.
+const trialNoticeKey = (userId: string) => `spark-trial-notice-seen_${userId}`;
 
 export function LifeOrganizerApp() {
   const { copy, language } = useAppLanguage();
   const { user, logout } = useAuth();
   const displayName = getUserDisplayName(user);
-  const { plan, trialDaysLeft } = useUserPlan();
+  const { plan, trialDaysLeft, trialEnded } = useUserPlan();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -52,6 +57,28 @@ export function LifeOrganizerApp() {
   const [unlockedGem, setUnlockedGem] = useState<{ level: number; days: number } | null>(null);
   // Desktop only: the chat can be put away so the screen holds one thing at a time.
   const [chatOpen, setChatOpen] = useState(true);
+
+  // Se arranca oculto: si la arrancara visible habría un flash del aviso en
+  // usuarios que ya lo vieron antes de que el effect lea localStorage.
+  const [trialNoticeSeen, setTrialNoticeSeen] = useState(true);
+
+  useEffect(() => {
+    if (!trialEnded) return;
+    try {
+      setTrialNoticeSeen(localStorage.getItem(trialNoticeKey(user.id)) === "1");
+    } catch {
+      /* storage can be blocked — el aviso se muestra una vez igual */
+    }
+  }, [trialEnded, user.id]);
+
+  function dismissTrialNotice() {
+    setTrialNoticeSeen(true);
+    try {
+      localStorage.setItem(trialNoticeKey(user.id), "1");
+    } catch {
+      /* storage can be blocked */
+    }
+  }
 
   useEffect(() => {
     try {
@@ -450,6 +477,28 @@ export function LifeOrganizerApp() {
           </button>
         </div>
       </header>
+
+      {trialEnded && !trialNoticeSeen && (
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-primary/30 bg-primary/10 px-4 py-2 text-xs text-foreground sm:px-5">
+          <span className="min-w-0">{copy.plans.trialExpired}</span>
+          <span className="flex flex-shrink-0 items-center gap-2">
+            <Link
+              href="/plans"
+              className="flex items-center gap-1 font-semibold text-primary underline underline-offset-2 hover:opacity-80 whitespace-nowrap"
+            >
+              {copy.plans.trialExpiredCta}
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+            <button
+              onClick={dismissTrialNotice}
+              aria-label={copy.plans.trialExpired}
+              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {storageError && (
         <div className="flex-shrink-0 border-b border-border bg-destructive/10 px-5 py-2 text-xs text-destructive">

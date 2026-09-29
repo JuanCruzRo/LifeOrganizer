@@ -17,3 +17,42 @@ export function resolvePlanForStatus(
 ): UserPlan {
   return status === "cancelled" ? "free" : plan;
 }
+
+export type TrialRow = {
+  plan: UserPlan;
+  /** null when the user never started a trial */
+  trialEndsAt: Date | null;
+  /** set as soon as there is a real subscription behind the account */
+  mpPreapprovalId: string | null;
+};
+
+export type TrialView = {
+  /** what the badge and the feature gates should show */
+  plan: UserPlan;
+  /** whether `startPlusTrial` would still accept this user */
+  trialAvailable: boolean;
+  /** whether the user's trial ran out and they should be told about it */
+  trialEnded: boolean;
+};
+
+/**
+ * A trial only downgrades someone who is still on it.
+ *
+ * `trial_ends_at` is never cleared when a trialling user goes on to pay, so it
+ * stays in the past forever. Reading `plan === "plus" && trialEndsAt < now`
+ * alone would therefore flip a *paying* Plus subscriber to "free" fourteen days
+ * after they started their trial: Free badge, features taken away, told to buy
+ * something they already bought. The `mp_preapprovalId` guard is what keeps the
+ * trial and the paid subscription as separate states.
+ */
+export function resolveTrialView(row: TrialRow, now: Date): TrialView {
+  const expired = row.trialEndsAt !== null && row.trialEndsAt < now;
+  const inTrial = row.plan === "plus" && row.trialEndsAt !== null && row.mpPreapprovalId === null;
+
+  return {
+    plan: inTrial && expired ? "free" : row.plan,
+    trialAvailable:
+      row.plan === "free" && row.trialEndsAt === null && row.mpPreapprovalId === null,
+    trialEnded: inTrial && expired
+  };
+}
