@@ -5,3 +5,23 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 // deprecated, and path matching can diverge from how Next.js actually routes a
 // request, which is exactly how protected pages end up reachable.
 export default clerkMiddleware();
+
+export const config = {
+  // The payment webhook is deliberately not in either pattern.
+  //
+  // Lemon Squeezy signs the exact bytes of the request body. Clerk's
+  // middleware, applied to a request it does not recognise as coming from a
+  // signed-in browser, re-reads the body on its way through — and the body that
+  // reaches the route is no longer byte-for-byte what the provider signed. The
+  // handler then hashes something the sender never hashed and every delivery
+  // verifies as forged, which is what happened: real payments were taken and
+  // rejected as invalid signatures.
+  //
+  // The route authenticates with the provider's HMAC instead of a session, so
+  // there is nothing for the middleware to do there. Both negative lookaheads
+  // are needed: one guards the page pattern and the other the /api pattern.
+  matcher: [
+    "/((?!api/subscriptions/webhook|_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!api/subscriptions/webhook)(?:api|trpc)(.*))"
+  ]
+};
