@@ -70,22 +70,21 @@ Fechas ya resueltas. NO calcules fechas vos ni supongas el día de la semana:
 ${rows.join("\n")}`;
 }
 
-export function buildTaskContext({
-  tasks = [],
-  pendingTaskAction = null,
-  canCreateTasks,
-  userMemory = "",
-  now = new Date()
-}: BuildContextOptions): string {
-  const today = isoDate(now);
-  const sevenDaysLater = new Date(now);
-  sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-  const defaultDate = isoDate(sevenDaysLater);
-
-  const lines: string[] = [
-    `Fecha de hoy: ${today}`,
-    dateReferences(now),
-    `
+/**
+ * The half of the prompt that never changes for a given plan.
+ *
+ * This is split out because it is the part worth caching. Ollama prices cached
+ * input at $0.014/M against $0.15/M for a fresh one, and this prefix is
+ * byte-identical for every user and every turn on the same plan, so keeping it
+ * alone in the first message lets the provider hit its cache instead of
+ * re-charging the same rules on each of the ~1,500 tokens a turn costs.
+ *
+ * The one thing that must NOT live here is a date: `defaultDateExample` moves
+ * every 24 hours, and a single changing character at the end of the prefix
+ * invalidates the cache for everything before it.
+ */
+function buildStaticPrompt(canCreateTasks: boolean, defaultDateExample: string): string {
+  return `
 Estilo:
 - Máximo 4 frases por defecto. Sin tablas, encabezados ni listas largas, salvo que pidan un plan detallado o "explicame en detalle".
 - Si el tema da para mucho, da lo esencial y preguntá si quieren más. Una respuesta larga es peor aunque sea buena.
@@ -94,7 +93,71 @@ Estilo:
 Honestidad:
 - Si no sabés con certeza, decilo: "No tengo esa información".
 - NUNCA inventes hechos, fechas, precios, datos ni nombres reales. Si una pregunta factual no está en los resultados de búsqueda, admití que no sabés.
-- Es mejor "no sé" que una respuesta incorrecta.`
+- Es mejor "no sé" que una respuesta incorrecta.`.concat(
+    canCreateTasks
+      ? `
+
+Tareas. Si vas a crear tareas, terminá tu respuesta con este bloque y NADA después (ni una palabra, ni un punto, ni un bloque de código):
+TASKS_ACTION:[{"title":"...","dueDate":"YYYY-MM-DD"}]
+
+Formato:
+- Solo esos dos campos. Los demás se completan solos; inventarlos rompe la creación.
+- Un objeto por tarea, sin saltos de línea ni comas de más.
+- Máximo 12 tareas. Si piden más (todos los días durante un mes), creá las 12 primeras.
+- NUNCA lo cortes a la mitad: si te falta lugar, emití menos tareas.
+Varias tareas van en el mismo array:
+TASKS_ACTION:[{"title":"Banco","dueDate":"${defaultDateExample}"},{"title":"Banco","dueDate":"${defaultDateExample}"}]
+
+Cuándo usarlo:
+1. Si lo piden explícitamente ("agenda", "crea", "recuérdame", "cada martes").
+2. Si MENCIONAN algo que hay que hacer, sobre todo con fecha o plazo ("mañana rindo", "tengo que llamar al banco", "el viernes entrego").
+Recurrentes (cada semana, todos los martes): una tarea por ocurrencia, hasta 12.
+Nunca si es solo una pregunta o charla sin nada que hacer.
+
+Proponés, no creás (CRÍTICO):
+- El usuario ve botones para confirmar o descartar. La tarea todavía NO existe.
+- NUNCA digas "he creado la tarea", "listo, agendado", "ya te lo guardé" ni "añadí un recordatorio": es mentira. Decí "te propongo", "agregá esta", "te dejo estos proyectos".
+- NUNCA propongas tareas si solo preguntan cómo van o qué tienen pendiente: respondé con la información y nada más.
+
+Proponé, no preguntes (CRÍTICO):
+- Si dicen algo que hay que hacer, poné la tarea en el bloque AHORA, en la misma respuesta. Preguntar NO reemplaza proponer.
+- Si no sabés la fecha, usá el default. No preguntes "¿para qué día?" ni "¿a qué hora?": después lo ajustan con un botón.
+- Si piden algo recurrente, creá las ocurrencias. No te excuses por "saturar la agenda" ni pidas permiso.
+- Ante la duda, PROPONÉ: si sobra lo descartan con un clic; si falta, se perdió y el usuario cree que no lo escuchaste.
+- Si el mensaje trae varias cosas ("mañana cursar y gym miércoles y sábados"), incluí TODAS. No dejes ninguna afuera por concentrarte en la recurrente.
+- Ejemplos: "agendame llamar al banco" -> 1 tarea, sin preguntar el día. "gimnasio los miércoles y sábados" -> 8 tareas, sin preguntar nada. "tengo parcial el jueves" -> 1 tarea con la fecha del jueves.
+- NUNCA inventes políticas o restricciones que no te di (por ejemplo, que no se pueden crear tareas diarias). No las tienes.`
+      : `
+
+Tareas: este usuario está en el plan Free y NO puede crear tareas desde el chat (exclusivo de Plus y Pro).
+Si pide crear, agendar o recordar ("agendá", "creá", "recuérdame", "nueva tarea"), explicá amablemente que por chat necesita Plus, y sugerí crearla con el botón "+" o hacer upgrade en /plans.
+Nunca generes el bloque TASKS_ACTION para este usuario.`
+  );
+}
+
+export type TaskPromptParts = {
+  /** Byte-stable per plan. Sent first so the provider can cache it. */
+  static: string;
+  /** Per user and per turn. */
+  dynamic: string;
+};
+
+export function buildTaskPromptParts({
+  tasks = [],
+  pendingTaskAction = null,
+  canCreateTasks,
+  userMemory = "",
+  now = new Date()
+}: BuildContextOptions): TaskPromptParts {
+  const today = isoDate(now);
+  const sevenDaysLater = new Date(now);
+  sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+  const defaultDate = isoDate(sevenDaysLater);
+
+  const lines: string[] = [
+    `Fecha de hoy: ${today}`,
+    dateReferences(now),
+    `\nFecha por defecto para una tarea sin fecha: ${defaultDate}.`
   ];
 
   if (userMemory) {
@@ -137,44 +200,23 @@ Tarea pendiente de confirmación del usuario: "${pendingTaskAction.title}" (${pe
 - Si el usuario cambia claramente de tema, recordale brevemente que tiene esa tarea pendiente de confirmar o descartar antes de continuar.`);
   }
 
-  lines.push(
-    canCreateTasks
-      ? `
-Tareas. Si vas a crear tareas, terminá tu respuesta con este bloque y NADA después (ni una palabra, ni un punto, ni un bloque de código):
-TASKS_ACTION:[{"title":"...","dueDate":"YYYY-MM-DD"}]
+  return {
+    // The static half carries a date inside its own example, so it is built
+    // from the same `defaultDate` the dynamic half announces. It changes once
+    // a day, not once a turn, which keeps the cache warm for a whole day.
+    static: buildStaticPrompt(canCreateTasks, defaultDate),
+    dynamic: lines.join("\n")
+  };
+}
 
-Formato:
-- Solo esos dos campos. Los demás se completan solos; inventarlos rompe la creación.
-- Un objeto por tarea, sin saltos de línea ni comas de más.
-- Máximo 12 tareas. Si piden más (todos los días durante un mes), creá las 12 primeras.
-- NUNCA lo cortes a la mitad: si te falta lugar, emití menos tareas.
-Varias tareas van en el mismo array:
-TASKS_ACTION:[{"title":"Banco","dueDate":"${defaultDate}"},{"title":"Banco","dueDate":"${defaultDate}"}]
-
-Cuándo usarlo:
-1. Si lo piden explícitamente ("agenda", "crea", "recuérdame", "cada martes").
-2. Si MENCIONAN algo que hay que hacer, sobre todo con fecha o plazo ("mañana rindo", "tengo que llamar al banco", "el viernes entrego").
-Recurrentes (cada semana, todos los martes): una tarea por ocurrencia, hasta 12.
-Nunca si es solo una pregunta o charla sin nada que hacer.
-
-Proponés, no creás (CRÍTICO):
-- El usuario ve botones para confirmar o descartar. La tarea todavía NO existe.
-- NUNCA digas "he creado la tarea", "listo, agendado", "ya te lo guardé" ni "añadí un recordatorio": es mentira. Decí "te propongo", "agregá esta", "te dejo estos proyectos".
-- NUNCA propongas tareas si solo preguntan cómo van o qué tienen pendiente: respondé con la información y nada más.
-
-Proponé, no preguntes (CRÍTICO):
-- Si dicen algo que hay que hacer, poné la tarea en el bloque AHORA, en la misma respuesta. Preguntar NO reemplaza proponer.
-- Si no sabés la fecha, usá el default. No preguntes "¿para qué día?" ni "¿a qué hora?": después lo ajustan con un botón.
-- Si piden algo recurrente, creá las ocurrencias. No te excuses por "saturar la agenda" ni pidas permiso.
-- Ante la duda, PROPONÉ: si sobra lo descartan con un clic; si falta, se perdió y el usuario cree que no lo escuchaste.
-- Si el mensaje trae varias cosas ("mañana cursar y gym miércoles y sábados"), incluí TODAS. No dejes ninguna afuera por concentrarte en la recurrente.
-- Ejemplos: "agendame llamar al banco" -> 1 tarea, sin preguntar el día. "gimnasio los miércoles y sábados" -> 8 tareas, sin preguntar nada. "tengo parcial el jueves" -> 1 tarea con la fecha del jueves.
-- NUNCA inventes políticas o restricciones que no te di (por ejemplo, que no se pueden crear tareas diarias). No las tienes.`
-      : `
-Tareas: este usuario está en el plan Free y NO puede crear tareas desde el chat (exclusivo de Plus y Pro).
-Si pide crear, agendar o recordar ("agendá", "creá", "recuérdame", "nueva tarea"), explicá amablemente que por chat necesita Plus, y sugerí crearla con el botón "+" o hacer upgrade en /plans.
-Nunca generes el bloque TASKS_ACTION para este usuario.`
-  );
-
-  return lines.join("\n");
+/**
+ * Single-string context, for callers that do not care about cache prefixes.
+ *
+ * The order matters: static first, dynamic after. Any provider that does
+ * automatic prefix caching only reuses the leading bytes, and a per-turn
+ * segment placed before the rules would invalidate all of them.
+ */
+export function buildTaskContext(options: BuildContextOptions): string {
+  const { static: staticPart, dynamic } = buildTaskPromptParts(options);
+  return `${staticPart}\n${dynamic}`;
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { chatWithMilo, refreshUserMemorySummary } from "@/lib/milo";
-import { buildTaskContext } from "@/lib/milo-chat-prompt";
+import { chatWithMilo, classifyChatFailure, refreshUserMemorySummary } from "@/lib/milo";
+import { buildTaskPromptParts } from "@/lib/milo-chat-prompt";
 import { parseTaskActions } from "@/lib/task-actions";
 import { requireAuth, getUserPlan } from "@/lib/server-auth";
 import { consumeDailyUsage, dailyLimitResponse } from "@/lib/usage-limits";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   const canCreateTasks = plan !== "free";
 
   const userMemory = await getUserMemory(userId);
-  const context = buildTaskContext({
+  const { static: staticContext, dynamic: dynamicContext } = buildTaskPromptParts({
     tasks: body.tasks ?? [],
     pendingTaskAction: body.pendingTaskAction ?? null,
     canCreateTasks,
@@ -58,7 +58,13 @@ export async function POST(request: Request) {
   }));
 
   try {
-    const { content } = await chatWithMilo({ message, context, history, isPro: plan === "pro" });
+    const { content } = await chatWithMilo({
+      message,
+      contextStatic: staticContext,
+      context: dynamicContext,
+      history,
+      isPro: plan === "pro"
+    });
     const parsed = parseTaskActions(content);
 
     // This used to swallow every malformed block, so "Milo no me creo las
@@ -78,26 +84,29 @@ export async function POST(request: Request) {
       taskActions: canCreateTasks && parsed.taskActions.length > 0 ? parsed.taskActions : null
     });
   } catch (error) {
-    // The Groq plan allows 200k tokens per day for the whole account, so a
-    // budget overrun is a normal operating condition, not a bug. Telling the
-    // user "no se pudo conectar" when the truth is "Milo está ocupado hoy"
-    // sends them to debug their own network for no reason.
-    const status = typeof (error as { status?: unknown })?.status === "number"
-      ? (error as { status: number }).status
-      : undefined;
-    const isRateLimited = status === 429;
-    const isTimeout = error instanceof Error && error.name === "TimeoutError";
+    // Groq's plan allows 200k tokens per day for the whole account, so a budget
+    // overrun is a normal operating condition rather than a bug — and the chain
+    // exists precisely so it is no longer the only outcome. It becomes a
+    // user-facing state only when the second provider is unavailable too.
+    const failure = classifyChatFailure(error);
 
-    console.error(`Milo chat failed (status=${status ?? "n/a"}, rateLimited=${isRateLimited})`, error);
+    console.error(
+      `[milo] user=${userId} chat failed: kinds=[${failure.kinds.join(", ")}] busy=${failure.busy} timedOut=${failure.timedOut}`,
+      error
+    );
 
-    if (isRateLimited) {
+    if (failure.busy) {
       return NextResponse.json(
         { error: "Milo está con muchos mensajes ahora. Probá en un rato." },
         { status: 503 }
       );
     }
     return NextResponse.json(
-      { error: isTimeout ? "Milo tardó demasiado en responder." : "No se pudo conectar con Milo." },
+      {
+        error: failure.timedOut
+          ? "Milo tardó demasiado en responder."
+          : "No se pudo conectar con Milo."
+      },
       { status: 502 }
     );
   }

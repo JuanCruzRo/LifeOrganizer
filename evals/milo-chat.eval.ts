@@ -1,46 +1,80 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, afterAll } from "vitest";
-import { chatWithMilo } from "@/lib/milo";
-import { buildTaskContext } from "@/lib/milo-chat-prompt";
+import { chatWithMilo, classifyChatFailure } from "@/lib/milo";
+import { buildTaskPromptParts } from "@/lib/milo-chat-prompt";
 import { parseTaskActions } from "@/lib/task-actions";
 import { CASES, NOW, type EvalCase } from "./milo-cases";
 import type { TaskInput } from "@/types/task";
 
-// CLI flags: --filter <substring>  --repeat <n>
-const argv = process.argv.slice(2);
-const flag = (name: string) => {
-  const i = argv.indexOf(`--${name}`);
-  return i === -1 ? undefined : argv[i + 1];
-};
+/**
+ * Configuration arrives as environment variables, never as CLI arguments.
+ *
+ * This file used to parse `process.argv` for `--filter`, `--repeat`, `--model`
+ * and `--provider`, and that code could never have fired: vitest rejects
+ * unknown options before the run starts, and the args that survive a `--`
+ * separator are not in `process.argv` inside the test worker. Every documented
+ * run silently fell back to the defaults — both models, one repeat, no filter.
+ *
+ * `scripts/eval-milo.mjs` translates the CLI into these variables, and
+ * `npm run eval:milo -- --filter x` works. Read from env only from here on, so
+ * the two can never drift apart again.
+ */
+const FILTER = process.env.EVAL_FILTER;
+const REPEAT = Math.max(1, Number(process.env.EVAL_REPEAT ?? 1));
 
-const FILTER = flag("filter") ?? process.env.EVAL_FILTER;
-const REPEAT = Math.max(1, Number(flag("repeat") ?? process.env.EVAL_REPEAT ?? 1));
+/**
+ * Pin the eval to one provider.
+ *
+ * The chain normally prefers Groq and falls over to Ollama Cloud. That is
+ * correct in production and wrong in a measurement: if half the cases run on
+ * one model and half on another, a regression in either looks like noise, and a
+ * "passing" run may never have touched the code you changed.
+ *
+ *   npm run eval:milo -- --provider groq
+ *   npm run eval:milo -- --provider ollama
+ */
+const PROVIDER = process.env.EVAL_PROVIDER;
+if (PROVIDER) process.env.AI_PROVIDER_ORDER = PROVIDER;
 
 // The Groq plan allows 200k tokens per DAY for the whole account. A full run is
 // ~70 calls at ~1.8k tokens each, so an unthrottled loop can spend the day and
 // leave the live app unable to answer. Fail loudly instead of silently 429ing
 // halfway through.
-const RUN_BUDGET_TOKENS = 180_000;
+//
+// The guard lifts on Ollama, which is billed per token and has no daily ceiling.
+// Removing it there would be wrong too — an eval on a paid provider can still
+// run up a real bill — so it is kept, just sized for a paid run.
+const ON_GROQ = (PROVIDER ?? "groq").includes("groq");
+const RUN_BUDGET_TOKENS = ON_GROQ ? 180_000 : 1_000_000;
 let tokensSpent = 0;
 
 const selected = FILTER
   ? CASES.filter((c) => c.name.toLowerCase().includes(FILTER.toLowerCase()))
   : CASES;
 
-if (!process.env.GROQ_API_KEY) {
+/** At least one provider in the pinned chain has to have a key. */
+const hasAnyProvider = Boolean(process.env.GROQ_API_KEY || process.env.OLLAMA_API_KEY);
+
+if (!hasAnyProvider) {
   describe("milo eval", () => {
-    it("needs GROQ_API_KEY", () => {
-      expect.fail("GROQ_API_KEY is not set. Copy .env.example to .env.local.");
+    it("needs a provider key", () => {
+      expect.fail(
+        "No GROQ_API_KEY and no OLLAMA_API_KEY. Copy .env.example to .env.local."
+      );
     });
   });
 } else {
   const transcript: Array<Record<string, unknown>> = [];
+  /** Set once the pinned provider is out of budget; the rest of the run skips. */
+  let quotaExhausted = false;
 
   const runCase = async (testCase: EvalCase, isPro: boolean) => {
     const now = testCase.now ?? NOW;
     const canCreateTasks = (testCase.plan ?? "pro") !== "free";
-    const context = buildTaskContext({
+    // Built the same way the route builds it, split included. An eval that sent
+    // a different prompt than production would be measuring the wrong thing.
+    const { static: staticContext, dynamic: dynamicContext } = buildTaskPromptParts({
       tasks: testCase.tasks ?? [],
       canCreateTasks,
       userMemory: testCase.userMemory ?? "",
@@ -49,7 +83,8 @@ if (!process.env.GROQ_API_KEY) {
 
     const { content } = await chatWithMilo({
       message: testCase.message,
-      context,
+      contextStatic: staticContext,
+      context: dynamicContext,
       history: (testCase.history ?? []).map((m) => ({
         role: m.role === "milo" ? ("assistant" as const) : ("user" as const),
         content: m.content
@@ -63,7 +98,7 @@ if (!process.env.GROQ_API_KEY) {
       text: parsed.text,
       tasks: parsed.taskActions,
       error: parsed.error,
-      usage: Math.round(context.length / 3.8) + Math.round(content.length / 3.8) + 250
+      usage: Math.round((staticContext.length + dynamicContext.length) / 3.8) + Math.round(content.length / 3.8) + 250
     };
   };
 
@@ -176,13 +211,27 @@ if (!process.env.GROQ_API_KEY) {
     }
   };
 
-  const modelLabel = (isPro: boolean) =>
-    isPro ? process.env.GROQ_PRO_MODEL ?? "pro model" : process.env.GROQ_MODEL ?? "default model";
+  /**
+   * Name the model that will actually answer, so a transcript says which engine
+   * produced a reply. With two providers in the chain, "pro model" is not enough
+   * to tell a Groq regression from an Ollama one.
+   */
+  const modelLabel = (isPro: boolean) => {
+    const onOllama = Boolean(PROVIDER?.includes("ollama"));
+    if (onOllama) {
+      return isPro
+        ? process.env.OLLAMA_PRO_MODEL ?? "ollama pro"
+        : process.env.OLLAMA_MODEL ?? "ollama standard";
+    }
+    return isPro
+      ? process.env.GROQ_PRO_MODEL ?? "pro model"
+      : process.env.GROQ_MODEL ?? "default model";
+  };
 
   // Groq enforces 200k tokens per day PER MODEL. Targeting one model halves the
   // cost of a run and lets you verify the non-pro experience on its own.
   //   --model default | pro | both   (default: both)
-  const MODEL_TARGET = flag("model") ?? process.env.EVAL_MODEL ?? "both";
+  const MODEL_TARGET = process.env.EVAL_MODEL ?? "both";
   const targets: boolean[] =
     MODEL_TARGET === "default" ? [false] : MODEL_TARGET === "pro" ? [true] : [false, true];
 
@@ -194,14 +243,41 @@ if (!process.env.GROQ_API_KEY) {
             ? `${testCase.name} [${modelLabel(isPro)} #${run + 1}]`
             : `${testCase.name} [${modelLabel(isPro)}]`;
 
-        it(label, async () => {
+        it(label, async (ctx) => {
+          // Once the provider is out of quota, every remaining case fails the
+          // same way. Reporting 70 identical "quarantined" failures buries the
+          // one line that matters and makes the run look like a regression.
+          if (quotaExhausted) {
+            ctx.skip();
+            return;
+          }
+
           if (tokensSpent > RUN_BUDGET_TOKENS) {
             throw new Error(
               `eval budget guard: already spent ~${tokensSpent} of ${RUN_BUDGET_TOKENS} daily tokens. ` +
                 `Re-run tomorrow, or narrow it with --filter. The live app shares this quota.`
             );
           }
-          const out = await runCase(testCase, isPro);
+
+          let out: Awaited<ReturnType<typeof runCase>>;
+          try {
+            out = await runCase(testCase, isPro);
+          } catch (error) {
+            if (classifyChatFailure(error).busy) {
+              // Groq allows 200k tokens per day for the whole account, and the
+              // live app shares it. Once it is gone the run cannot continue, so
+              // say so once and skip the rest rather than producing a wall of
+              // identical failures.
+              quotaExhausted = true;
+              throw new Error(
+                `${label}: se agotó la cuota diaria de Groq.\n` +
+                  `  Re-run mañana, o:--filter para un caso puntual.\n` +
+                  `  Con OLLAMA_API_KEY: --provider ollama (cobrado por token, sin tope diario).`
+              );
+            }
+            throw error;
+          }
+
           tokensSpent += out.usage;
           const entry: Record<string, unknown> = {
             case: testCase.name,
@@ -232,7 +308,8 @@ if (!process.env.GROQ_API_KEY) {
 
   afterAll(() => {
     console.log(
-      `\n[milo eval] ~${tokensSpent.toLocaleString("es-AR")} tokens estimados de los 200.000 diarios de Groq.`
+      `\n[milo eval] ~${tokensSpent.toLocaleString("es-AR")} tokens estimados` +
+        (ON_GROQ ? " de los 200.000 diarios de Groq." : " (provider con pago por token).")
     );
     if (process.env.EVAL_TRANSCRIPT) {
       mkdirSync(resolve(process.env.EVAL_TRANSCRIPT), { recursive: true });

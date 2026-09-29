@@ -85,7 +85,14 @@ Write it in ${LANGUAGE_NAMES[params.uiLanguage]}.
 Reply with the message only, no quotes.`;
 
   try {
-    const { content } = await chatWithMilo({ message: prompt, timeoutMs: 12000, maxTokens: 150 });
+    const { content } = await chatWithMilo({
+      message: prompt,
+      // A one-line stat blurb: the longest prompt in the app, the
+      // shortest answer. No reasoning, no quota.
+      tier: "fast",
+      timeoutMs: 12000,
+      maxTokens: 150
+    });
     return content.trim() || "";
   } catch {
     return "";

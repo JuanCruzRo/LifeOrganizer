@@ -56,6 +56,8 @@ Rules:
     const { content } = await chatWithMilo({
       message: JSON.stringify({ title, description, category, estimatedDuration: duration }),
       context,
+      // Splitting a task into steps is mechanical once the task is read.
+      tier: "fast",
       timeoutMs: 20000,
       maxTokens: 400
     });

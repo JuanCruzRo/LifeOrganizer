@@ -60,6 +60,45 @@ cookies que no son de producción.
 `MP_WEBHOOK_SECRET` falta en producción la ruta devuelve 503. Confirmá que en
 Vercel la variable existe con mayúsculas exactas.
 
+## AI: el segundo provider (recomendado antes de tener usuarios)
+
+Groq es rápido y gratis, pero su plan da **200.000 tokens por día por modelo para
+toda la cuenta**. Medido contra el tráfico real, eso son ~130 turnos de chat en
+todo el producto. El día que se agota, todos los usuarios reciben el mismo error
+al mismo tiempo.
+
+La app ya no depende de eso: hay una cadena en `lib/ai/complete.ts` que cae a
+Ollama Cloud cuando Groq no puede. Para activarla alcanza con una variable:
+
+1. Registrate en <https://ollama.com> y creá una key en
+   <https://ollama.com/settings/keys>
+2. `OLLAMA_API_KEY` en Vercel (y en `.env.local` para desarrollo)
+3. Redeploy
+
+Sin la key, todo sigue funcionando igual: un provider sin key se saltea solo y
+no se pierde nada. **El plan Pro de $20/mes de Ollama no hace falta para
+arrancar**; agrega créditos, no cuota. Compralo solo si el uso real lo pide.
+
+Sin esto, el único síntoma es el mensaje "Milo está con muchos mensajes ahora",
+que es honesto pero no evita nada.
+
+### Si la key quedó mal
+
+Un `401` manda al provider a cuarentena por 10 minutos de una, sin reintentos: una
+key rota no se arregla probando de nuevo. El estado se ve en los logs:
+
+```
+[ai] skipping "ollama": quarantined after earlier failures
+```
+
+Un lambda que ya estaba caliente conserva la cuarentena; uno nuevo arranca limpio.
+
+### Fijar un provider
+
+`AI_PROVIDER_ORDER=groq,ollama` (el default). `AI_PROVIDER_ORDER=ollama` deja
+Groq completamente afuera, útil para comparar comportamiento sin que el fallback
+esconda un problema.
+
 ## Lo que sigue después
 
 Nada de esto es bloqueante para cobrar, pero es lo que convierte usuarios en

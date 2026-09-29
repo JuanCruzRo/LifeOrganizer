@@ -78,6 +78,9 @@ Reply with the sentence only, no quotes.`;
 
   try {
     const { content } = await chatWithMilo({
+      // A short nudge about one step of the task in progress. No reasoning
+      // needed, and it runs while the user watches the timer.
+      tier: "fast",
       // The session length is only shared at the end, where it can be stated safely.
       message: JSON.stringify({
         taskTitle,
