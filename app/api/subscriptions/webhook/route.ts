@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import {
   verifyWebhookSignature,
+  planForVariant,
   type PaidPlan,
   type WebhookPayload,
   type LsSubscriptionStatus
@@ -91,11 +92,8 @@ export async function POST(request: Request) {
  * so it is the fallback rather than the source of truth.
  */
 function planFromAttributes(payload: WebhookPayload): PaidPlan | null {
-  const variantId = payload.data?.attributes?.variant_id;
-  const pro = process.env.LEMONSQUEEZY_VARIANT_PRO;
-  const plus = process.env.LEMONSQUEEZY_VARIANT_PLUS;
-  if (pro && variantId === Number(pro)) return "pro";
-  if (plus && variantId === Number(plus)) return "plus";
+  const byVariant = planForVariant(payload.data?.attributes?.variant_id);
+  if (byVariant) return byVariant;
 
   const declared = payload.meta?.custom_data?.plan;
   return declared === "plus" || declared === "pro" ? declared : null;

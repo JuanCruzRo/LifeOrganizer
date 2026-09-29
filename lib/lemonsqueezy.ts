@@ -25,17 +25,45 @@ export type PaidPlan = PaidPlanName;
  */
 
 /**
- * Variant ids come from the store, not from the code. They are read from the
- * environment so a price change on Lemon Squeezy never needs a redeploy to
- * match, and so nobody can accidentally commit a live variant to the repo.
+ * Lemon Squeezy names a variant twice, and the two uses need different halves.
+ *
+ *   /checkout/buy/<slug>    the buyer is sent here. The numeric id returns
+ *                           404, so the slug is not interchangeable with it.
+ *   attributes.variant_id  the number, on every webhook for the life of the
+ *                           subscription. This is what attributes a payment
+ *                           to a plan.
+ *
+ * Both are stable, so both are configuration. Deriving one from the other
+ * would mean either a checkout link that 404s after pressing "Plus", or a
+ * renewal we cannot match to anyone.
  */
-function variantId(plan: PaidPlan): string {
-  const id = plan === "pro" ? process.env.LEMONSQUEEZY_VARIANT_PRO : process.env.LEMONSQUEEZY_VARIANT_PLUS;
-  if (!id) {
-    throw new Error(`LEMONSQUEEZY_VARIANT_${plan.toUpperCase()} is not set`);
+function variantSlug(plan: PaidPlan): string {
+  const slug = plan === "pro" ? process.env.LEMONSQUEEZY_CHECKOUT_SLUG_PRO : process.env.LEMONSQUEEZY_CHECKOUT_SLUG_PLUS;
+  if (!slug) {
+    throw new Error(`LEMONSQUEEZY_CHECKOUT_SLUG_${plan.toUpperCase()} is not set`);
   }
-  return id;
+  return slug;
 }
+
+/**
+ * Which plan a webhook payload belongs to.
+ *
+ * The variant is the durable answer: it rides on every event for the life of
+ * the subscription, including renewals nobody set a custom field for. The
+ * caller falls back to `meta.custom_data.plan` when this returns null.
+ *
+ * Returns null rather than guessing when the variant is not one of ours —
+ * attributing a payment to the wrong tier is worse than not attributing it.
+ */
+export function planForVariant(variantId: number | undefined): PaidPlan | null {
+  if (!variantId) return null;
+  const pro = process.env.LEMONSQUEEZY_VARIANT_PRO;
+  const plus = process.env.LEMONSQUEEZY_VARIANT_PLUS;
+  if (pro && variantId === Number(pro)) return "pro";
+  if (plus && variantId === Number(plus)) return "plus";
+  return null;
+}
+
 
 /**
  * Builds the hosted checkout URL.
@@ -46,10 +74,10 @@ function variantId(plan: PaidPlan): string {
  * if it stalls; the hosted page always works, and "not found" cannot happen on
  * our side of the navigation.
  *
- * `custom[user_id]` is echoed back inside `meta.custom_data` on every webhook.
- * It is the only trustworthy way to attribute a payment: the payer email can
- * change, Clerk can be re-created, and a subscription id we have never seen
- * before has nowhere else to point.
+ * `checkout[custom][user_id]` is echoed back inside `meta.custom_data` on every
+ * webhook. It is the only trustworthy way to attribute a payment: the payer
+ * email can change, Clerk can be re-created, and a subscription id we have
+ * never seen before has nowhere else to point.
  */
 export function buildCheckoutUrl(params: {
   plan: PaidPlan;
@@ -60,7 +88,9 @@ export function buildCheckoutUrl(params: {
   const storeDomain = process.env.LEMONSQUEEZY_STORE_DOMAIN;
   if (!storeDomain) throw new Error("LEMONSQUEEZY_STORE_DOMAIN is not set");
 
-  const url = new URL(`https://${storeDomain}/checkout/buy/${variantId(params.plan)}`);
+  // The slug, never the variant id: the id here 404s. Verified against the
+  // live store, not assumed from the API docs.
+  const url = new URL(`https://${storeDomain}/checkout/buy/${variantSlug(params.plan)}`);
   // Lemon Squeezy echoes these back on every webhook for this subscription.
   // They are the only attribution that survives a changed email or a
   // re-created Clerk account.

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { verifyWebhookSignature, buildCheckoutUrl } from "@/lib/lemonsqueezy";
+import { verifyWebhookSignature, buildCheckoutUrl, planForVariant } from "@/lib/lemonsqueezy";
 
 // Lemon Squeezy signs the raw body. These pin the two things that are easy to
 // get wrong and impossible to notice in development: hashing the wrong bytes,
@@ -19,6 +19,8 @@ beforeEach(() => {
   process.env.LEMONSQUEEZY_WEBHOOK_SECRET = SECRET;
   process.env.LEMONSQUEEZY_VARIANT_PLUS = "111";
   process.env.LEMONSQUEEZY_VARIANT_PRO = "222";
+  process.env.LEMONSQUEEZY_CHECKOUT_SLUG_PLUS = "slug-plus";
+  process.env.LEMONSQUEEZY_CHECKOUT_SLUG_PRO = "slug-pro";
   process.env.LEMONSQUEEZY_STORE_DOMAIN = "spark.lemonsqueezy.com";
 });
 
@@ -65,15 +67,27 @@ describe("buildCheckoutUrl", () => {
   it("carries the user id and plan the webhook needs to attribute payment", () => {
     const url = new URL(buildCheckoutUrl({ plan: "pro", userId: "user_9", email: "a@b.c", siteUrl: "https://sparktodo.com" }));
     expect(url.origin).toBe("https://spark.lemonsqueezy.com");
-    expect(url.pathname).toBe("/checkout/buy/222");
+    expect(url.pathname).toBe("/checkout/buy/slug-pro");
     expect(url.searchParams.get("checkout[custom][user_id]")).toBe("user_9");
     expect(url.searchParams.get("checkout[custom][plan]")).toBe("pro");
     expect(url.searchParams.get("checkout[email]")).toBe("a@b.c");
   });
 
+  it("addresses the variant by slug, never by id", () => {
+    // Checked against the live store: /checkout/buy/<variant_id> answers 404,
+    // the slug answers 302 to the real checkout. Getting this backwards costs
+    // a user their payment and leaves them on a "not found" page.
+    for (const plan of ["plus", "pro"] as const) {
+      const url = buildCheckoutUrl({ plan, userId: "u", email: "", siteUrl: "https://s" });
+      expect(url).not.toContain("/checkout/buy/111");
+      expect(url).not.toContain("/checkout/buy/222");
+      expect(url).toContain(plan === "plus" ? "slug-plus" : "slug-pro");
+    }
+  });
+
   it("maps each plan to its own variant", () => {
     const plus = new URL(buildCheckoutUrl({ plan: "plus", userId: "u", email: "", siteUrl: "https://s" }));
-    expect(plus.pathname).toBe("/checkout/buy/111");
+    expect(plus.pathname).toBe("/checkout/buy/slug-plus");
   });
 
   it("never builds a url pointing at localhost in production config", () => {
@@ -83,9 +97,9 @@ describe("buildCheckoutUrl", () => {
   });
 
   it("fails loudly instead of sending the user to a checkout with no variant", () => {
-    delete process.env.LEMONSQUEEZY_VARIANT_PLUS;
+    delete process.env.LEMONSQUEEZY_CHECKOUT_SLUG_PLUS;
     expect(() => buildCheckoutUrl({ plan: "plus", userId: "u", email: "", siteUrl: "https://s" })).toThrow(
-      /LEMONSQUEEZY_VARIANT_PLUS/
+      /LEMONSQUEEZY_CHECKOUT_SLUG_PLUS/
     );
   });
 
@@ -94,5 +108,24 @@ describe("buildCheckoutUrl", () => {
     expect(() => buildCheckoutUrl({ plan: "plus", userId: "u", email: "", siteUrl: "https://s" })).toThrow(
       /LEMONSQUEEZY_STORE_DOMAIN/
     );
+  });
+});
+
+describe("planForVariant", () => {
+  it("maps each configured variant to its plan", () => {
+    expect(planForVariant(111)).toBe("plus");
+    expect(planForVariant(222)).toBe("pro");
+  });
+
+  it("returns null for a variant that is not one of ours", () => {
+    // Guessing a tier here would hand someone a Pro they never paid for.
+    expect(planForVariant(999)).toBeNull();
+    expect(planForVariant(undefined)).toBeNull();
+  });
+
+  it("returns null when the variants are not configured", () => {
+    delete process.env.LEMONSQUEEZY_VARIANT_PLUS;
+    delete process.env.LEMONSQUEEZY_VARIANT_PRO;
+    expect(planForVariant(111)).toBeNull();
   });
 });

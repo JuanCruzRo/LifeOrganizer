@@ -41,8 +41,17 @@ if (!env.includes("LEMONSQUEEZY_WEBHOOK_SECRET")) {
   blockers.push("LEMONSQUEEZY_WEBHOOK_SECRET is not set — Lemon Squeezy payments would be taken but never granted");
 }
 // Without these, buildCheckoutUrl throws and checkout answers 502: the plans
-// page looks fine until someone presses the button.
-for (const key of ["LEMONSQUEEZY_STORE_DOMAIN", "LEMONSQUEEZY_VARIANT_PLUS", "LEMONSQUEEZY_VARIANT_PRO"]) {
+// page looks fine until someone presses the button. The slugs and the numeric
+// ids are checked separately because the failure is silent either way — a slug
+// missing gives 502, but an id used in place of a slug gives a 404 the user
+// sees only after pressing "Plus".
+for (const key of [
+  "LEMONSQUEEZY_STORE_DOMAIN",
+  "LEMONSQUEEZY_CHECKOUT_SLUG_PLUS",
+  "LEMONSQUEEZY_CHECKOUT_SLUG_PRO",
+  "LEMONSQUEEZY_VARIANT_PLUS",
+  "LEMONSQUEEZY_VARIANT_PRO"
+]) {
   if (!env.includes(key)) blockers.push(`${key} is not set — Plus/Pro checkout cannot be built`);
 }
 // sitemap.ts, robots.ts and metadataBase all fall back to http://localhost:3000,
